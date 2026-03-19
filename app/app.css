@@ -1,5 +1,9 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes:
+    emerald --default,
+    forest --prefersdark;
+}
 
 @theme {
   --font-sans:
@@ -9,9 +13,5 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
+  @apply antialiased h-full;
 }
