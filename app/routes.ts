@@ -78,7 +78,7 @@ export default [
       "dashboard/accounting/open-bills",
       "routes/dashboard/accounting/open-bills.tsx",
     ),
-    route("accounting/banking", "routes/dashboard/accounting/banking.tsx"),
-    route("accounting/coa", "routes/dashboard/accounting/coa.tsx"),
+    route("dashboard/accounting/banking", "routes/dashboard/accounting/banking.tsx"),
+    route("dashboard/accounting/coa", "routes/dashboard/accounting/coa.tsx"),
   ]),
 ] satisfies RouteConfig;
