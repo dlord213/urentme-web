@@ -1,7 +1,23 @@
 import { Bell, Menu, Search, User } from "lucide-react";
-import { Link } from "react-router";
+import { useAuthStore } from "../store/auth.store";
+import { useMutation } from "@tanstack/react-query";
+import { apiFetch } from "../lib/api";
+import { useNavigate } from "react-router";
 
 export function Header() {
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const navigate = useNavigate();
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiFetch("/auth/logout", { method: "POST" });
+    },
+    onSettled: () => {
+      clearAuth();
+      navigate("/login");
+    },
+  });
+
   return (
     <div className="navbar bg-base-100 border-b border-base-200 sticky top-0 z-30 px-4">
       <div className="flex-none lg:hidden">
@@ -37,7 +53,13 @@ export function Header() {
             <li><a className="justify-between">Profile<span className="badge badge-primary">New</span></a></li>
             <li><a>Settings</a></li>
             <div className="divider my-1"></div>
-            <li><Link to="/login" className="text-error">Logout</Link></li>
+            <li><button 
+              onClick={() => logoutMutation.mutate()} 
+              disabled={logoutMutation.isPending}
+              className="text-error text-left w-full text-sm disabled:opacity-50"
+            >
+              {logoutMutation.isPending ? "Logging out..." : "Logout"}
+            </button></li>
           </ul>
         </div>
       </div>

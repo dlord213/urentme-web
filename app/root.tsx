@@ -10,6 +10,10 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -33,7 +37,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -41,7 +47,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "./store/auth.store";
+import { apiFetch } from "./lib/api";
+
 export default function App() {
+  const setUser = useAuthStore((state) => state.setUser);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  useQuery({
+    queryKey: ["auth-me"],
+    queryFn: async () => {
+      try {
+        const data = await apiFetch("/auth/me");
+        setUser(data.user);
+        return data.user;
+      } catch (err) {
+        clearAuth();
+        throw err;
+      }
+    },
+    retry: false,
+    staleTime: Infinity,
+  });
+
   return <Outlet />;
 }
 

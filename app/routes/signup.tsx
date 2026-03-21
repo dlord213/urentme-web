@@ -1,4 +1,8 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { apiFetch } from "../lib/api";
+import { useAuthStore } from "../store/auth.store";
+import { useMutation } from "@tanstack/react-query";
 import {
   Building,
   Lock,
@@ -20,10 +24,29 @@ const STEPS = ["Account Info", "Portfolio Setup", "Go Live"];
 
 export default function Signup() {
   const navigate = useNavigate();
+  const setAuthUser = useAuthStore((state) => state.setUser);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const signupMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      return apiFetch("/auth/register", {
+        method: "POST",
+        body: JSON.stringify(userData),
+      });
+    },
+    onSuccess: (data) => {
+      setAuthUser(data.user);
+      navigate("/dashboard");
+    },
+  });
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    signupMutation.mutate({ firstName, lastName, email, password });
   };
 
   return (
@@ -115,6 +138,11 @@ export default function Signup() {
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
+            {signupMutation.isError && (
+              <div className="alert alert-error text-sm rounded-lg py-2">
+                <span>{(signupMutation.error as any)?.message || "Failed to register"}</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="form-control">
                 <label className="label pb-1.5">
@@ -129,6 +157,8 @@ export default function Signup() {
                     className="grow text-sm"
                     placeholder="John"
                     required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                   />
                 </label>
               </div>
@@ -143,6 +173,8 @@ export default function Signup() {
                   className="input input-bordered w-full text-sm focus:input-primary transition-colors"
                   placeholder="Doe"
                   required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                 />
               </div>
             </div>
@@ -179,6 +211,8 @@ export default function Signup() {
                   className="grow text-sm"
                   placeholder="john@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </label>
             </div>
@@ -197,6 +231,8 @@ export default function Signup() {
                   placeholder="Min. 8 characters"
                   minLength={8}
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </label>
               <label className="label pt-1.5">
@@ -247,8 +283,15 @@ export default function Signup() {
             <button
               type="submit"
               className="btn btn-primary w-full shadow-lg shadow-primary/30 gap-2 text-base mt-2"
+              disabled={signupMutation.isPending}
             >
-              Create Account <ArrowRight className="w-4 h-4" />
+              {signupMutation.isPending ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                <>
+                  Create Account <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 

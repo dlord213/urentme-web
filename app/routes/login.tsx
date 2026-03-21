@@ -1,4 +1,8 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { apiFetch } from "../lib/api";
+import { useAuthStore } from "../store/auth.store";
+import { useMutation } from "@tanstack/react-query";
 import {
   Lock,
   Mail,
@@ -16,10 +20,27 @@ const HIGHLIGHTS = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const setAuthUser = useAuthStore((state) => state.setUser);
+  
+  const [email, setEmail] = useState("admin@urentme.com");
+  const [password, setPassword] = useState("password123");
+
+  const loginMutation = useMutation({
+    mutationFn: async ({ email, password }: any) => {
+      return apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+    },
+    onSuccess: (data) => {
+      setAuthUser(data.user);
+      navigate("/dashboard");
+    },
+  });
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    loginMutation.mutate({ email, password });
   };
 
   return (
@@ -108,6 +129,11 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
+            {loginMutation.isError && (
+              <div className="alert alert-error text-sm rounded-lg py-2">
+                <span>{(loginMutation.error as any)?.message || "Failed to login"}</span>
+              </div>
+            )}
             <div className="form-control">
               <label className="label pb-1.5">
                 <span className="label-text font-semibold">Email Address</span>
@@ -119,7 +145,8 @@ export default function Login() {
                   className="grow text-sm"
                   placeholder="admin@urentme.com"
                   required
-                  defaultValue="admin@urentme.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </label>
             </div>
@@ -135,7 +162,8 @@ export default function Login() {
                   className="grow text-sm"
                   placeholder="••••••••"
                   required
-                  defaultValue="password123"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </label>
             </div>
@@ -165,8 +193,15 @@ export default function Login() {
             <button
               type="submit"
               className="btn btn-primary w-full shadow-lg shadow-primary/30 mt-2 gap-2 text-base"
+              disabled={loginMutation.isPending}
             >
-              Sign In <ArrowRight className="w-4 h-4" />
+              {loginMutation.isPending ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                <>
+                  Sign In <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 
