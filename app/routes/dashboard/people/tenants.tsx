@@ -6,6 +6,7 @@ import {
   Eye,
   MessageSquare,
   Plus,
+  Mail,
 } from "lucide-react";
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
@@ -155,6 +156,14 @@ export default function Tenants() {
                 icon: <MessageSquare className="w-3 h-3" />,
                 onClick: () => {},
                 variant: "ghost",
+              },
+              {
+                label: "Send Invite",
+                icon: <Mail className="w-3 h-3" />,
+                onClick: (item: any) => {
+                  alert(`Invitation sent to \${item.email} with a link to /invite/mock-token-123`);
+                },
+                variant: "outline",
               },
             ]}
             emptyMessage="No tenants found."

@@ -78,7 +78,10 @@ export default [
       "dashboard/accounting/open-bills",
       "routes/dashboard/accounting/open-bills.tsx",
     ),
-    route("dashboard/accounting/banking", "routes/dashboard/accounting/banking.tsx"),
+    route(
+      "dashboard/accounting/banking",
+      "routes/dashboard/accounting/banking.tsx",
+    ),
     route("dashboard/accounting/coa", "routes/dashboard/accounting/coa.tsx"),
   ]),
 
@@ -90,4 +93,7 @@ export default [
     route("tenant/lease", "routes/tenant/lease.tsx"),
     route("tenant/announcements", "routes/tenant/announcements.tsx"),
   ]),
+
+  route("invite/:token", "routes/invite.$token.tsx"),
+  route("invite/success", "routes/invite.success.tsx"),
 ] satisfies RouteConfig;
