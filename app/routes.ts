@@ -81,4 +81,13 @@ export default [
     route("dashboard/accounting/banking", "routes/dashboard/accounting/banking.tsx"),
     route("dashboard/accounting/coa", "routes/dashboard/accounting/coa.tsx"),
   ]),
+
+  layout("routes/tenant.tsx", [
+    route("tenant", "routes/tenant/index.tsx"),
+    route("tenant/payments", "routes/tenant/payments.tsx"),
+    route("tenant/payments/history", "routes/tenant/payments/history.tsx"),
+    route("tenant/maintenance", "routes/tenant/maintenance.tsx"),
+    route("tenant/lease", "routes/tenant/lease.tsx"),
+    route("tenant/announcements", "routes/tenant/announcements.tsx"),
+  ]),
 ] satisfies RouteConfig;
