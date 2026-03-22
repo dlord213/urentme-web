@@ -1,4 +1,4 @@
-import { Building2, DollarSign, User, Eye, Pencil, Plus } from "lucide-react";
+import { Building2, PhilippinePeso, User, Eye, Pencil, Plus } from "lucide-react";
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
@@ -78,7 +78,7 @@ export default function Owners() {
         <StatsCard
           title="Owner Balances"
           value="₱63,400"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="success"
           subtitle="Total held / payable"
         />

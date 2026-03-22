@@ -1,5 +1,5 @@
 import {
-  DollarSign,
+  PhilippinePeso,
   AlertTriangle,
   Clock,
   TrendingUp,
@@ -91,7 +91,7 @@ export default function UnpaidRent() {
         <StatsCard
           title="Total Outstanding"
           value="₱7,550"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="error"
           subtitle="Across all units"
         />

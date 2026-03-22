@@ -1,7 +1,7 @@
 import {
   Users,
   Home,
-  DollarSign,
+  PhilippinePeso,
   AlertTriangle,
   Eye,
   MessageSquare,
@@ -112,7 +112,7 @@ export default function Tenants() {
         <StatsCard
           title="Total Balances Due"
           value="₱9,450"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="warning"
         />
       </div>

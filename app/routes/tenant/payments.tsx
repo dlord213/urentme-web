@@ -1,11 +1,11 @@
-import { DollarSign, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { PhilippinePeso, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { PageHeader } from "../../components/PageHeader";
 import { DataTable } from "../../components/DataTable";
 import { StatsCard } from "../../components/StatsCard";
 
 const MOCK_BILLS = [
-  { id: "BLL-001", description: "April 2025 Rent", dueDate: "2025-04-01", amount: "$1,450.00", status: "Unpaid" },
-  { id: "BLL-002", description: "Trash / Valet Service (April)", dueDate: "2025-04-01", amount: "$25.00", status: "Unpaid" },
+  { id: "BLL-001", description: "April 2025 Rent", dueDate: "2025-04-01", amount: "₱1,450.00", status: "Unpaid" },
+  { id: "BLL-002", description: "Trash / Valet Service (April)", dueDate: "2025-04-01", amount: "₱25.00", status: "Unpaid" },
 ];
 
 const statusBadge = (s: string) => {
@@ -28,7 +28,7 @@ export default function TenantPayments() {
         description="View your open charges and make payments."
         actionButton={
           <button className="btn btn-primary shadow-sm shadow-primary/20 gap-2">
-            Pay Total: ${totalDue.toLocaleString('en-US', {minimumFractionDigits: 2})}
+            Pay Total: ₱{totalDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}
           </button>
         }
       />
@@ -59,20 +59,20 @@ export default function TenantPayments() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-base-content/70">Rent</span>
-                  <span className="font-semibold">$1,450.00</span>
+                  <span className="font-semibold">₱1,450.00</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-base-content/70">Fees & Utilities</span>
-                  <span className="font-semibold">$25.00</span>
+                  <span className="font-semibold">₱25.00</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-base-content/70">Credits</span>
-                  <span className="font-semibold text-success">-$0.00</span>
+                  <span className="font-semibold text-success">-₱0.00</span>
                 </div>
                 <div className="divider my-1"></div>
                 <div className="flex justify-between text-lg">
                   <span className="font-bold">Total Due</span>
-                  <span className="font-black">${totalDue.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                  <span className="font-black">₱{totalDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
                 </div>
               </div>
               <button className="btn btn-primary w-full shadow-lg shadow-primary/30">

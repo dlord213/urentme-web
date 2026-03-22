@@ -1,6 +1,6 @@
 import {
   FileText,
-  DollarSign,
+  PhilippinePeso,
   AlertCircle,
   Clock,
   Eye,
@@ -101,7 +101,7 @@ export default function OpenBills() {
         <StatsCard
           title="Total Outstanding"
           value="₱2,055"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="warning"
         />
         <StatsCard

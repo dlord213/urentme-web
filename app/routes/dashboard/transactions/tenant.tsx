@@ -1,5 +1,5 @@
 import {
-  DollarSign,
+  PhilippinePeso,
   CreditCard,
   ArrowDownLeft,
   ReceiptText,
@@ -35,8 +35,7 @@ const MOCK_TENANT_TXNS = [
     id: "TT003",
     tenant: "Bob Martinez",
     unit: "Greenview – 3B",
-    type: "Issue Credit",
-    amount: "-$200",
+    amount: "-₱200",
     date: "2025-03-10",
     description: "Maintenance Credit",
     status: "Posted",
@@ -45,8 +44,7 @@ const MOCK_TENANT_TXNS = [
     id: "TT004",
     tenant: "TechCorp LLC",
     unit: "Sunset – Suite 101",
-    type: "Give Refund",
-    amount: "-$500",
+    amount: "-₱500",
     date: "2025-03-15",
     description: "Security Deposit Return",
     status: "Pending",
@@ -128,7 +126,7 @@ export default function TenantTransactions() {
         <StatsCard
           title="Total Collected (MTD)"
           value="₱38,450"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="success"
           trend={{ value: "+5% vs last month", positive: true }}
         />

@@ -1,6 +1,6 @@
 import {
   FileText,
-  DollarSign,
+  PhilippinePeso,
   CheckCircle2,
   Clock,
   Eye,
@@ -44,7 +44,7 @@ const MOCK_VENDOR_TXNS = [
     vendor: "Handy HVAC",
     description: "Overpayment credit",
     type: "Credit",
-    amount: "-$150",
+    amount: "-₱150",
     due: "—",
     status: "Applied",
   },
@@ -119,7 +119,7 @@ export default function VendorTransactions() {
         <StatsCard
           title="Total Owed"
           value="₱1,450"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="error"
           subtitle="Unpaid bills"
         />
@@ -178,7 +178,7 @@ export default function VendorTransactions() {
               },
               {
                 label: "Pay",
-                icon: <DollarSign className="w-3 h-3" />,
+                icon: <PhilippinePeso className="w-3 h-3" />,
                 onClick: () => {},
                 variant: "primary",
               },

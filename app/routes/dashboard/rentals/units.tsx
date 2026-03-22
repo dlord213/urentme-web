@@ -2,62 +2,33 @@ import {
   Plus,
   Home,
   DoorOpen,
-  Wrench,
-  DollarSign,
+  PhilippinePeso,
   Eye,
   Pencil,
 } from "lucide-react";
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "~/lib/api";
 
-const MOCK_UNITS = [
-  {
-    id: "U001",
-    unit: "1A",
-    property: "Riverside Apartments",
-    type: "1BR/1BA",
-    rent: "₱1,450",
-    tenant: "John Smith",
-    status: "Occupied",
-  },
-  {
-    id: "U002",
-    unit: "1B",
-    property: "Riverside Apartments",
-    type: "2BR/2BA",
-    rent: "₱1,850",
-    tenant: "Maria Garcia",
-    status: "Occupied",
-  },
-  {
-    id: "U003",
-    unit: "2A",
-    property: "Riverside Apartments",
-    type: "Studio",
-    rent: "₱1,100",
-    tenant: "—",
-    status: "Vacant",
-  },
-  {
-    id: "U004",
-    unit: "2B",
-    property: "Greenview Townhomes",
-    type: "3BR/2BA",
-    rent: "₱2,400",
-    tenant: "—",
-    status: "Maintenance",
-  },
-  {
-    id: "U005",
-    unit: "Suite 101",
-    property: "Sunset Commercial Plaza",
-    type: "Office",
-    rent: "₱3,200",
-    tenant: "TechCorp LLC",
-    status: "Occupied",
-  },
-];
+export interface Unit {
+  id: string;
+  unitNumber: string;
+  propertyId: string;
+  property?: {
+    name: string;
+  };
+  leases: {
+    tenant: {
+      firstName: string;
+      lastName: string;
+    };
+  }[];
+  type: string;
+  rentAmount: number;
+  status: string;
+}
 
 const statusBadge = (status: string) => {
   const map: Record<string, string> = {
@@ -75,6 +46,45 @@ const statusBadge = (status: string) => {
 };
 
 export default function Units() {
+  const { data: rawUnits = [], isLoading, isError } = useQuery<Unit[]>({
+    queryKey: ["units"],
+    queryFn: () => apiFetch("/rentals/units"),
+  });
+
+  const units = rawUnits.map((u) => ({
+    ...u,
+    unit: u.unitNumber,
+    property: u.property?.name,
+    rent: u.rentAmount,
+    tenant: u.leases?.[0]?.tenant
+      ? `${u.leases[0].tenant.firstName} ${u.leases[0].tenant.lastName}`
+      : "No Tenant",
+  }));
+
+  console.log(rawUnits);
+
+  const totalRent = units.reduce((acc, unit) => acc + (unit.rentAmount || 0), 0);
+  const avgRent = units.length > 0 ? totalRent / units.length : 0;
+  const occupiedCount = units.filter((u) => u.status === "OCCUPIED").length;
+  const occupancyRate =
+    units.length > 0 ? Math.round((occupiedCount / units.length) * 100) : 0;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <span className="loading loading-spinner text-primary loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="alert alert-error">
+        <span>Failed to load units.</span>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
       <PageHeader
@@ -88,25 +98,28 @@ export default function Units() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Total Units" value={62} icon={Home} color="primary" />
+        <StatsCard title="Total Units" value={units.length} icon={Home} color="primary" />
         <StatsCard
           title="Occupied"
-          value={55}
+          value={occupiedCount}
           icon={DoorOpen}
           color="success"
-          trend={{ value: "89% occupancy", positive: true }}
+          trend={{ value: `${occupancyRate}% occupancy`, positive: true }}
         />
         <StatsCard
           title="Vacant"
-          value={4}
+          value={units.filter((unit) => unit.status === "VACANT").length}
           icon={Home}
           color="warning"
           subtitle="Available to rent"
         />
         <StatsCard
           title="Avg. Rent"
-          value="₱1,780"
-          icon={DollarSign}
+          value={new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+          }).format(avgRent)}
+          icon={PhilippinePeso}
           color="accent"
         />
       </div>
@@ -142,7 +155,7 @@ export default function Units() {
               { key: "tenant", label: "Current Tenant" },
               { key: "status", label: "Status", render: statusBadge },
             ]}
-            data={MOCK_UNITS}
+            data={units}
             actions={[
               {
                 label: "View",

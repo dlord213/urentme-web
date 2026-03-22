@@ -2,7 +2,7 @@ import {
   Building2,
   Key,
   Users,
-  DollarSign,
+  PhilippinePeso,
   TrendingUp,
   AlertCircle,
   CheckCircle2,
@@ -117,7 +117,7 @@ export default function DashboardOverview() {
         <StatsCard
           title="Revenue (MTD)"
           value="₱142K"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="accent"
           trend={{ value: "+8.3% vs last month", positive: true }}
         />

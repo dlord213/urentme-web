@@ -3,7 +3,6 @@ import {
   ArrowLeftRight,
   Building2,
   Receipt,
-  DollarSign,
   Eye,
   Plus,
 } from "lucide-react";

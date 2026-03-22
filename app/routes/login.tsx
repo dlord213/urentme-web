@@ -22,11 +22,11 @@ export default function Login() {
   const navigate = useNavigate();
   const setAuthUser = useAuthStore((state) => state.setUser);
   
-  const [email, setEmail] = useState("admin@urentme.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
   const loginMutation = useMutation({
-    mutationFn: async ({ email, password }: any) => {
+    mutationFn: async ({ email, password }: { email: string, password: string }) => {
       return apiFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
@@ -143,7 +143,7 @@ export default function Login() {
                 <input
                   type="email"
                   className="grow text-sm"
-                  placeholder="admin@urentme.com"
+                  placeholder="urentme@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

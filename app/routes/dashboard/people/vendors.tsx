@@ -1,4 +1,4 @@
-import { Wrench, Star, DollarSign, FileText, Eye, Pencil, Plus } from "lucide-react";
+import { Wrench, Star, PhilippinePeso, FileText, Eye, Pencil, Plus } from "lucide-react";
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";

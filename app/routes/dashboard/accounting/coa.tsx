@@ -2,7 +2,7 @@ import {
   BookOpen,
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  PhilippinePeso,
   Eye,
   Pencil,
   Plus,
@@ -141,7 +141,7 @@ export default function ChartOfAccounts() {
         <StatsCard
           title="Revenue (YTD)"
           value="₱142,800"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="accent"
         />
         <StatsCard

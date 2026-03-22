@@ -2,7 +2,7 @@ import {
   User,
   ArrowUpRight,
   ArrowDownLeft,
-  DollarSign,
+  PhilippinePeso,
   Eye,
   Plus,
 } from "lucide-react";
@@ -105,7 +105,7 @@ export default function OwnerTransactions() {
         <StatsCard
           title="Pending Disbursements"
           value="₱22,100"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="warning"
         />
       </div>

@@ -1,6 +1,6 @@
 import {
   Building2,
-  DollarSign,
+  PhilippinePeso,
   TrendingUp,
   TrendingDown,
   Eye,
@@ -98,7 +98,7 @@ export default function Banking() {
         <StatsCard
           title="Total Bank Balance"
           value="₱133,340"
-          icon={DollarSign}
+          icon={PhilippinePeso}
           color="primary"
           subtitle="Across all accounts"
         />

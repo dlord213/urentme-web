@@ -2,13 +2,26 @@ import { Plus, Building2, MapPin, Home, TrendingUp, MoreVertical, Eye, Pencil, T
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "~/lib/api";
 
-const MOCK_PROPERTIES = [
-  { id: "P001", name: "Riverside Apartments", address: "123 Riverside Dr, Austin, TX", units: 24, occupied: 22, type: "Residential", status: "Active" },
-  { id: "P002", name: "Sunset Commercial Plaza", address: "456 Sunset Blvd, Austin, TX", units: 8, occupied: 7, type: "Commercial", status: "Active" },
-  { id: "P003", name: "Greenview Townhomes", address: "789 Greenview Ln, Round Rock, TX", units: 12, occupied: 10, type: "Residential", status: "Active" },
-  { id: "P004", name: "Lakeview Condos", address: "321 Lakeview Dr, Cedar Park, TX", units: 18, occupied: 15, type: "Residential", status: "Maintenance" },
-];
+export interface Unit {
+  id: string;
+  status: string;
+}
+
+export interface Property {
+  id: string;
+  name: string;
+  address: string;
+  type: string;
+  isActive: boolean;
+  units: Unit[];
+  // Calculated fields for display
+  unitsCount?: number;
+  occupiedCount?: number;
+  displayStatus?: string;
+}
 
 const statusBadge = (status: string) => {
   const map: Record<string, string> = {
@@ -28,7 +41,8 @@ const typeBadge = (type: string) => {
 };
 
 const occupancyBar = (_: any, item: any) => {
-  const pct = Math.round((item.occupied / item.units) * 100);
+  const total = item.unitsCount;
+  const pct = Math.round((item.occupiedCount / total) * 100) || 0;
   const color = pct >= 90 ? "progress-success" : pct >= 70 ? "progress-warning" : "progress-error";
   return (
     <div className="flex items-center gap-2 min-w-[120px]">
@@ -39,6 +53,38 @@ const occupancyBar = (_: any, item: any) => {
 };
 
 export default function Properties() {
+  const { data: rawProperties = [], isLoading, isError } = useQuery<Property[]>({
+    queryKey: ["properties"],
+    queryFn: () => apiFetch("/rentals/properties"),
+  });
+
+  const properties = rawProperties.map(p => ({
+    ...p,
+    unitsCount: p.units ? p.units.length : 0,
+    occupiedCount: p.units ? p.units.filter((u) => u.status === 'OCCUPIED').length : 0,
+    displayStatus: p.isActive ? 'Active' : 'Inactive',
+  }));
+
+  const totalUnits = properties.reduce((s: number, p: Property) => s + (p.unitsCount || 0), 0);
+  const totalOccupied = properties.reduce((s: number, p: Property) => s + (p.occupiedCount || 0), 0);
+  const occupancyRate = totalUnits > 0 ? Math.round((totalOccupied / totalUnits) * 100) : 0;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <span className="loading loading-spinner text-primary loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="alert alert-error">
+        <span>Failed to load properties.</span>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
       <PageHeader
@@ -52,10 +98,10 @@ export default function Properties() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Total Properties" value={MOCK_PROPERTIES.length} icon={Building2} color="primary" />
-        <StatsCard title="Total Units" value={MOCK_PROPERTIES.reduce((s, p) => s + p.units, 0)} icon={Home} color="info" />
-        <StatsCard title="Occupied Units" value={MOCK_PROPERTIES.reduce((s, p) => s + p.occupied, 0)} icon={TrendingUp} color="success" trend={{ value: "89% occupancy rate", positive: true }} />
-        <StatsCard title="Vacant Units" value={MOCK_PROPERTIES.reduce((s, p) => s + (p.units - p.occupied), 0)} icon={MapPin} color="warning" subtitle="Available to lease" />
+        <StatsCard title="Total Properties" value={properties.length} icon={Building2} color="primary" />
+        <StatsCard title="Total Units" value={totalUnits} icon={Home} color="info" />
+        <StatsCard title="Occupied Units" value={totalOccupied} icon={TrendingUp} color="success" trend={{ value: `${occupancyRate}% occupancy rate`, positive: true }} />
+        <StatsCard title="Vacant Units" value={totalUnits - totalOccupied} icon={MapPin} color="warning" subtitle="Available to lease" />
       </div>
 
       <div className="card bg-base-100 shadow-sm border border-base-200">
@@ -79,11 +125,11 @@ export default function Properties() {
               { key: "name", label: "Property Name" },
               { key: "address", label: "Address" },
               { key: "type", label: "Type", render: typeBadge },
-              { key: "units", label: "Units" },
+              { key: "unitsCount", label: "Units" },
               { key: "occupancy", label: "Occupancy", render: occupancyBar },
-              { key: "status", label: "Status", render: statusBadge },
+              { key: "displayStatus", label: "Status", render: statusBadge },
             ]}
-            data={MOCK_PROPERTIES}
+            data={properties}
             actions={[
               { label: "View", icon: <Eye className="w-3 h-3" />, onClick: () => {}, variant: "ghost" },
               { label: "Edit", icon: <Pencil className="w-3 h-3" />, onClick: () => {}, variant: "ghost" },

@@ -5,7 +5,7 @@ import {
   Key,
   Users,
   CheckSquare,
-  DollarSign,
+  PhilippinePeso,
   MessageSquare,
   Calculator,
   ChevronDown,
@@ -58,7 +58,7 @@ const NAV_GROUPS = [
   },
   {
     title: "Transactions",
-    icon: DollarSign,
+    icon: PhilippinePeso,
     items: [
       { label: "Tenant Txns", to: "/dashboard/transactions/tenant" },
       { label: "Vendor Txns", to: "/dashboard/transactions/vendor" },
