@@ -11,60 +11,47 @@ import {
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "~/lib/api";
 
-const MOCK_TENANTS = [
-  {
-    id: "T001",
-    name: "John Smith",
-    unit: "Riverside Apts – 1A",
-    email: "john@email.com",
-    phone: "(512) 555-0101",
-    leaseEnd: "2025-01-31",
-    balance: "₱0",
-    status: "Current",
-  },
-  {
-    id: "T002",
-    name: "Maria Garcia",
-    unit: "Riverside Apts – 1B",
-    email: "maria@email.com",
-    phone: "(512) 555-0102",
-    leaseEnd: "2025-04-30",
-    balance: "₱0",
-    status: "Current",
-  },
-  {
-    id: "T003",
-    name: "Bob Martinez",
-    unit: "Greenview – 3B",
-    email: "bob@email.com",
-    phone: "(512) 555-0103",
-    leaseEnd: "2025-02-28",
-    balance: "₱2,100",
-    status: "Delinquent",
-  },
-  {
-    id: "T004",
-    name: "Emily Chen",
-    unit: "Greenview – 3A",
-    email: "emily@email.com",
-    phone: "(512) 555-0104",
-    leaseEnd: "2024-12-31",
-    balance: "₱0",
-    status: "Past Tenant",
-  },
-];
+export interface Unit {
+  id: string;
+  unit: string;
+}
 
-const statusBadge = (s: string) => {
+export interface Lease {
+  id: string;
+  leaseEnd: string;
+  unit: Unit[];
+}
+
+export interface Tenants {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  balanceDue: number;
+  status: string[];
+  leases: Lease[];
+}
+
+const statusBadge = (s: string | string[]) => {
   const map: Record<string, string> = {
     Current: "badge-success",
     Delinquent: "badge-error",
     "Past Tenant": "badge-ghost",
   };
+  
+  const statuses = Array.isArray(s) ? s : [s];
+  
   return (
-    <span className={`badge badge-sm font-semibold ${map[s] || "badge-ghost"}`}>
-      {s}
-    </span>
+    <div className="flex gap-1 flex-wrap">
+      {statuses.map((status) => (
+        <span key={status} className={`badge badge-sm font-semibold ${map[status] || "badge-ghost"}`}>
+          {status}
+        </span>
+      ))}
+    </div>
   );
 };
 
@@ -77,6 +64,52 @@ const balanceCell = (val: string) => (
 );
 
 export default function Tenants() {
+  const {
+      data: rawTenants = [],
+      isLoading,
+      isError,
+    } = useQuery<Tenants[]>({
+      queryKey: ["tenants"],
+      queryFn: () => apiFetch("/people/tenants"),
+    });
+
+  const tenants = rawTenants.map((t: any) => {
+    const statusArray = [];
+    if (t.isActive) statusArray.push("Current");
+    else statusArray.push("Past Tenant");
+    if (t.isFlagged) statusArray.push("Delinquent");
+
+    return {
+      ...t,
+      name: `${t.firstName} ${t.lastName}`,
+      unit: t.leases[0].unit.unit,
+      leaseEnd: t.leases[0]?.endDate ? new Date(t.leases[0].endDate).toISOString().split("T")[0] : null,
+      balance: `₱${t.balanceDue}`,
+      status: statusArray,
+    };
+  });
+
+  const totalTenants = tenants.length;
+  const currentTenants = rawTenants.filter((t: any) => t.isActive).length;
+  const delinquentTenants = rawTenants.filter((t: any) => t.isFlagged).length;
+  const totalBalancesDue = rawTenants.reduce((sum: number, t: any) => sum + (Number(t.balanceDue) || 0), 0);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <span className="loading loading-spinner text-primary loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="alert alert-error">
+        <span>Failed to load tenants.</span>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
       <PageHeader
@@ -92,26 +125,26 @@ export default function Tenants() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total Tenants"
-          value={103}
+          value={totalTenants}
           icon={Users}
           color="primary"
         />
         <StatsCard
           title="Current Tenants"
-          value={87}
+          value={currentTenants}
           icon={Home}
           color="success"
         />
         <StatsCard
           title="Delinquent"
-          value={6}
+          value={delinquentTenants}
           icon={AlertTriangle}
           color="error"
           subtitle="Balance due"
         />
         <StatsCard
           title="Total Balances Due"
-          value="₱9,450"
+          value={`₱${totalBalancesDue.toLocaleString()}`}
           icon={PhilippinePeso}
           color="warning"
         />
@@ -143,7 +176,7 @@ export default function Tenants() {
               { key: "balance", label: "Balance Due", render: balanceCell },
               { key: "status", label: "Status", render: statusBadge },
             ]}
-            data={MOCK_TENANTS}
+            data={tenants}
             actions={[
               {
                 label: "View",
@@ -161,7 +194,9 @@ export default function Tenants() {
                 label: "Send Invite",
                 icon: <Mail className="w-3 h-3" />,
                 onClick: (item: any) => {
-                  alert(`Invitation sent to \${item.email} with a link to /invite/mock-token-123`);
+                  alert(
+                    `Invitation sent to \${item.email} with a link to /invite/mock-token-123`,
+                  );
                 },
                 variant: "outline",
               },

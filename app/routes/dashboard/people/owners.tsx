@@ -1,4 +1,11 @@
-import { Building2, PhilippinePeso, User, Eye, Pencil, Plus } from "lucide-react";
+import {
+  Building2,
+  PhilippinePeso,
+  User,
+  Eye,
+  Pencil,
+  Plus,
+} from "lucide-react";
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";

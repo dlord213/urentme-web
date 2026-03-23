@@ -26,24 +26,10 @@ const NAV_GROUPS = [
     ],
   },
   {
-    title: "Leasing",
-    icon: Key,
-    items: [
-      { label: "Active Leases", to: "/dashboard/leasing/active" },
-      { label: "Draft Leases", to: "/dashboard/leasing/draft" },
-      { label: "Renewals", to: "/dashboard/leasing/renewals" },
-      { label: "Applications", to: "/dashboard/leasing/applications" },
-    ],
-  },
-  {
     title: "People",
     icon: Users,
     items: [
       { label: "Tenants", to: "/dashboard/people/tenants" },
-      { label: "Owners", to: "/dashboard/people/owners" },
-      { label: "Vendors", to: "/dashboard/people/vendors" },
-      { label: "Prospects", to: "/dashboard/people/prospects" },
-      { label: "System Users", to: "/dashboard/people/users" },
     ],
   },
   {
@@ -51,9 +37,6 @@ const NAV_GROUPS = [
     icon: CheckSquare,
     items: [
       { label: "My Tasks", to: "/dashboard/tasks/my-tasks" },
-      { label: "Unassigned Tasks", to: "/dashboard/tasks/unassigned" },
-      { label: "Work Orders", to: "/dashboard/tasks/work-orders" },
-      { label: "All Tasks", to: "/dashboard/tasks/all" },
     ],
   },
   {
@@ -79,9 +62,6 @@ const NAV_GROUPS = [
     icon: Calculator,
     items: [
       { label: "Unpaid Rent", to: "/dashboard/accounting/unpaid-rent" },
-      { label: "Open Bills", to: "/dashboard/accounting/open-bills" },
-      { label: "Banking", to: "/dashboard/accounting/banking" },
-      { label: "Chart of Accounts", to: "/dashboard/accounting/coa" },
     ],
   },
 ];

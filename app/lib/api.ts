@@ -8,7 +8,11 @@ export const apiFetch = async (path: string, options: any = {}) => {
     const response = await axios({
       url: `${API_URL}${path}`,
       method: method,
-      data: body ? (typeof body === "string" ? JSON.parse(body) : body) : undefined,
+      data: body
+        ? typeof body === "string"
+          ? JSON.parse(body)
+          : body
+        : undefined,
       headers: {
         "Content-Type": "application/json",
         ...headers,
@@ -18,7 +22,12 @@ export const apiFetch = async (path: string, options: any = {}) => {
     return response.data;
   } catch (error: any) {
     if (error.response?.status === 204) return null;
-    throw new Error(error.response?.data?.message || error.response?.data?.error || error.message || "An error occurred");
+    throw new Error(
+      error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "An error occurred",
+    );
   }
 };
 

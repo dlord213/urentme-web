@@ -61,8 +61,6 @@ export default function Units() {
       : "No Tenant",
   }));
 
-  console.log(rawUnits);
-
   const totalRent = units.reduce((acc, unit) => acc + (unit.rentAmount || 0), 0);
   const avgRent = units.length > 0 ? totalRent / units.length : 0;
   const occupiedCount = units.filter((u) => u.status === "OCCUPIED").length;
