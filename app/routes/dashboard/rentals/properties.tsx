@@ -198,13 +198,13 @@ export default function Properties() {
               {
                 label: "View",
                 icon: <Eye className="w-3 h-3" />,
-                onClick: () => {},
+                to: (item: any) => `/dashboard/properties/${item.id}`,
                 variant: "ghost",
               },
               {
                 label: "Edit",
                 icon: <Pencil className="w-3 h-3" />,
-                onClick: () => {},
+                to: (item: any) => `/dashboard/properties/${item.id}?edit=true`,
                 variant: "ghost",
               },
             ]}

@@ -10,6 +10,7 @@ import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { Link } from "react-router";
 
 export interface Lease {
   id: string;
@@ -83,9 +84,12 @@ export default function Leases() {
         title="Leases"
         description="View and manage all active, draft, and past lease agreements."
         actionButton={
-          <button className="btn btn-primary shadow-sm shadow-primary/20 gap-2">
+          <Link
+            to="/dashboard/leases/create"
+            className="btn btn-primary shadow-sm shadow-primary/20 gap-2"
+          >
             <Plus className="w-4 h-4" /> Create Lease
-          </button>
+          </Link>
         }
       />
 

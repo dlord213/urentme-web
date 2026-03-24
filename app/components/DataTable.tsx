@@ -1,8 +1,11 @@
+import { Link } from "react-router";
+
 interface Action {
   label: string;
-  onClick: (item: any) => void;
+  onClick?: (item: any) => void;
+  to?: (item: any) => string;
   icon?: React.ReactNode;
-  variant?: 'primary' | 'error' | 'ghost' | 'outline';
+  variant?: 'primary' | 'error' | 'ghost' | 'outline' | 'secondary';
 }
 
 interface Column {
@@ -59,16 +62,33 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
                 {actions && actions.length > 0 && (
                   <td className="text-right">
                     <div className="flex justify-end gap-2">
-                      {actions.map((act, i) => (
-                        <button 
-                          key={i} 
-                          className={`btn btn-sm ${act.variant ? `btn-${act.variant}` : 'btn-ghost'}`}
-                          onClick={() => act.onClick(item)}
-                        >
-                          {act.icon}
-                          {act.label}
-                        </button>
-                      ))}
+                      {actions.map((act, i) => {
+                        const className = `btn btn-sm ${act.variant ? `btn-${act.variant}` : 'btn-ghost'}`;
+                        
+                        if (act.to) {
+                          return (
+                            <Link 
+                              key={i} 
+                              to={act.to(item)}
+                              className={className}
+                            >
+                              {act.icon}
+                              {act.label}
+                            </Link>
+                          );
+                        }
+
+                        return (
+                          <button 
+                            key={i} 
+                            className={className}
+                            onClick={() => act.onClick?.(item)}
+                          >
+                            {act.icon}
+                            {act.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </td>
                 )}

@@ -11,6 +11,7 @@ import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { Link } from "react-router";
 
 export interface Transaction {
   id: string;
@@ -47,7 +48,7 @@ const amountCell = (val: number) => {
   );
 };
 
-export default function TenantTransactions() {
+export default function Transactions() {
   const { data: rawTxns = [], isLoading, isError } = useQuery<Transaction[]>({
     queryKey: ["transactions"],
     queryFn: () => apiFetch("/transactions"),
@@ -87,9 +88,12 @@ export default function TenantTransactions() {
         title="Transactions"
         description="View all financial transactions, rent payments, and charges."
         actionButton={
-          <button className="btn btn-primary shadow-sm shadow-primary/20 gap-2">
+          <Link
+            to="/dashboard/transactions/new"
+            className="btn btn-primary shadow-sm shadow-primary/20 gap-2"
+          >
             <Plus className="w-4 h-4" /> New Transaction
-          </button>
+          </Link>
         }
       />
 

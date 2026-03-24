@@ -12,6 +12,7 @@ import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { Link } from "react-router";
 
 export interface Unit {
   id: string;
@@ -101,9 +102,12 @@ export default function Tenants() {
         title="Tenants"
         description="View and manage all current and past tenants."
         actionButton={
-          <button className="btn btn-primary shadow-sm shadow-primary/20 gap-2">
+          <Link
+            to="/dashboard/tenants/add"
+            className="btn btn-primary shadow-sm shadow-primary/20 gap-2"
+          >
             <Plus className="w-4 h-4" /> Add Tenant
-          </button>
+          </Link>
         }
       />
 

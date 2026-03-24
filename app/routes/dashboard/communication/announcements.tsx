@@ -4,6 +4,7 @@ import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { Link } from "react-router";
 
 export interface Announcement {
   id: string;
@@ -70,9 +71,12 @@ export default function Announcements() {
         title="Announcements"
         description="Send announcements and notices to tenants across properties or units."
         actionButton={
-          <button className="btn btn-primary shadow-sm shadow-primary/20 gap-2">
+          <Link
+            to="/dashboard/announcements/new"
+            className="btn btn-primary shadow-sm shadow-primary/20 gap-2"
+          >
             <Plus className="w-4 h-4" /> New Announcement
-          </button>
+          </Link>
         }
       />
 
