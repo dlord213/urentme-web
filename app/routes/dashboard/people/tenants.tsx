@@ -1,7 +1,6 @@
 import {
   Users,
   Home,
-  PhilippinePeso,
   AlertTriangle,
   Eye,
   MessageSquare,
@@ -16,29 +15,28 @@ import { apiFetch } from "~/lib/api";
 
 export interface Unit {
   id: string;
-  unit: string;
+  unitNumber: string;
 }
 
 export interface Lease {
   id: string;
-  leaseEnd: string;
-  unit: Unit[];
+  leaseEndDate: string;
+  unit: Unit;
+  status: string;
 }
 
 export interface Tenants {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone: string;
-  balanceDue: number;
-  status: string[];
+  celNum: string;
   leases: Lease[];
 }
 
 const statusBadge = (s: string | string[]) => {
   const map: Record<string, string> = {
     Current: "badge-success",
-    Delinquent: "badge-error",
     "Past Tenant": "badge-ghost",
   };
   
@@ -55,14 +53,6 @@ const statusBadge = (s: string | string[]) => {
   );
 };
 
-const balanceCell = (val: string) => (
-  <span
-    className={`font-semibold text-sm ${val !== "₱0" ? "text-error" : "text-success"}`}
-  >
-    {val}
-  </span>
-);
-
 export default function Tenants() {
   const {
       data: rawTenants = [],
@@ -73,26 +63,21 @@ export default function Tenants() {
       queryFn: () => apiFetch("/people/tenants"),
     });
 
-  const tenants = rawTenants.map((t: any) => {
-    const statusArray = [];
-    if (t.isActive) statusArray.push("Current");
-    else statusArray.push("Past Tenant");
-    if (t.isFlagged) statusArray.push("Delinquent");
+  const tenants = rawTenants.map((t) => {
+    const hasActiveLease = t.leases.some(l => l.status === "active");
+    const statusArray = hasActiveLease ? ["Current"] : ["Past Tenant"];
 
     return {
       ...t,
       name: `${t.firstName} ${t.lastName}`,
-      unit: t.leases[0].unit.unit,
-      leaseEnd: t.leases[0]?.endDate ? new Date(t.leases[0].endDate).toISOString().split("T")[0] : null,
-      balance: `₱${t.balanceDue}`,
+      unit: t.leases[0]?.unit?.unitNumber || "None",
+      leaseEnd: t.leases[0]?.leaseEndDate ? new Date(t.leases[0].leaseEndDate).toISOString().split("T")[0] : "—",
       status: statusArray,
     };
   });
 
   const totalTenants = tenants.length;
-  const currentTenants = rawTenants.filter((t: any) => t.isActive).length;
-  const delinquentTenants = rawTenants.filter((t: any) => t.isFlagged).length;
-  const totalBalancesDue = rawTenants.reduce((sum: number, t: any) => sum + (Number(t.balanceDue) || 0), 0);
+  const currentTenants = tenants.filter((t) => t.status.includes("Current")).length;
 
   if (isLoading) {
     return (
@@ -122,7 +107,7 @@ export default function Tenants() {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatsCard
           title="Total Tenants"
           value={totalTenants}
@@ -136,17 +121,10 @@ export default function Tenants() {
           color="success"
         />
         <StatsCard
-          title="Delinquent"
-          value={delinquentTenants}
+          title="Past Tenants"
+          value={totalTenants - currentTenants}
           icon={AlertTriangle}
-          color="error"
-          subtitle="Balance due"
-        />
-        <StatsCard
-          title="Total Balances Due"
-          value={`₱${totalBalancesDue.toLocaleString()}`}
-          icon={PhilippinePeso}
-          color="warning"
+          color="info"
         />
       </div>
 
@@ -161,7 +139,6 @@ export default function Tenants() {
             <select className="select select-bordered select-sm w-44">
               <option>All Statuses</option>
               <option>Current</option>
-              <option>Delinquent</option>
               <option>Past Tenant</option>
             </select>
           </div>
@@ -171,9 +148,8 @@ export default function Tenants() {
               { key: "name", label: "Tenant Name" },
               { key: "unit", label: "Unit" },
               { key: "email", label: "Email" },
-              { key: "phone", label: "Phone" },
+              { key: "celNum", label: "Mobile" },
               { key: "leaseEnd", label: "Lease End" },
-              { key: "balance", label: "Balance Due", render: balanceCell },
               { key: "status", label: "Status", render: statusBadge },
             ]}
             data={tenants}
@@ -189,16 +165,6 @@ export default function Tenants() {
                 icon: <MessageSquare className="w-3 h-3" />,
                 onClick: () => {},
                 variant: "ghost",
-              },
-              {
-                label: "Send Invite",
-                icon: <Mail className="w-3 h-3" />,
-                onClick: (item: any) => {
-                  alert(
-                    `Invitation sent to \${item.email} with a link to /invite/mock-token-123`,
-                  );
-                },
-                variant: "outline",
               },
             ]}
             emptyMessage="No tenants found."

@@ -1,27 +1,24 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import type { ReactNode } from "react";
+import { Navigate } from "react-router";
 import { useAuthStore } from "../store/auth.store";
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuthStore();
-  const navigate = useNavigate();
+interface AuthGuardProps {
+  children: ReactNode;
+}
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate("/login", { replace: true });
-    }
-  }, [isAuthenticated, isLoading, navigate]);
+export function AuthGuard({ children }: AuthGuardProps) {
+  const { isAuthenticated, isLoading } = useAuthStore();
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-base-100">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

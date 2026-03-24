@@ -4,11 +4,9 @@ import {
   Building,
   Key,
   Users,
-  CheckSquare,
   PhilippinePeso,
   MessageSquare,
-  Calculator,
-  ChevronDown,
+  FileText,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -21,47 +19,36 @@ const NAV_GROUPS = [
     title: "Rentals",
     icon: Building,
     items: [
-      { label: "Properties", to: "/dashboard/rentals/properties" },
-      { label: "Units", to: "/dashboard/rentals/units" },
+      { label: "Properties", to: "/dashboard/properties" },
+      { label: "Units", to: "/dashboard/units" },
     ],
   },
   {
     title: "People",
     icon: Users,
     items: [
-      { label: "Tenants", to: "/dashboard/people/tenants" },
+      { label: "Tenants", to: "/dashboard/tenants" },
     ],
   },
   {
-    title: "Tasks & Maintenance",
-    icon: CheckSquare,
+    title: "Leases",
+    icon: FileText,
     items: [
-      { label: "My Tasks", to: "/dashboard/tasks/my-tasks" },
+      { label: "All Leases", to: "/dashboard/leases" },
     ],
   },
   {
     title: "Transactions",
     icon: PhilippinePeso,
     items: [
-      { label: "Tenant Txns", to: "/dashboard/transactions/tenant" },
-      { label: "Vendor Txns", to: "/dashboard/transactions/vendor" },
-      { label: "Owner Txns", to: "/dashboard/transactions/owner" },
-      { label: "Other Txns", to: "/dashboard/transactions/other" },
+      { label: "All Transactions", to: "/dashboard/transactions" },
     ],
   },
   {
     title: "Communication",
     icon: MessageSquare,
     items: [
-      { label: "Announcements", to: "/dashboard/communication/announcements" },
-      { label: "Signature Requests", to: "/dashboard/communication/signatures" },
-    ],
-  },
-  {
-    title: "Accounting",
-    icon: Calculator,
-    items: [
-      { label: "Unpaid Rent", to: "/dashboard/accounting/unpaid-rent" },
+      { label: "Announcements", to: "/dashboard/announcements" },
     ],
   },
 ];
@@ -79,7 +66,7 @@ export function Sidebar() {
         <ul className="flex-1 w-full gap-2 overflow-y-auto pb-20">
           {NAV_GROUPS.map((group, i) => (
             <li key={i}>
-              <details open={i < 3}>
+              <details open={i < 4}>
                 <summary className="font-semibold text-base py-3">
                   <group.icon className="w-5 h-5 opacity-70" />
                   {group.title}

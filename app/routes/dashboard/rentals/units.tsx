@@ -15,7 +15,6 @@ import { apiFetch } from "~/lib/api";
 export interface Unit {
   id: string;
   unitNumber: string;
-  propertyId: string;
   property?: {
     name: string;
   };
@@ -25,20 +24,20 @@ export interface Unit {
       lastName: string;
     };
   }[];
-  type: string;
-  rentAmount: number;
+  monthlyRentAmount: number;
   status: string;
 }
 
 const statusBadge = (status: string) => {
   const map: Record<string, string> = {
-    Occupied: "badge-success",
-    Vacant: "badge-warning",
-    Maintenance: "badge-error",
+    occupied: "badge-success",
+    vacant: "badge-warning",
+    maintenance: "badge-error",
+    reserved: "badge-info",
   };
   return (
     <span
-      className={`badge badge-sm font-semibold ${map[status] || "badge-ghost"}`}
+      className={`badge badge-sm font-semibold capitalize ${map[status] || "badge-ghost"}`}
     >
       {status}
     </span>
@@ -48,22 +47,22 @@ const statusBadge = (status: string) => {
 export default function Units() {
   const { data: rawUnits = [], isLoading, isError } = useQuery<Unit[]>({
     queryKey: ["units"],
-    queryFn: () => apiFetch("/rentals/units"),
+    queryFn: () => apiFetch("/units"),
   });
 
   const units = rawUnits.map((u) => ({
     ...u,
     unit: u.unitNumber,
     property: u.property?.name,
-    rent: u.rentAmount,
-    tenant: u.leases?.[0]?.tenant
+    rent: u.monthlyRentAmount,
+    tenant: u.leases?.length && u.leases[0].tenant
       ? `${u.leases[0].tenant.firstName} ${u.leases[0].tenant.lastName}`
       : "No Tenant",
   }));
 
-  const totalRent = units.reduce((acc, unit) => acc + (unit.rentAmount || 0), 0);
+  const totalRent = units.reduce((acc, unit) => acc + (unit.rent || 0), 0);
   const avgRent = units.length > 0 ? totalRent / units.length : 0;
-  const occupiedCount = units.filter((u) => u.status === "OCCUPIED").length;
+  const occupiedCount = units.filter((u) => u.status === "occupied").length;
   const occupancyRate =
     units.length > 0 ? Math.round((occupiedCount / units.length) * 100) : 0;
 
@@ -106,7 +105,7 @@ export default function Units() {
         />
         <StatsCard
           title="Vacant"
-          value={units.filter((unit) => unit.status === "VACANT").length}
+          value={units.filter((unit) => unit.status === "vacant").length}
           icon={Home}
           color="warning"
           subtitle="Available to rent"
@@ -148,7 +147,7 @@ export default function Units() {
               { key: "id", label: "ID" },
               { key: "unit", label: "Unit #" },
               { key: "property", label: "Property" },
-              { key: "type", label: "Type" },
+              { key: "bedrooms", label: "Beds" },
               { key: "rent", label: "Rent/Mo" },
               { key: "tenant", label: "Current Tenant" },
               { key: "status", label: "Status", render: statusBadge },

@@ -5,8 +5,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
-  phone?: string;
+  celNum?: string;
   isActive: boolean;
   isFlagged?: boolean;
   profilePictureUrl?: string;

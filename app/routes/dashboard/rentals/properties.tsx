@@ -22,11 +22,14 @@ export interface Unit {
 export interface Property {
   id: string;
   name: string;
-  address: string;
+  street: string;
+  barangay: string;
+  city: string;
+  province: string;
   type: string;
-  isActive: boolean;
   units: Unit[];
   // Calculated fields for display
+  address?: string;
   unitsCount?: number;
   occupiedCount?: number;
   displayStatus?: string;
@@ -63,7 +66,7 @@ const typeBadge = (type: string) => {
 
 const occupancyBar = (_: any, item: any) => {
   const total = item.unitsCount;
-  const pct = Math.round((item.occupiedCount / total) * 100) || 0;
+  const pct = total ? Math.round((item.occupiedCount / total) * 100) : 0;
   const color =
     pct >= 90
       ? "progress-success"
@@ -85,16 +88,17 @@ export default function Properties() {
     isError,
   } = useQuery<Property[]>({
     queryKey: ["properties"],
-    queryFn: () => apiFetch("/rentals/properties"),
+    queryFn: () => apiFetch("/properties"),
   });
 
   const properties = rawProperties.map((p) => ({
     ...p,
+    address: `${p.street}, ${p.barangay}, ${p.city}`,
     unitsCount: p.units ? p.units.length : 0,
     occupiedCount: p.units
-      ? p.units.filter((u) => u.status === "OCCUPIED").length
+      ? p.units.filter((u) => u.status === "occupied").length
       : 0,
-    displayStatus: p.isActive ? "Active" : "Inactive",
+    displayStatus: "Active", // no isActive flag on properties table now, all active
   }));
 
   const totalUnits = properties.reduce(
@@ -130,7 +134,7 @@ export default function Properties() {
         title="Properties"
         description="Manage your portfolio of properties and buildings."
         actionButton={
-          <Link to="/dashboard/rentals/properties/add" className="btn btn-primary shadow-sm shadow-primary/20 gap-2">
+          <Link to="/dashboard/properties/add" className="btn btn-primary shadow-sm shadow-primary/20 gap-2">
             <Plus className="w-4 h-4" /> Add Property
           </Link>
         }
@@ -177,11 +181,6 @@ export default function Properties() {
               <option>All Types</option>
               <option>Residential</option>
               <option>Commercial</option>
-            </select>
-            <select className="select select-bordered select-sm w-40">
-              <option>All Statuses</option>
-              <option>Active</option>
-              <option>Maintenance</option>
             </select>
           </div>
           <DataTable
