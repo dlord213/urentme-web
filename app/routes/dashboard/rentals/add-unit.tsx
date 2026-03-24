@@ -245,7 +245,6 @@ export default function AddUnit() {
                   >
                     <option value="vacant">Vacant</option>
                     <option value="occupied">Occupied</option>
-                    <option value="maintenance">Maintenance</option>
                     <option value="reserved">Reserved</option>
                   </select>
                 </div>

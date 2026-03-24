@@ -108,7 +108,7 @@ export default function AddProperty() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
-      navigate("/dashboard/rentals/properties");
+      navigate("/dashboard/properties");
     },
     onError: (error: any) => {
       alert(error.message || "Failed to add property.");

@@ -23,21 +23,21 @@ export default [
     ),
     route(
       "dashboard/properties/:id",
-      "routes/dashboard/rentals/property-detail.tsx",
+      "routes/dashboard/rentals/view-property.tsx",
     ),
     route("dashboard/units", "routes/dashboard/rentals/units.tsx"),
     route("dashboard/units/add", "routes/dashboard/rentals/add-unit.tsx"),
     route("dashboard/tenants", "routes/dashboard/people/tenants.tsx"),
     route("dashboard/tenants/add", "routes/dashboard/people/add-tenant.tsx"),
-    route("dashboard/leases", "routes/dashboard/leases.tsx"),
-    route("dashboard/leases/create", "routes/dashboard/rentals/create-lease.tsx"),
+    route("dashboard/leases", "routes/dashboard/leases/leases.tsx"),
+    route("dashboard/leases/create", "routes/dashboard/leases/add-lease.tsx"),
     route(
       "dashboard/transactions",
       "routes/dashboard/transactions/transactions.tsx",
     ),
     route(
       "dashboard/transactions/new",
-      "routes/dashboard/transactions/new.tsx",
+      "routes/dashboard/transactions/add-transaction.tsx",
     ),
     route(
       "dashboard/announcements",
@@ -45,7 +45,7 @@ export default [
     ),
     route(
       "dashboard/announcements/new",
-      "routes/dashboard/communication/new.tsx",
+      "routes/dashboard/communication/add-announcement.tsx",
     ),
   ]),
 ] satisfies RouteConfig;

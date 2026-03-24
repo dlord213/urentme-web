@@ -49,6 +49,11 @@ export default function PropertyDetail() {
     region: "",
     yearBuilt: "",
     description: "",
+    houseRules: "", // Store as newline-separated string for editing
+    imageUrls: "",  // Store as newline-separated string for editing
+    isActive: true,
+    isUnderRepair: false,
+    isUnderRenovation: false,
   });
 
   // PSGC State
@@ -69,6 +74,11 @@ export default function PropertyDetail() {
         region: property.region || "",
         yearBuilt: property.yearBuilt || "",
         description: property.description || "",
+        houseRules: Array.isArray(property.houseRules) ? property.houseRules.join("\n") : "",
+        imageUrls: Array.isArray(property.imageUrls) ? property.imageUrls.join("\n") : "",
+        isActive: property.isActive ?? true,
+        isUnderRepair: property.isUnderRepair ?? false,
+        isUnderRenovation: property.isUnderRenovation ?? false,
       });
     }
   }, [property]);
@@ -184,6 +194,8 @@ export default function PropertyDetail() {
     const payload = {
       ...formData,
       yearBuilt: formData.yearBuilt ? parseInt(formData.yearBuilt.toString()) : null,
+      houseRules: formData.houseRules.split("\n").filter(line => line.trim() !== ""),
+      imageUrls: formData.imageUrls.split("\n").filter(line => line.trim() !== ""),
     };
     updateMutation.mutate(payload);
   };
@@ -204,12 +216,15 @@ export default function PropertyDetail() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              {property.name}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold">{property.name}</h1>
               <span className={`badge badge-sm ${property.type === 'Commercial' ? 'badge-secondary' : 'badge-primary'}`}>
                 {property.type}
               </span>
-            </h1>
+              {property.isActive === false && <span className="badge badge-sm badge-error">Inactive</span>}
+              {property.isUnderRepair && <span className="badge badge-sm badge-warning">Under Repair</span>}
+              {property.isUnderRenovation && <span className="badge badge-sm badge-info">Under Renovation</span>}
+            </div>
             <p className="text-sm opacity-60 flex items-center gap-1">
               <MapPin className="w-3 h-3" /> {property.street}, {property.barangay}, {property.city}
             </p>
@@ -287,6 +302,24 @@ export default function PropertyDetail() {
                       <label className="label"><span className="label-text">Year Built</span></label>
                       <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="input input-bordered w-full" />
                     </div>
+
+                    <div className="space-y-3 pt-2">
+                      <label className="label-text font-semibold">Status Flags</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <label className="label cursor-pointer justify-start gap-3">
+                          <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData(p => ({...p, isActive: e.target.checked}))} className="checkbox checkbox-primary checkbox-sm" />
+                          <span className="label-text">Property is Active</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-3">
+                          <input type="checkbox" checked={formData.isUnderRepair} onChange={(e) => setFormData(p => ({...p, isUnderRepair: e.target.checked}))} className="checkbox checkbox-warning checkbox-sm" />
+                          <span className="label-text">Under Repair</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-3">
+                          <input type="checkbox" checked={formData.isUnderRenovation} onChange={(e) => setFormData(p => ({...p, isUnderRenovation: e.target.checked}))} className="checkbox checkbox-info checkbox-sm" />
+                          <span className="label-text">Under Renovation</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-4">
@@ -329,10 +362,23 @@ export default function PropertyDetail() {
                     </div>
                   </div>
                 </div>
-                <div className="form-control mt-4">
-                  <label className="label"><span className="label-text">Description</span></label>
-                  <textarea name="description" value={formData.description} onChange={handleChange} className="textarea textarea-bordered h-24 w-full" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+                  <div className="form-control">
+                    <label className="label"><span className="label-text font-semibold">House Rules (one per line)</span></label>
+                    <textarea name="houseRules" value={formData.houseRules} onChange={handleChange} className="textarea textarea-bordered h-32 w-full font-mono text-sm" placeholder="No smoking&#10;No pets..." />
+                  </div>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text font-semibold">Property Image URLs (one per line)</span></label>
+                    <textarea name="imageUrls" value={formData.imageUrls} onChange={handleChange} className="textarea textarea-bordered h-32 w-full font-mono text-sm" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg..." />
+                  </div>
                 </div>
+
+                <div className="form-control mt-4">
+                  <label className="label"><span className="label-text font-semibold">Description</span></label>
+                  <textarea name="description" value={formData.description} onChange={handleChange} className="textarea textarea-bordered h-32 w-full" placeholder="Property description..." />
+                </div>
+
                 <div className="flex justify-end gap-3 pt-6 border-t mt-6">
                   <button type="submit" className="btn btn-primary px-8" disabled={updateMutation.isPending}>
                     {updateMutation.isPending ? <span className="loading loading-spinner loading-xs"></span> : <Save className="w-4 h-4 mr-2" />}
@@ -341,34 +387,62 @@ export default function PropertyDetail() {
                 </div>
               </form>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-2">Detailed Description</h3>
-                    <p className="text-base leading-relaxed">{property.description || "No description provided."}</p>
+              <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
+                {/* Image Gallery */}
+                {property.imageUrls && property.imageUrls.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {property.imageUrls.map((url: string, index: number) => (
+                      <div key={index} className="aspect-video rounded-xl overflow-hidden border border-base-200 shadow-sm group relative">
+                        <img src={url} alt={`${property.name} ${index + 1}`} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    ))}
                   </div>
-                  <div className="grid grid-cols-2 gap-6">
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-8">
                     <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Property Type</h3>
-                      <p className="font-semibold">{property.type}</p>
+                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-3 flex items-center gap-2">
+                        <Info className="w-3 h-3" /> Detailed Description
+                      </h3>
+                      <p className="text-base leading-relaxed whitespace-pre-wrap">{property.description || "No description provided."}</p>
                     </div>
+
+                    {property.houseRules && property.houseRules.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-3 flex items-center gap-2">
+                          <Building2 className="w-3 h-3" /> House Rules
+                        </h3>
+                        <ul className="space-y-2">
+                          {property.houseRules.map((rule: string, i: number) => (
+                            <li key={i} className="flex items-start gap-2 text-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                              {rule}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-6 pt-4 border-t border-base-200">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Property Type</h3>
+                        <p className="font-semibold">{property.type}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Year Built</h3>
+                        <p className="font-semibold">{property.yearBuilt || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6 p-8 bg-base-200/30 rounded-3xl border border-base-200/50 h-fit">
                     <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Year Built</h3>
-                      <p className="font-semibold">{property.yearBuilt || "N/A"}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-6 p-6 bg-base-200/30 rounded-2xl">
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1 text-primary">Full Address</h3>
-                    <p className="text-lg font-bold">{property.street}</p>
-                    <p className="opacity-80">{property.barangay}, {property.city}</p>
-                    <p className="opacity-80">{property.province}, {property.region}</p>
-                  </div>
-                  <div className="pt-4 border-t border-base-200">
-                    <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-2">GPS Location</h3>
-                    <div className="badge badge-outline gap-2 p-3 font-mono opacity-60">
-                      <MapPin className="w-3 h-3" /> 14.5995° N, 120.9842° E
+                      <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-primary">Full Address</h3>
+                      <p className="text-xl font-bold">{property.street}</p>
+                      <p className="opacity-80 italic">{property.barangay}, {property.city}</p>
+                      <p className="opacity-80">{property.province}, {property.region}</p>
                     </div>
                   </div>
                 </div>
@@ -379,8 +453,8 @@ export default function PropertyDetail() {
               <DataTable
                 columns={[
                   { key: "unitNumber", label: "Unit #" },
-                  { key: "type", label: "Type" },
-                  { key: "rentAmount", label: "Rent", render: (v) => `₱${v.toLocaleString()}` },
+                  { key: "floor", label: "Floor" },
+                  { key: "monthlyRentAmount", label: "Monthly Rent", render: (v) => `₱${v.toLocaleString()}` },
                   { key: "status", label: "Status", render: (s) => (
                     <span className={`badge badge-sm font-semibold ${s === 'occupied' ? 'badge-success' : 'badge-warning'}`}>
                       {s.toUpperCase()}
@@ -392,7 +466,7 @@ export default function PropertyDetail() {
                   { 
                     label: "View", 
                     icon: <Eye className="w-3 h-3" />, 
-                    to: (u: any) => `/dashboard/units`, // Placeholder, usually there's a unit detail page or filter
+                    to: (u: any) => `/dashboard/units?propertyId=${id}&unitId=${u.id}`,
                     variant: "ghost" 
                   }
                 ]}

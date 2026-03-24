@@ -28,25 +28,29 @@ export interface Property {
   province: string;
   type: string;
   units: Unit[];
-  // Calculated fields for display
-  address?: string;
+  isActive: boolean;
+  isUnderRepair: boolean;
+  isUnderRenovation: boolean;
   unitsCount?: number;
   occupiedCount?: number;
-  displayStatus?: string;
 }
 
-const statusBadge = (status: string) => {
-  const map: Record<string, string> = {
-    Active: "badge-success",
-    Maintenance: "badge-warning",
-    Inactive: "badge-error",
-  };
+const renderPropertyStatus = (item: Property) => {
   return (
-    <span
-      className={`badge badge-sm font-semibold ${map[status] || "badge-ghost"}`}
-    >
-      {status}
-    </span>
+    <div className="flex flex-wrap gap-1">
+      {item.isActive === false && (
+        <span className="badge badge-xs font-semibold badge-error">Inactive</span>
+      )}
+      {item.isUnderRepair && (
+        <span className="badge badge-xs font-semibold badge-warning">Repair</span>
+      )}
+      {item.isUnderRenovation && (
+        <span className="badge badge-xs font-semibold badge-info">Renovation</span>
+      )}
+      {item.isActive !== false && (
+        <span className="badge badge-xs font-semibold badge-success">Active</span>
+      )}
+    </div>
   );
 };
 
@@ -93,12 +97,11 @@ export default function Properties() {
 
   const properties = rawProperties.map((p) => ({
     ...p,
-    address: `${p.street}, ${p.barangay}, ${p.city}`,
+    address: `${p.street}, ${p.barangay}, ${p.city}${p.province ? `, ${p.province}` : ""}`,
     unitsCount: p.units ? p.units.length : 0,
     occupiedCount: p.units
       ? p.units.filter((u) => u.status === "occupied").length
       : 0,
-    displayStatus: "Active", // no isActive flag on properties table now, all active
   }));
 
   const totalUnits = properties.reduce(
@@ -185,13 +188,12 @@ export default function Properties() {
           </div>
           <DataTable
             columns={[
-              { key: "id", label: "ID" },
               { key: "name", label: "Property Name" },
               { key: "address", label: "Address" },
               { key: "type", label: "Type", render: typeBadge },
               { key: "unitsCount", label: "Units" },
               { key: "occupancy", label: "Occupancy", render: occupancyBar },
-              { key: "displayStatus", label: "Status", render: statusBadge },
+              { key: "id", label: "Status", render: (_, item) => renderPropertyStatus(item) },
             ]}
             data={properties}
             actions={[

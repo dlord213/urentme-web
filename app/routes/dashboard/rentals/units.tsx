@@ -17,31 +17,48 @@ export interface Unit {
   id: string;
   unitNumber: string;
   property?: {
+    id: string;
     name: string;
   };
   leases: {
+    id: string;
     tenant: {
+      id: string;
       firstName: string;
       lastName: string;
     };
   }[];
   monthlyRentAmount: number;
+  bedrooms: number;
   status: string;
+  isActive: boolean;
+  isUnderRepair: boolean;
+  isUnderRenovation: boolean;
 }
 
-const statusBadge = (status: string) => {
+const renderUnitStatus = (item: Unit) => {
   const map: Record<string, string> = {
     occupied: "badge-success",
     vacant: "badge-warning",
     maintenance: "badge-error",
     reserved: "badge-info",
   };
+  
   return (
-    <span
-      className={`badge badge-sm font-semibold capitalize ${map[status] || "badge-ghost"}`}
-    >
-      {status}
-    </span>
+    <div className="flex flex-wrap gap-1">
+      <span className={`badge badge-xs font-semibold capitalize ${map[item.status] || "badge-ghost"}`}>
+        {item.status}
+      </span>
+      {item.isActive === false && (
+        <span className="badge badge-xs font-semibold badge-error">Inactive</span>
+      )}
+      {item.isUnderRepair && (
+        <span className="badge badge-xs font-semibold badge-warning whitespace-nowrap">Repair</span>
+      )}
+      {item.isUnderRenovation && (
+        <span className="badge badge-xs font-semibold badge-info whitespace-nowrap">Renovation</span>
+      )}
+    </div>
   );
 };
 
@@ -54,9 +71,10 @@ export default function Units() {
   const units = rawUnits.map((u) => ({
     ...u,
     unit: u.unitNumber,
-    property: u.property?.name,
+    propertyId: u.property?.id,
+    propertyName: u.property?.name || "N/A",
     rent: u.monthlyRentAmount,
-    tenant: u.leases?.length && u.leases[0].tenant
+    tenantName: u.leases?.length && u.leases[0].tenant
       ? `${u.leases[0].tenant.firstName} ${u.leases[0].tenant.lastName}`
       : "No Tenant",
   }));
@@ -135,9 +153,9 @@ export default function Units() {
             />
             <select className="select select-bordered select-sm w-44">
               <option>All Properties</option>
-              <option>Riverside Apartments</option>
-              <option>Greenview Townhomes</option>
-              <option>Sunset Commercial Plaza</option>
+              {Array.from(new Set(units.map(u => u.propertyName))).map(name => (
+                <option key={name}>{name}</option>
+              ))}
             </select>
             <select className="select select-bordered select-sm w-36">
               <option>All Statuses</option>
@@ -148,26 +166,25 @@ export default function Units() {
           </div>
           <DataTable
             columns={[
-              { key: "id", label: "ID" },
               { key: "unit", label: "Unit #" },
-              { key: "property", label: "Property" },
+              { key: "propertyName", label: "Property" },
               { key: "bedrooms", label: "Beds" },
-              { key: "rent", label: "Rent/Mo" },
-              { key: "tenant", label: "Current Tenant" },
-              { key: "status", label: "Status", render: statusBadge },
+              { key: "rent", label: "Rent/Mo", render: (val) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(val) },
+              { key: "tenantName", label: "Current Tenant" },
+              { key: "id", label: "Status", render: (_, item) => renderUnitStatus(item) },
             ]}
             data={units}
             actions={[
               {
                 label: "View",
                 icon: <Eye className="w-3 h-3" />,
-                onClick: () => {},
+                to: (item: any) => `/dashboard/properties/${item.propertyId}?unitId=${item.id}`,
                 variant: "ghost",
               },
               {
                 label: "Edit",
                 icon: <Pencil className="w-3 h-3" />,
-                onClick: () => {},
+                to: (item: any) => `/dashboard/properties/${item.propertyId}?unitId=${item.id}&edit=true`,
                 variant: "ghost",
               },
             ]}
