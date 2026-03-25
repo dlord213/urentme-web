@@ -1,0 +1,425 @@
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { 
+  ArrowLeft, 
+  Save, 
+  Edit2, 
+  Trash2, 
+  User, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  AlertTriangle,
+  Info,
+  Clock,
+  Home,
+  ShieldAlert,
+  FileText,
+  Eye
+} from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "~/lib/api";
+import { PageHeader } from "~/components/PageHeader";
+import { StatsCard } from "~/components/StatsCard";
+import { DataTable } from "~/components/DataTable";
+
+export default function TenantDetail() {
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
+  const isEditingInitial = searchParams.get("edit") === "true";
+  const [isEditing, setIsEditing] = useState(isEditingInitial);
+  const [activeTab, setActiveTab] = useState("details");
+
+  // Tenant Data
+  const { data: tenant, isLoading, isError } = useQuery({
+    queryKey: ["tenant", id],
+    queryFn: () => apiFetch(`/people/tenants/${id}`),
+    enabled: !!id,
+  });
+
+  // Form State
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    celNum: "",
+    dateOfBirth: "",
+    emergencyName: "",
+    emergencyPhone: "",
+    notes: "",
+    isFlagged: false,
+    flagReason: "",
+    isActive: true,
+    moveInDate: "",
+    moveOutDate: "",
+  });
+
+  // Sync Form with Data
+  useEffect(() => {
+    if (tenant) {
+      setFormData({
+        firstName: tenant.firstName || "",
+        lastName: tenant.lastName || "",
+        email: tenant.email || "",
+        celNum: tenant.celNum || "",
+        dateOfBirth: tenant.dateOfBirth ? new Date(tenant.dateOfBirth).toISOString().split("T")[0] : "",
+        emergencyName: tenant.emergencyName || "",
+        emergencyPhone: tenant.emergencyPhone || "",
+        notes: tenant.notes || "",
+        isFlagged: tenant.isFlagged ?? false,
+        flagReason: tenant.flagReason || "",
+        isActive: tenant.isActive ?? true,
+        moveInDate: tenant.moveInDate ? new Date(tenant.moveInDate).toISOString().split("T")[0] : "",
+        moveOutDate: tenant.moveOutDate ? new Date(tenant.moveOutDate).toISOString().split("T")[0] : "",
+      });
+    }
+  }, [tenant]);
+
+  const handleChange = (e: any) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
+  };
+
+  // Mutations
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => apiFetch(`/people/tenants/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenant", id] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      alert(error.message || "Failed to update tenant.");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiFetch(`/people/tenants/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+      navigate("/dashboard/tenants");
+    },
+  });
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this tenant? This will also affect associated leases.")) {
+      deleteMutation.mutate();
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      ...formData,
+      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
+      moveInDate: formData.moveInDate ? new Date(formData.moveInDate).toISOString() : null,
+      moveOutDate: formData.moveOutDate ? new Date(formData.moveOutDate).toISOString() : null,
+    };
+    updateMutation.mutate(payload);
+  };
+
+  if (isLoading) return <div className="flex justify-center p-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
+  if (isError || !tenant) return <div className="alert alert-error">Tenant not found.</div>;
+
+  const leases = tenant.leases || [];
+  const activeLeases = leases.filter((l: any) => l.status === "active");
+
+  return (
+    <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard/tenants" className="btn btn-ghost btn-sm btn-square">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold">{tenant.firstName} {tenant.lastName}</h1>
+              <span className={`badge badge-sm ${tenant.isActive ? 'badge-info' : 'badge-error'}`}>
+                {tenant.isActive ? 'ACTIVE' : 'INACTIVE'}
+              </span>
+              {tenant.isFlagged && <span className="badge badge-sm badge-warning">FLAGGED</span>}
+            </div>
+            <p className="text-sm opacity-60 flex items-center gap-3">
+              <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {tenant.email}</span>
+              <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {tenant.celNum || "No contact info"}</span>
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {!isEditing ? (
+            <>
+              <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
+                <Edit2 className="w-4 h-4" /> Edit
+              </button>
+              <button 
+                onClick={handleDelete} 
+                className="btn btn-ghost text-error btn-sm btn-square"
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setIsEditing(false)} className="btn btn-ghost btn-sm">
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Stats Summary */}
+      {!isEditing && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatsCard title="Status" value={tenant.isActive ? "Active" : "Inactive"} icon={User} color={tenant.isActive ? "info" : "error"} />
+          <StatsCard title="Total Leases" value={leases.length} icon={FileText} color="primary" />
+          <StatsCard title="Flagged" value={tenant.isFlagged ? "Yes" : "No"} icon={AlertTriangle} color={tenant.isFlagged ? "warning" : "success"} />
+          <StatsCard title="Move In" value={tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString() : "N/A"} icon={Calendar} color="accent" />
+        </div>
+      )}
+
+      {/* Main Content Tabs */}
+      <div className="card bg-base-100 shadow-sm border border-base-200">
+        <div className="tabs tabs-bordered px-6 pt-2">
+          <button 
+            className={`tab tab-lg gap-2 ${activeTab === 'details' ? 'tab-active font-bold' : ''}`}
+            onClick={() => setActiveTab('details')}
+          >
+            <Info className="w-4 h-4" /> Personal Details
+          </button>
+          <button 
+            className={`tab tab-lg gap-2 ${activeTab === 'history' ? 'tab-active font-bold' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            <Clock className="w-4 h-4" /> Lease History
+          </button>
+        </div>
+
+        <div className="card-body">
+          {activeTab === 'details' ? (
+            isEditing ? (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg border-b pb-1">Basic Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label"><span className="label-text">First Name <span className="text-error">*</span></span></label>
+                        <input name="firstName" value={formData.firstName} onChange={handleChange} required className="input input-bordered w-full" />
+                      </div>
+                      <div className="form-control">
+                        <label className="label"><span className="label-text">Last Name <span className="text-error">*</span></span></label>
+                        <input name="lastName" value={formData.lastName} onChange={handleChange} required className="input input-bordered w-full" />
+                      </div>
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Email <span className="text-error">*</span></span></label>
+                      <input type="email" name="email" value={formData.email} onChange={handleChange} required className="input input-bordered w-full" />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Mobile Number</span></label>
+                      <input name="celNum" value={formData.celNum} onChange={handleChange} className="input input-bordered w-full" />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Date of Birth</span></label>
+                      <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className="input input-bordered w-full" />
+                    </div>
+
+                    <h3 className="font-semibold text-lg border-b pb-1 pt-4">Emergency Contact</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label"><span className="label-text">Contact Name</span></label>
+                        <input name="emergencyName" value={formData.emergencyName} onChange={handleChange} className="input input-bordered w-full" />
+                      </div>
+                      <div className="form-control">
+                        <label className="label"><span className="label-text">Contact Phone</span></label>
+                        <input name="emergencyPhone" value={formData.emergencyPhone} onChange={handleChange} className="input input-bordered w-full" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg border-b pb-1">Management & Status</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label"><span className="label-text">Move In Date</span></label>
+                        <input type="date" name="moveInDate" value={formData.moveInDate} onChange={handleChange} className="input input-bordered w-full" />
+                      </div>
+                      <div className="form-control">
+                        <label className="label"><span className="label-text">Move Out Date</span></label>
+                        <input type="date" name="moveOutDate" value={formData.moveOutDate} onChange={handleChange} className="input input-bordered w-full" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                      <label className="label-text font-semibold">Status Flags</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <label className="label cursor-pointer justify-start gap-3">
+                          <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="checkbox checkbox-info checkbox-sm" />
+                          <span className="label-text">Tenant is Active</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-3">
+                          <input type="checkbox" name="isFlagged" checked={formData.isFlagged} onChange={handleChange} className="checkbox checkbox-warning checkbox-sm" />
+                          <span className="label-text">Flag Tenant</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {formData.isFlagged && (
+                      <div className="form-control animate-in slide-in-from-top-2">
+                        <label className="label"><span className="label-text text-warning font-semibold">Flag Reason</span></label>
+                        <textarea name="flagReason" value={formData.flagReason} onChange={handleChange} className="textarea textarea-bordered h-24 w-full" placeholder="Specify reason for flagging..." />
+                      </div>
+                    )}
+
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Internal Notes</span></label>
+                      <textarea name="notes" value={formData.notes} onChange={handleChange} className="textarea textarea-bordered h-24 w-full" placeholder="Additional information..." />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+                  <button type="submit" className="btn btn-primary px-8" disabled={updateMutation.isPending}>
+                    {updateMutation.isPending ? <span className="loading loading-spinner loading-xs"></span> : <Save className="w-4 h-4 mr-2" />}
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-3 flex items-center gap-2">
+                        <Info className="w-3 h-3" /> Internal Notes
+                      </h3>
+                      <p className="text-base leading-relaxed whitespace-pre-wrap">{tenant.notes || "No notes provided."}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6 pt-4 border-t border-base-200">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Date of Birth</h3>
+                        <p className="font-semibold">{tenant.dateOfBirth ? new Date(tenant.dateOfBirth).toLocaleDateString() : "N/A"}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Move In Date</h3>
+                        <p className="font-semibold">{tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString() : "N/A"}</p>
+                      </div>
+                    </div>
+
+                    {tenant.isFlagged && (
+                      <div className="alert alert-warning shadow-sm border border-warning/20">
+                        <ShieldAlert className="w-5 h-5" />
+                        <div>
+                          <h3 className="font-bold uppercase text-xs">Flag Detail</h3>
+                          <div className="text-xs opacity-80">{tenant.flagReason || "No reason specified."}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div className="p-8 bg-base-200/30 rounded-3xl border border-base-200/50 h-fit">
+                      <h3 className="text-xs font-bold uppercase tracking-wider mb-4 text-primary">Emergency Contact</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <User className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs opacity-60">Name</p>
+                            <p className="font-bold">{tenant.emergencyName || "N/A"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <Phone className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs opacity-60">Phone</p>
+                            <p className="font-bold">{tenant.emergencyPhone || "N/A"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {activeLeases.length > 0 ? (
+                      <div className="p-8 bg-success/10 rounded-3xl border border-success/20 h-fit">
+                        <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-success uppercase">Currently Occupying</h3>
+                        {activeLeases.map((l: any) => (
+                          <div key={l.id} className="mb-2 last:mb-0">
+                            <p className="text-lg font-bold">
+                              {l.unit?.property?.name} — Unit {l.unit?.unitNumber}
+                            </p>
+                            <p className="text-sm opacity-80">
+                              Ends: {new Date(l.leaseEndDate).toLocaleDateString()}
+                            </p>
+                            <Link to={`/dashboard/units/${l.unitId}`} className="btn btn-link btn-xs p-0 h-auto mt-1 flex items-center gap-1">
+                              View unit details
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 bg-warning/10 rounded-3xl border border-warning/20 h-fit">
+                        <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-warning font-bold">Lease Status</h3>
+                        <p className="text-lg font-bold">No Active Leases</p>
+                        <p className="text-sm opacity-80">This tenant is not currently occupying any units.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          ) : (
+            <div className="animate-in slide-in-from-bottom-4 duration-300">
+              <DataTable
+                columns={[
+                  { key: "unit", label: "Property & Unit", render: (_, l) => (
+                    <div>
+                      <p className="font-bold">{l.unit?.property?.name}</p>
+                      <p className="text-xs opacity-60">Unit {l.unit?.unitNumber}</p>
+                    </div>
+                  )},
+                  { key: "status", label: "Status", render: (s) => (
+                    <span className={`badge badge-sm font-semibold capitalize ${s === 'active' ? 'badge-success' : 'badge-ghost'}`}>
+                      {s}
+                    </span>
+                  )},
+                  { key: "leaseStartDate", label: "Start Date", render: (d) => new Date(d).toLocaleDateString() },
+                  { key: "leaseEndDate", label: "End Date", render: (d) => new Date(d).toLocaleDateString() },
+                ]}
+                data={leases}
+                actions={[
+                  { 
+                    label: "View Unit", 
+                    icon: <Home className="w-3 h-3" />, 
+                    to: (l: any) => `/dashboard/units/${l.unitId}`,
+                    variant: "ghost" 
+                  },
+                  { 
+                    label: "View Lease", 
+                    icon: <Eye className="w-3 h-3" />, 
+                    to: (l: any) => `/dashboard/leases/${l.id}`,
+                    variant: "ghost" 
+                  }
+                ]}
+                emptyMessage="No lease history for this tenant."
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

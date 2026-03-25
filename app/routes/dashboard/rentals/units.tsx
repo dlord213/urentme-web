@@ -178,13 +178,13 @@ export default function Units() {
               {
                 label: "View",
                 icon: <Eye className="w-3 h-3" />,
-                to: (item: any) => `/dashboard/properties/${item.propertyId}?unitId=${item.id}`,
+                to: (item: any) => `/dashboard/units/${item.id}`,
                 variant: "ghost",
               },
               {
                 label: "Edit",
                 icon: <Pencil className="w-3 h-3" />,
-                to: (item: any) => `/dashboard/properties/${item.propertyId}?unitId=${item.id}&edit=true`,
+                to: (item: any) => `/dashboard/units/${item.id}?edit=true`,
                 variant: "ghost",
               },
             ]}

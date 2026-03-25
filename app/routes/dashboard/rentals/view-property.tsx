@@ -466,7 +466,7 @@ export default function PropertyDetail() {
                   { 
                     label: "View", 
                     icon: <Eye className="w-3 h-3" />, 
-                    to: (u: any) => `/dashboard/units?propertyId=${id}&unitId=${u.id}`,
+                    to: (u: any) => `/dashboard/units/${u.id}`,
                     variant: "ghost" 
                   }
                 ]}

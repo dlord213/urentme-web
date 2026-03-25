@@ -6,6 +6,7 @@ import {
   MessageSquare,
   Plus,
   Mail,
+  Pencil,
 } from "lucide-react";
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
@@ -14,9 +15,16 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { Link } from "react-router";
 
+export interface Property {
+  id: string;
+  name: string;
+}
+
 export interface Unit {
   id: string;
   unitNumber: string;
+  floor: string;
+  property: Property;
 }
 
 export interface Lease {
@@ -32,6 +40,8 @@ export interface Tenants {
   lastName: string;
   email: string;
   celNum: string;
+  isActive: boolean;
+  isFlagged: boolean;
   leases: Lease[];
 }
 
@@ -39,6 +49,9 @@ const statusBadge = (s: string | string[]) => {
   const map: Record<string, string> = {
     Current: "badge-success",
     "Past Tenant": "badge-ghost",
+    Active: "badge-info",
+    Inactive: "badge-error",
+    Flagged: "badge-warning",
   };
   
   const statuses = Array.isArray(s) ? s : [s];
@@ -65,20 +78,31 @@ export default function Tenants() {
     });
 
   const tenants = rawTenants.map((t) => {
-    const hasActiveLease = t.leases.some(l => l.status === "active");
-    const statusArray = hasActiveLease ? ["Current"] : ["Past Tenant"];
+    const statusArray = [];
+    
+    if (t.isActive) statusArray.push("Active");
+    else statusArray.push("Inactive");
+    
+    if (t.isFlagged) statusArray.push("Flagged");
+
+    const primaryLease = t.leases[0];
+    const unitText = primaryLease?.unit 
+      ? `${primaryLease.unit.property?.name} - ${primaryLease.unit.unitNumber} ${primaryLease.unit.floor || ""}` 
+      : "None";
 
     return {
       ...t,
       name: `${t.firstName} ${t.lastName}`,
-      unit: t.leases[0]?.unit?.unitNumber || "None",
-      leaseEnd: t.leases[0]?.leaseEndDate ? new Date(t.leases[0].leaseEndDate).toISOString().split("T")[0] : "—",
+      unit: unitText,
+      leaseEnd: primaryLease?.leaseEndDate ? new Date(primaryLease.leaseEndDate).toISOString().split("T")[0] : "—",
       status: statusArray,
     };
   });
 
   const totalTenants = tenants.length;
-  const currentTenants = tenants.filter((t) => t.status.includes("Current")).length;
+  const currentTenants = tenants.filter((t) => t.status.includes("Active")).length;
+  const pastTenants = tenants.filter((t) => t.status.includes("Inactive")).length;
+  const flaggedTenants = tenants.filter((t) => t.status.includes("Flagged")).length;
 
   if (isLoading) {
     return (
@@ -111,7 +135,7 @@ export default function Tenants() {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total Tenants"
           value={totalTenants}
@@ -119,16 +143,22 @@ export default function Tenants() {
           color="primary"
         />
         <StatsCard
-          title="Current Tenants"
+          title="Active Tenants"
           value={currentTenants}
           icon={Home}
           color="success"
         />
         <StatsCard
           title="Past Tenants"
-          value={totalTenants - currentTenants}
+          value={pastTenants}
           icon={AlertTriangle}
           color="info"
+        />
+        <StatsCard
+          title="Flagged Tenants"
+          value={flaggedTenants}
+          icon={AlertTriangle}
+          color="warning"
         />
       </div>
 
@@ -161,7 +191,13 @@ export default function Tenants() {
               {
                 label: "View",
                 icon: <Eye className="w-3 h-3" />,
-                onClick: () => {},
+                to: (t: any) => `/dashboard/tenants/${t.id}`,
+                variant: "ghost",
+              },
+              {
+                label: "Edit",
+                icon: <Pencil className="w-3 h-3" />,
+                to: (t: any) => `/dashboard/tenants/${t.id}?edit=true`,
                 variant: "ghost",
               },
               {

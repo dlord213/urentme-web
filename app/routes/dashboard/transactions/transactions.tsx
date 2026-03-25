@@ -24,7 +24,7 @@ export interface Transaction {
       unitNumber: string;
       property?: {
         name: string;
-      }
+      };
     };
     tenant: {
       firstName: string;
@@ -38,7 +38,7 @@ const amountCell = (val: number) => {
     style: "currency",
     currency: "PHP",
   }).format(val);
-  
+
   return (
     <span
       className={`font-bold text-sm ${val < 0 ? "text-error" : "text-success"}`}
@@ -49,7 +49,11 @@ const amountCell = (val: number) => {
 };
 
 export default function Transactions() {
-  const { data: rawTxns = [], isLoading, isError } = useQuery<Transaction[]>({
+  const {
+    data: rawTxns = [],
+    isLoading,
+    isError,
+  } = useQuery<Transaction[]>({
     queryKey: ["transactions"],
     queryFn: () => apiFetch("/transactions"),
   });
@@ -59,11 +63,11 @@ export default function Transactions() {
     tenantDisplay: `${t.lease.tenant.firstName} ${t.lease.tenant.lastName}`,
     unitDisplay: `${t.lease.unit.property?.name ? t.lease.unit.property.name + " - " : ""}${t.lease.unit.unitNumber}`,
     dateDisplay: new Date(t.transactionDate).toISOString().split("T")[0],
-    description: t.notes || "No description",
+    notes: t.notes || "No description",
   }));
 
   const totalCollected = transactions
-    .filter(t => t.amount > 0)
+    .filter((t) => t.amount > 0)
     .reduce((acc, t) => acc + t.amount, 0);
 
   if (isLoading) {
@@ -134,7 +138,7 @@ export default function Transactions() {
               { key: "dateDisplay", label: "Date" },
               { key: "tenantDisplay", label: "Tenant" },
               { key: "unitDisplay", label: "Unit" },
-              { key: "description", label: "Description" },
+              { key: "notes", label: "Notes" },
               { key: "reference", label: "Reference" },
               { key: "amount", label: "Amount", render: amountCell },
             ]}
@@ -143,7 +147,7 @@ export default function Transactions() {
               {
                 label: "View",
                 icon: <Eye className="w-3 h-3" />,
-                onClick: () => {},
+                to: (t: any) => `/dashboard/transactions/${t.id}`,
                 variant: "ghost",
               },
             ]}

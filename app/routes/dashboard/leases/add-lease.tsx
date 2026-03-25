@@ -44,11 +44,17 @@ export default function CreateLease() {
   }, [formData.unitId, units]);
 
   const mutation = useMutation({
-    mutationFn: (data: any) =>
-      apiFetch("/leases", {
+    mutationFn: async (data: any) => {
+      await apiFetch("/leases", {
         method: "POST",
         body: JSON.stringify(data),
-      }),
+      });
+
+      await apiFetch(`/units/${data.unitId}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: data.status === "active" ? "occupied" : "vacant" }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leases"] });
       queryClient.invalidateQueries({ queryKey: ["units"] });
@@ -82,6 +88,7 @@ export default function CreateLease() {
       ...formData,
       leaseStartDate: new Date(formData.leaseStartDate).toISOString(),
       leaseEndDate: new Date(formData.leaseEndDate).toISOString(),
+      signedAt: formData.status === 'active' ? new Date().toISOString() : null,
     };
 
     mutation.mutate(payload);

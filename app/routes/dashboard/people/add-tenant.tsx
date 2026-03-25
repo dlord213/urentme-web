@@ -53,6 +53,7 @@ export default function AddTenant() {
     const payload = {
       ...formData,
       dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
+      moveInDate: new Date().toISOString(),
     };
 
     mutation.mutate(payload);

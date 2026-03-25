@@ -26,14 +26,21 @@ export default [
       "routes/dashboard/rentals/view-property.tsx",
     ),
     route("dashboard/units", "routes/dashboard/rentals/units.tsx"),
+    route("dashboard/units/:id", "routes/dashboard/rentals/view-unit.tsx"),
     route("dashboard/units/add", "routes/dashboard/rentals/add-unit.tsx"),
     route("dashboard/tenants", "routes/dashboard/people/tenants.tsx"),
+    route("dashboard/tenants/:id", "routes/dashboard/people/view-tenant.tsx"),
     route("dashboard/tenants/add", "routes/dashboard/people/add-tenant.tsx"),
     route("dashboard/leases", "routes/dashboard/leases/leases.tsx"),
+    route("dashboard/leases/:id", "routes/dashboard/leases/view-lease.tsx"),
     route("dashboard/leases/create", "routes/dashboard/leases/add-lease.tsx"),
     route(
       "dashboard/transactions",
       "routes/dashboard/transactions/transactions.tsx",
+    ),
+    route(
+      "dashboard/transactions/:id",
+      "routes/dashboard/transactions/view-transaction.tsx",
     ),
     route(
       "dashboard/transactions/new",

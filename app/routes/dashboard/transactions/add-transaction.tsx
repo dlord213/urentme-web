@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ArrowLeft, Save, ReceiptText, User, PhilippinePeso, Calendar, FileText, Hash } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  ReceiptText,
+  User,
+  PhilippinePeso,
+  Calendar,
+  FileText,
+  Hash,
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
@@ -13,7 +22,6 @@ export default function NewTransaction() {
     leaseId: "",
     amount: "",
     reference: "",
-    transactionDate: new Date().toISOString().split("T")[0],
     notes: "",
   });
 
@@ -59,7 +67,7 @@ export default function NewTransaction() {
     const payload = {
       ...formData,
       amount: parseFloat(formData.amount) || 0,
-      transactionDate: new Date(formData.transactionDate).toISOString(),
+      transactionDate: new Date().toISOString(),
     };
 
     mutation.mutate(payload);
@@ -74,7 +82,10 @@ export default function NewTransaction() {
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <PageHeader title="New Transaction" description="Record a payment or charge for a lease." />
+        <PageHeader
+          title="New Transaction"
+          description="Record a payment or charge for a lease."
+        />
       </div>
 
       <div className="card bg-base-100 shadow-sm border border-base-200">
@@ -86,11 +97,12 @@ export default function NewTransaction() {
                 <FileText className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold text-lg">Agreement Details</h3>
               </div>
-              
+
               <div className="form-control">
                 <label className="label">
                   <span className="label-text flex items-center gap-2 font-medium">
-                    <User className="w-4 h-4 opacity-70" /> Select Lease <span className="text-error">*</span>
+                    <User className="w-4 h-4 opacity-70" /> Select Lease{" "}
+                    <span className="text-error">*</span>
                   </span>
                 </label>
                 <select
@@ -102,11 +114,14 @@ export default function NewTransaction() {
                   disabled={leasesLoading}
                 >
                   <option value="" disabled>
-                    {leasesLoading ? "Loading leases..." : "Select a lease agreement"}
+                    {leasesLoading
+                      ? "Loading leases..."
+                      : "Select a lease agreement"}
                   </option>
                   {leases.map((l: any) => (
                     <option key={l.id} value={l.id}>
-                      {l.tenant?.firstName} {l.tenant?.lastName} - Unit {l.unit?.unitNumber} ({l.status})
+                      {l.tenant?.firstName} {l.tenant?.lastName} - Unit{" "}
+                      {l.unit?.unitNumber} ({l.status})
                     </option>
                   ))}
                 </select>
@@ -119,14 +134,18 @@ export default function NewTransaction() {
                 <PhilippinePeso className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold text-lg">Financial Details</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-medium">Amount (PHP) <span className="text-error">*</span></span>
+                    <span className="label-text font-medium">
+                      Amount (PHP) <span className="text-error">*</span>
+                    </span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50 font-mono">₱</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50 font-mono">
+                      ₱
+                    </span>
                     <input
                       type="number"
                       name="amount"
@@ -144,7 +163,8 @@ export default function NewTransaction() {
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text flex items-center gap-2 font-medium">
-                      <Hash className="w-4 h-4 opacity-70" /> Reference Number <span className="text-error">*</span>
+                      <Hash className="w-4 h-4 opacity-70" /> Reference Number{" "}
+                      <span className="text-error">*</span>
                     </span>
                   </label>
                   <input
@@ -158,31 +178,15 @@ export default function NewTransaction() {
                   />
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text flex items-center gap-2 font-medium">
-                      <Calendar className="w-4 h-4 opacity-70" /> Transaction Date <span className="text-error">*</span>
-                    </span>
-                  </label>
-                  <input
-                    type="date"
-                    name="transactionDate"
-                    required
-                    value={formData.transactionDate}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                  />
-                </div>
-              </div>
             </section>
 
             {/* Additional Info */}
             <section className="space-y-4">
               <div className="form-control flex flex-col">
                 <label className="label">
-                  <span className="label-text font-semibold">Notes / Description</span>
+                  <span className="label-text font-semibold">
+                    Notes / Description
+                  </span>
                 </label>
                 <textarea
                   name="notes"

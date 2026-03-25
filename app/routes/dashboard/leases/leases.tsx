@@ -138,13 +138,13 @@ export default function Leases() {
               {
                 label: "View",
                 icon: <Eye className="w-3 h-3" />,
-                onClick: () => {},
+                to: (l: any) => `/dashboard/leases/${l.id}`,
                 variant: "ghost",
               },
               {
                 label: "Edit",
                 icon: <Pencil className="w-3 h-3" />,
-                onClick: () => {},
+                to: (l: any) => `/dashboard/leases/${l.id}?edit=true`,
                 variant: "ghost",
               },
             ]}
