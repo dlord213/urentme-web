@@ -19,6 +19,9 @@ export default function AddUnit() {
     monthlyRentAmount: "",
     description: "",
     status: "vacant",
+    isActive: true,
+    isUnderRepair: false,
+    isUnderRenovation: false,
   });
 
   const { data: properties = [], isLoading: propertiesLoading } = useQuery({
@@ -48,10 +51,14 @@ export default function AddUnit() {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target as any;
+    const isCheckbox = type === 'checkbox';
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: ["bedrooms", "bathrooms"].includes(name)
+      [name]: isCheckbox 
+        ? (e.target as HTMLInputElement).checked
+        : ["bedrooms", "bathrooms"].includes(name)
         ? parseInt(value) || 0
         : value,
     }));
@@ -247,6 +254,42 @@ export default function AddUnit() {
                     <option value="occupied">Occupied</option>
                     <option value="reserved">Reserved</option>
                   </select>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <label className="label-text font-semibold">Status Flags</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    <label className="label cursor-pointer justify-start gap-3">
+                      <input 
+                        type="checkbox" 
+                        name="isActive" 
+                        checked={formData.isActive} 
+                        onChange={handleChange} 
+                        className="checkbox checkbox-primary checkbox-sm" 
+                      />
+                      <span className="label-text">Unit is Active</span>
+                    </label>
+                    <label className="label cursor-pointer justify-start gap-3">
+                      <input 
+                        type="checkbox" 
+                        name="isUnderRepair" 
+                        checked={formData.isUnderRepair} 
+                        onChange={handleChange} 
+                        className="checkbox checkbox-warning checkbox-sm" 
+                      />
+                      <span className="label-text">Under Repair</span>
+                    </label>
+                    <label className="label cursor-pointer justify-start gap-3">
+                      <input 
+                        type="checkbox" 
+                        name="isUnderRenovation" 
+                        checked={formData.isUnderRenovation} 
+                        onChange={handleChange} 
+                        className="checkbox checkbox-info checkbox-sm" 
+                      />
+                      <span className="label-text">Under Renovation</span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>

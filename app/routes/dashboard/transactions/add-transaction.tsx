@@ -13,6 +13,14 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
+import { useEffect } from "react";
+import { RefreshCw } from "lucide-react";
+
+const generateReference = () => {
+  const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `REF-${date}-${random}`;
+};
 
 export default function NewTransaction() {
   const navigate = useNavigate();
@@ -24,6 +32,14 @@ export default function NewTransaction() {
     reference: "",
     notes: "",
   });
+
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, reference: generateReference() }));
+  }, []);
+
+  const handleRegenerate = () => {
+    setFormData(prev => ({ ...prev, reference: generateReference() }));
+  };
 
   const { data: leases = [], isLoading: leasesLoading } = useQuery({
     queryKey: ["leases"],
@@ -120,8 +136,8 @@ export default function NewTransaction() {
                   </option>
                   {leases.map((l: any) => (
                     <option key={l.id} value={l.id}>
-                      {l.tenant?.firstName} {l.tenant?.lastName} - Unit{" "}
-                      {l.unit?.unitNumber} ({l.status})
+                      {l.tenant.firstName} {l.tenant.lastName} - {l.unit.property.name} - Unit{" "}
+                      {l.unit.unitNumber} ({l.status.charAt(0).toUpperCase() + l.status.slice(1)})
                     </option>
                   ))}
                 </select>
@@ -167,15 +183,25 @@ export default function NewTransaction() {
                       <span className="text-error">*</span>
                     </span>
                   </label>
-                  <input
-                    type="text"
-                    name="reference"
-                    required
-                    value={formData.reference}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                    placeholder="OR-123456"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="reference"
+                      required
+                      value={formData.reference}
+                      onChange={handleChange}
+                      className="input input-bordered w-full pr-12 font-mono"
+                      placeholder="OR-123456"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRegenerate}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-square opacity-50 hover:opacity-100"
+                      title="Regenerate Reference"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>

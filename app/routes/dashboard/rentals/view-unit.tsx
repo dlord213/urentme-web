@@ -67,18 +67,18 @@ export default function UnitDetail() {
   useEffect(() => {
     if (unit) {
       setFormData({
-        propertyId: unit.propertyId || "",
-        unitNumber: unit.unitNumber || "",
-        floor: unit.floor || "",
+        propertyId: unit.property.id,
+        unitNumber: unit.unitNumber,
+        floor: unit.floor,
         bedrooms: unit.bedrooms || 0,
         bathrooms: unit.bathrooms || 0,
         squareFeet: unit.squareFeet || "",
-        monthlyRentAmount: unit.monthlyRentAmount || "",
+        monthlyRentAmount: unit.monthlyRentAmount,
         description: unit.description || "",
-        status: unit.status || "vacant",
-        isActive: unit.isActive ?? true,
-        isUnderRepair: unit.isUnderRepair ?? false,
-        isUnderRenovation: unit.isUnderRenovation ?? false,
+        status: unit.status,
+        isActive: unit.isActive,
+        isUnderRepair: unit.isUnderRepair,
+        isUnderRenovation: unit.isUnderRenovation,
         imageUrls: Array.isArray(unit.imageUrls) ? unit.imageUrls.join("\n") : "",
       });
     }
@@ -162,11 +162,11 @@ export default function UnitDetail() {
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">Unit {unit.unitNumber}</h1>
               <span className={`badge badge-sm ${unit.status === 'occupied' ? 'badge-success' : 'badge-warning'}`}>
-                {unit.status.toUpperCase()}
+                {unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}
               </span>
               {unit.isActive === false && <span className="badge badge-sm badge-error">Inactive</span>}
-              {unit.isUnderRepair && <span className="badge badge-sm badge-warning">Repair</span>}
-              {unit.isUnderRenovation && <span className="badge badge-sm badge-info">Renovation</span>}
+              {unit.isUnderRepair && <span className="badge badge-sm badge-warning">Under Repair</span>}
+              {unit.isUnderRenovation && <span className="badge badge-sm badge-info">Under Renovation</span>}
             </div>
             <p className="text-sm opacity-60 flex items-center gap-1">
               <Building2 className="w-3 h-3" /> {currentProperty?.name} — {unit.floor || "No Floor Info"}
@@ -407,7 +407,7 @@ export default function UnitDetail() {
                   { key: "tenant", label: "Tenant", render: (t) => t ? `${t.firstName} ${t.lastName}` : "Unknown" },
                   { key: "status", label: "Status", render: (s) => (
                     <span className={`badge badge-sm font-semibold ${s === 'active' ? 'badge-success' : 'badge-ghost'}`}>
-                      {s.toUpperCase()}
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
                     </span>
                   )},
                   { key: "leaseStartDate", label: "Start Date", render: (d) => new Date(d).toLocaleDateString() },

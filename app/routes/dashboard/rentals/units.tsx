@@ -58,6 +58,9 @@ const renderUnitStatus = (item: Unit) => {
       {item.isUnderRenovation && (
         <span className="badge badge-xs font-semibold badge-info whitespace-nowrap">Renovation</span>
       )}
+      {item.isActive !== false && (
+        <span className="badge badge-xs font-semibold badge-success">Active</span>
+      )}
     </div>
   );
 };

@@ -140,7 +140,7 @@ export default function LeaseDetail() {
       leaseEndDate: formData.leaseEndDate
         ? new Date(formData.leaseEndDate).toISOString()
         : null,
-      signedAt: formData.status === "active" ? new Date().toISOString() : null,
+      signedAt: formData.status === "active" ? new Date().toISOString() : formData.status === 'terminated' ? new Date(formData.signedAt).toISOString() : null,
       terminatedAt:
         formData.status === "terminated" ? new Date().toISOString() : null,
     };
@@ -161,6 +161,11 @@ export default function LeaseDetail() {
   const tenant = lease.tenant;
   const transactions = lease.transactions || [];
 
+  const now = new Date();
+  const end = new Date(lease.leaseEndDate);
+  const diffInDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+  const isExpiringSoon = lease.status === "active" && diffInDays <= 7 && diffInDays > 0;
+
   return (
     <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12">
       {/* Header */}
@@ -178,17 +183,19 @@ export default function LeaseDetail() {
                 Lease Agreement #{lease.id.slice(-6).toUpperCase()}
               </h1>
               <span
-                className={`badge badge-sm font-bold uppercase ${
-                  lease.status === "active"
-                    ? "badge-success"
-                    : lease.status === "draft"
-                      ? "badge-ghost"
-                      : lease.status === "terminated"
-                        ? "badge-error"
-                        : "badge-warning"
+                className={`badge badge-sm font-bold ${
+                  isExpiringSoon
+                    ? "badge-warning animate-pulse"
+                    : lease.status === "active"
+                      ? "badge-success"
+                      : lease.status === "draft"
+                        ? "badge-ghost"
+                        : lease.status === "terminated"
+                          ? "badge-error"
+                          : "badge-warning"
                 }`}
               >
-                {lease.status}
+                {isExpiringSoon ? "Expiring Soon" : lease.status.charAt(0).toUpperCase() + lease.status.slice(1)}
               </span>
             </div>
             <p className="text-sm opacity-60 flex items-center gap-2">
@@ -227,6 +234,17 @@ export default function LeaseDetail() {
           )}
         </div>
       </div>
+
+      {/* Expiration Warning */}
+      {isExpiringSoon && (
+        <div className="alert alert-warning shadow-sm border-warning/20 animate-pulse">
+          <ShieldAlert className="w-5 h-5" />
+          <div>
+            <h3 className="font-bold">Lease Expiring Soon!</h3>
+            <div className="text-sm">This lease agreement will expire in {Math.ceil(diffInDays)} day(s) on {new Date(lease.leaseEndDate).toLocaleDateString()}.</div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Summary */}
       {!isEditing && (
@@ -442,11 +460,7 @@ export default function LeaseDetail() {
                             Terminated Date
                           </h3>
                           <p className="font-semibold text-error">
-                            {lease.terminatedAt
-                              ? new Date(
-                                  lease.terminatedAt,
-                                ).toLocaleDateString()
-                              : "N/A"}
+                            {new Date(lease.terminatedAt).toLocaleDateString()}
                           </p>
                         </div>
                       )}

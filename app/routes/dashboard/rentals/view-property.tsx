@@ -457,7 +457,7 @@ export default function PropertyDetail() {
                   { key: "monthlyRentAmount", label: "Monthly Rent", render: (v) => `₱${v.toLocaleString()}` },
                   { key: "status", label: "Status", render: (s) => (
                     <span className={`badge badge-sm font-semibold ${s === 'occupied' ? 'badge-success' : 'badge-warning'}`}>
-                      {s.toUpperCase()}
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
                     </span>
                   )},
                 ]}

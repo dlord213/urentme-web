@@ -23,6 +23,52 @@ import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { DataTable } from "~/components/DataTable";
 
+const calculateTotalLeaseAmount = (startDate: string, endDate: string, monthlyRent: number) => {
+  if (!startDate || !endDate || !monthlyRent) return 0;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Calculate difference in months based on calendar
+  let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  
+  // Adjust based on the day of the month
+  if (end.getDate() < start.getDate()) {
+    // Check if end is at the end of the month
+    const endIsLastDay = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate() === end.getDate();
+    const startIsLastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate() === start.getDate();
+    
+    if (!(endIsLastDay && startIsLastDay)) {
+      months -= 1;
+      // Add fractional part for the remaining days
+      const daysInStartMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
+      const remainingDays = end.getDate() + (daysInStartMonth - start.getDate());
+      months += remainingDays / 30; // Approximation for fraction
+    }
+  } else if (end.getDate() > start.getDate()) {
+    const remainingDays = end.getDate() - start.getDate();
+    months += remainingDays / 30; // Approximation for fraction
+  }
+  
+  // Use a small epsilon to round to nearest integer if very close
+  const result = months * monthlyRent;
+  const roundedResult = Math.round(result / 100) * 100; // Round to nearest 100 for cleaner numbers if close
+  
+  // Actually, just round to nearest integer is safer if we want exact 10000
+  if (Math.abs(Math.round(months) - months) < 0.05) {
+     return Math.round(months) * monthlyRent;
+  }
+
+  return Math.round(result);
+};
+
+const getPaymentStatus = (paid: number, total: number) => {
+  if (total <= 0) return { label: "N/A", color: "badge-ghost" };
+  const ratio = paid / total;
+  if (ratio >= 0.999) return { label: "Fully Paid", color: "badge-success text-white" };
+  if (ratio > 0) return { label: "Partially Paid", color: "badge-warning text-warning-content" };
+  return { label: "Unpaid", color: "badge-error text-white" };
+};
+
 export default function TenantDetail() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -133,6 +179,13 @@ export default function TenantDetail() {
   const leases = tenant.leases || [];
   const activeLeases = leases.filter((l: any) => l.status === "active");
 
+  const isExpiringSoon = activeLeases.some((l: any) => {
+    const end = new Date(l.leaseEndDate);
+    const now = new Date();
+    const diffInDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    return diffInDays <= 7 && diffInDays > 0;
+  });
+
   return (
     <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12">
       {/* Header */}
@@ -144,10 +197,10 @@ export default function TenantDetail() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">{tenant.firstName} {tenant.lastName}</h1>
-              <span className={`badge badge-sm ${tenant.isActive ? 'badge-info' : 'badge-error'}`}>
-                {tenant.isActive ? 'ACTIVE' : 'INACTIVE'}
+              <span className={`badge badge-sm ${tenant.isActive ? 'badge-success' : 'badge-error'}`}>
+                {tenant.isActive ? 'Active' : 'Inactive'}
               </span>
-              {tenant.isFlagged && <span className="badge badge-sm badge-warning">FLAGGED</span>}
+              {tenant.isFlagged && <span className="badge badge-sm badge-warning">Flagged</span>}
             </div>
             <p className="text-sm opacity-60 flex items-center gap-3">
               <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {tenant.email}</span>
@@ -176,6 +229,17 @@ export default function TenantDetail() {
           )}
         </div>
       </div>
+
+      {/* Expiration Warning */}
+      {isExpiringSoon && (
+        <div className="alert alert-warning shadow-sm border-warning/20 animate-pulse">
+          <ShieldAlert className="w-5 h-5" />
+          <div>
+            <h3 className="font-bold text-xs">Lease Expiring Soon!</h3>
+            <div className="text-sm">One or more active lease agreements for this tenant are expiring within 7 days.</div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Summary */}
       {!isEditing && (
@@ -356,19 +420,46 @@ export default function TenantDetail() {
                     {activeLeases.length > 0 ? (
                       <div className="p-8 bg-success/10 rounded-3xl border border-success/20 h-fit">
                         <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-success uppercase">Currently Occupying</h3>
-                        {activeLeases.map((l: any) => (
-                          <div key={l.id} className="mb-2 last:mb-0">
-                            <p className="text-lg font-bold">
-                              {l.unit?.property?.name} — Unit {l.unit?.unitNumber}
-                            </p>
-                            <p className="text-sm opacity-80">
-                              Ends: {new Date(l.leaseEndDate).toLocaleDateString()}
-                            </p>
-                            <Link to={`/dashboard/units/${l.unitId}`} className="btn btn-link btn-xs p-0 h-auto mt-1 flex items-center gap-1">
-                              View unit details
-                            </Link>
-                          </div>
-                        ))}
+                        {activeLeases.map((l: any) => {
+                          const end = new Date(l.leaseEndDate);
+                          const now = new Date();
+                          const diffInDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+                          const expiringSoon = diffInDays <= 7 && diffInDays > 0;
+
+                          return (
+                            <div key={l.id} className={`mb-4 last:mb-0 p-4 rounded-2xl ${expiringSoon ? 'bg-warning/10 border border-warning/30' : ''}`}>
+                              <div className="flex justify-between items-start">
+                                <p className="text-lg font-bold">
+                                  {l.unit?.property?.name} — Unit {l.unit?.unitNumber}
+                                </p>
+                                {expiringSoon && <span className="badge badge-xs badge-warning font-bold animate-pulse">EXPIRING</span>}
+                              </div>
+                              <p className={`text-sm ${expiringSoon ? 'text-warning font-bold' : 'opacity-80'}`}>
+                                Ends: {new Date(l.leaseEndDate).toLocaleDateString()} {expiringSoon && `(${Math.ceil(diffInDays)} days left)`}
+                              </p>
+                              <p className="text-sm font-bold mt-1 text-success">
+                                Total Contract: ₱{calculateTotalLeaseAmount(l.leaseStartDate, l.leaseEndDate, l.unit?.monthlyRentAmount || 0).toLocaleString()}
+                              </p>
+                              {(() => {
+                                const total = calculateTotalLeaseAmount(l.leaseStartDate, l.leaseEndDate, l.unit?.monthlyRentAmount || 0);
+                                const paid = (l.transactions || []).reduce((sum: number, t: any) => sum + t.amount, 0);
+                                const status = getPaymentStatus(paid, total);
+                                return (
+                                  <div className="mt-3 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-xs opacity-70">Paid: ₱{paid.toLocaleString()}</p>
+                                      <span className={`badge badge-xs font-bold ${status.color}`}>{status.label}</span>
+                                    </div>
+                                    <progress className={`progress w-full h-1.5 ${paid >= total ? 'progress-success' : 'progress-warning'}`} value={paid} max={total}></progress>
+                                  </div>
+                                );
+                              })()}
+                              <Link to={`/dashboard/units/${l.unitId}`} className="btn btn-link btn-xs p-0 h-auto mt-2 flex items-center gap-1">
+                                View unit details
+                              </Link>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="p-8 bg-warning/10 rounded-3xl border border-warning/20 h-fit">
@@ -396,6 +487,21 @@ export default function TenantDetail() {
                       {s}
                     </span>
                   )},
+                  { key: "totalAmount", label: "Total Contract", render: (_, l) => {
+                    const total = calculateTotalLeaseAmount(l.leaseStartDate, l.leaseEndDate, l.unit?.monthlyRentAmount || 0);
+                    return <span className="font-semibold">₱{total.toLocaleString()}</span>;
+                  }},
+                  { key: "paidAmount", label: "Paid", render: (_, l) => {
+                    const total = calculateTotalLeaseAmount(l.leaseStartDate, l.leaseEndDate, l.unit?.monthlyRentAmount || 0);
+                    const paid = (l.transactions || []).reduce((sum: number, t: any) => sum + t.amount, 0);
+                    const status = getPaymentStatus(paid, total);
+                    return (
+                      <div className="flex flex-col gap-1">
+                        <span className="font-bold text-success">₱{paid.toLocaleString()}</span>
+                        <span className={`badge badge-xs font-bold ${status.color}`}>{status.label}</span>
+                      </div>
+                    );
+                  }},
                   { key: "leaseStartDate", label: "Start Date", render: (d) => new Date(d).toLocaleDateString() },
                   { key: "leaseEndDate", label: "End Date", render: (d) => new Date(d).toLocaleDateString() },
                 ]}

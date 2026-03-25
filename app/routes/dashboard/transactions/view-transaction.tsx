@@ -270,7 +270,7 @@ export default function TransactionDetail() {
               </h3>
               <div className="space-y-3">
                 <Link
-                  to={`/dashboard/leases/${transaction.leaseId}`}
+                  to={`/dashboard/leases/${transaction.lease.id}`}
                   className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
@@ -280,7 +280,7 @@ export default function TransactionDetail() {
                   <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
                 <Link
-                  to={`/dashboard/tenants/${tenant?.id}`}
+                  to={`/dashboard/tenants/${tenant.id}`}
                   className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
@@ -290,7 +290,7 @@ export default function TransactionDetail() {
                   <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
                 <Link
-                  to={`/dashboard/units/${unit?.id}`}
+                  to={`/dashboard/units/${unit.id}`}
                   className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
