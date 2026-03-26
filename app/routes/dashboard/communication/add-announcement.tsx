@@ -13,6 +13,7 @@ export default function NewAnnouncement() {
     title: "",
     body: "",
     isActive: true,
+    isPublished: true,
     selectedProperties: [] as string[],
     selectedUnits: [] as string[],
   });
@@ -77,7 +78,7 @@ export default function NewAnnouncement() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const { title, body, isActive, selectedProperties, selectedUnits } = formData;
+    const { title, body, isActive, isPublished, selectedProperties, selectedUnits } = formData;
     
     if (selectedProperties.length === 0 && selectedUnits.length === 0) {
       alert("Please select at least one property or unit as the target audience.");
@@ -88,7 +89,7 @@ export default function NewAnnouncement() {
       title,
       body,
       isActive,
-      publishedAt: isActive ? new Date().toISOString() : null,
+      publishedAt: isPublished ? new Date().toISOString() : null,
       propertyAnnouncements: {
         create: selectedProperties.map((id) => ({ propertyId: id })),
       },
@@ -249,21 +250,39 @@ export default function NewAnnouncement() {
             </section>
 
             {/* Status Section */}
-            <section className="space-y-4 pt-4 border-t">
-              <div className="form-control">
-                <label className="label cursor-pointer flex items-center justify-start gap-4 p-0">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleChange}
-                    className="toggle toggle-success toggle-sm"
-                  />
-                  <div>
-                    <span className="font-semibold block">Publish Immediately</span>
-                    <span className="text-[10px] opacity-60">Announcements will be visible to tenants upon publishing.</span>
-                  </div>
-                </label>
+            <section className="space-y-6 pt-4 border-t">
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="form-control">
+                  <label className="label cursor-pointer flex items-center justify-start gap-4 p-0">
+                    <input
+                      type="checkbox"
+                      name="isPublished"
+                      checked={formData.isPublished}
+                      onChange={handleChange}
+                      className="toggle toggle-info toggle-sm"
+                    />
+                    <div>
+                      <span className="font-semibold block text-sm">Publish Immediately</span>
+                      <span className="text-[10px] opacity-60">Visible to tenants if active.</span>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="form-control">
+                  <label className="label cursor-pointer flex items-center justify-start gap-4 p-0">
+                    <input
+                      type="checkbox"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleChange}
+                      className="toggle toggle-success toggle-sm"
+                    />
+                    <div>
+                      <span className="font-semibold block text-sm">Active Status</span>
+                      <span className="text-[10px] opacity-60">Enable or disable this announcement.</span>
+                    </div>
+                  </label>
+                </div>
               </div>
             </section>
 
@@ -280,8 +299,8 @@ export default function NewAnnouncement() {
                   <span className="loading loading-spinner loading-xs"></span>
                 ) : (
                   <>
-                    {formData.isActive ? <Send className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                    {formData.isActive ? "Send Announcement" : "Save as Draft"}
+                    {formData.isPublished ? <Send className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    {formData.isPublished ? "Send Announcement" : "Save as Draft"}
                   </>
                 )}
               </button>

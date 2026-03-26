@@ -51,13 +51,16 @@ const statusBadge = (s: string | string[]) => {
     Inactive: "badge badge-xs font-semibold badge-error",
     Flagged: "badge badge-xs font-semibold badge-warning",
   };
-  
+
   const statuses = Array.isArray(s) ? s : [s];
-  
+
   return (
     <div className="flex gap-1 flex-wrap">
       {statuses.map((status) => (
-        <span key={status} className={`badge badge-sm font-semibold ${map[status] || "badge-ghost"}`}>
+        <span
+          key={status}
+          className={`badge badge-sm font-semibold ${map[status] || "badge-ghost"}`}
+        >
           {status}
         </span>
       ))}
@@ -67,62 +70,78 @@ const statusBadge = (s: string | string[]) => {
 
 export default function Tenants() {
   const {
-      data: rawTenants = [],
-      isLoading,
-      isError,
-    } = useQuery<Tenants[]>({
-      queryKey: ["tenants"],
-      queryFn: () => apiFetch("/people/tenants"),
-    });
+    data: rawTenants = [],
+    isLoading,
+    isError,
+  } = useQuery<Tenants[]>({
+    queryKey: ["tenants"],
+    queryFn: () => apiFetch("/people/tenants"),
+  });
 
   const tenants = rawTenants.map((t) => {
     const statusArray = [];
-    
+
     if (t.isActive) statusArray.push("Active");
     else statusArray.push("Inactive");
-    
+
     if (t.isFlagged) statusArray.push("Flagged");
 
     // Prioritize active leases
-    const activeLeases = t.leases.filter(l => l.status === "active");
-    const primaryLease = activeLeases.length > 0 ? activeLeases[0] : t.leases[0];
-    
-    let unitText = primaryLease?.unit 
-      ? `${primaryLease.unit.property?.name} - ${primaryLease.unit.unitNumber}` 
+    const activeLeases = t.leases.filter((l) => l.status === "active");
+    const primaryLease =
+      activeLeases.length > 0 ? activeLeases[0] : t.leases[0];
+
+    let unitText = primaryLease?.unit
+      ? `${primaryLease.unit.property?.name} - ${primaryLease.unit.unitNumber}`
       : "None";
 
     if (activeLeases.length > 1) {
       unitText = `${unitText} (+${activeLeases.length - 1} more)`;
     } else if (!activeLeases.length && t.leases.length > 1) {
-       // If no active but multiple others (e.g. past), just show first as before or indicate
-       unitText = `${unitText} (Past)`;
+      // If no active but multiple others (e.g. past), just show first as before or indicate
+      unitText = `${unitText} (Past)`;
     }
 
     // For lease end, if multiple active, show the one ending soonest (most urgent)
-    const relevantLeaseEnd = activeLeases.length > 0
-      ? activeLeases.reduce((soonest, curr) => 
-          new Date(curr.leaseEndDate) < new Date(soonest.leaseEndDate) ? curr : soonest
-        ).leaseEndDate
-      : primaryLease?.leaseEndDate;
+    const relevantLeaseEnd =
+      activeLeases.length > 0
+        ? activeLeases.reduce((soonest, curr) =>
+            new Date(curr.leaseEndDate) < new Date(soonest.leaseEndDate)
+              ? curr
+              : soonest,
+          ).leaseEndDate
+        : primaryLease?.leaseEndDate;
 
     // Check if expiring soon (7 days)
-    const isExpiringSoon = relevantLeaseEnd && activeLeases.length > 0 &&
-      (new Date(relevantLeaseEnd).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24) <= 7;
+    const isExpiringSoon =
+      relevantLeaseEnd &&
+      activeLeases.length > 0 &&
+      (new Date(relevantLeaseEnd).getTime() - new Date().getTime()) /
+        (1000 * 60 * 60 * 24) <=
+        7;
 
     return {
       ...t,
       name: `${t.firstName} ${t.lastName}`,
       unit: unitText,
-      leaseEnd: relevantLeaseEnd ? new Date(relevantLeaseEnd).toISOString().split("T")[0] : "—",
+      leaseEnd: relevantLeaseEnd
+        ? new Date(relevantLeaseEnd).toISOString().split("T")[0]
+        : "—",
       isExpiringSoon,
       status: statusArray,
     };
   });
 
   const totalTenants = tenants.length;
-  const currentTenants = tenants.filter((t) => t.status.includes("Active")).length;
-  const pastTenants = tenants.filter((t) => t.status.includes("Inactive")).length;
-  const flaggedTenants = tenants.filter((t) => t.status.includes("Flagged")).length;
+  const currentTenants = tenants.filter((t) =>
+    t.status.includes("Active"),
+  ).length;
+  const pastTenants = tenants.filter((t) =>
+    t.status.includes("Inactive"),
+  ).length;
+  const flaggedTenants = tenants.filter((t) =>
+    t.status.includes("Flagged"),
+  ).length;
 
   if (isLoading) {
     return (
@@ -203,17 +222,31 @@ export default function Tenants() {
               { key: "unit", label: "Unit" },
               { key: "email", label: "Email" },
               { key: "celNum", label: "Mobile" },
-              { key: "leaseEnd", label: "Lease End", render: (val, t) => (
-                <span className={t.isExpiringSoon ? "text-warning font-bold" : ""}>{val}</span>
-              )},
-              { key: "status", label: "Status", render: (s, t) => (
-                <div className="flex flex-col gap-1">
-                  {statusBadge(s)}
-                  {t.isExpiringSoon && (
-                    <span className="badge badge-xs badge-warning font-bold animate-pulse py-2 border-none whitespace-nowrap">Expiring Soon</span>
-                  )}
-                </div>
-              )},
+              {
+                key: "leaseEnd",
+                label: "Lease End",
+                render: (val, t) => (
+                  <span
+                    className={t.isExpiringSoon ? "text-warning font-bold" : ""}
+                  >
+                    {val}
+                  </span>
+                ),
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (s, t) => (
+                  <div className="flex flex-col gap-1">
+                    {statusBadge(s)}
+                    {t.isExpiringSoon && (
+                      <span className="badge badge-xs badge-warning font-bold animate-pulse py-2 border-none whitespace-nowrap">
+                        Expiring Soon
+                      </span>
+                    )}
+                  </div>
+                ),
+              },
             ]}
             data={tenants}
             actions={[

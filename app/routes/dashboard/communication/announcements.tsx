@@ -1,4 +1,4 @@
-import { Megaphone, Users, CheckCircle2, Clock, Eye, Send, Plus } from "lucide-react";
+import { Megaphone, Users, CheckCircle2, Clock, Eye, Send, Plus, Pencil } from "lucide-react";
 import { DataTable } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
@@ -14,12 +14,28 @@ export interface Announcement {
   publishedAt?: string;
   createdAt: string;
   propertyAnnouncements: { property: { name: string } }[];
-  unitAnnouncements: { unit: { unitNumber: string } }[];
+  unitAnnouncements: { unit: { unitNumber: string, property: { name: string } } }[];
 }
 
-const statusBadge = (s: string) => {
-  const map: Record<string, string> = { Sent: "badge-success", Draft: "badge-ghost" };
-  return <span className={`badge badge-sm font-semibold ${map[s] || "badge-ghost"}`}>{s}</span>;
+const statusBadge = (s: string[]) => {
+  const map: Record<string, string> = {
+    Active: "badge-info",
+    Inactive: "badge-error",
+    Sent: "badge-success text-white",
+    Draft: "badge-ghost",
+  };
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {s.map((status) => (
+        <span
+          key={status}
+          className={`badge badge-xs font-semibold ${map[status] || "badge-ghost"}`}
+        >
+          {status}
+        </span>
+      ))}
+    </div>
+  );
 };
 
 export default function Announcements() {
@@ -33,8 +49,15 @@ export default function Announcements() {
     if (a.propertyAnnouncements?.length) {
       audience = a.propertyAnnouncements.map(pa => pa.property.name).join(", ");
     } else if (a.unitAnnouncements?.length) {
-      audience = "Unit " + a.unitAnnouncements.map(ua => ua.unit.unitNumber).join(", ");
+      audience = a.unitAnnouncements.map(ua => ua.unit.property.name + " - Unit " +  ua.unit.unitNumber).join(", ");
     }
+
+    const statusArray = [];
+    if (a.isActive) statusArray.push("Active");
+    else statusArray.push("Inactive");
+
+    if (a.publishedAt) statusArray.push("Sent");
+    else statusArray.push("Draft");
 
     return {
       ...a,
@@ -42,12 +65,12 @@ export default function Announcements() {
       dateDisplay: a.publishedAt 
         ? new Date(a.publishedAt).toISOString().split("T")[0] 
         : new Date(a.createdAt).toISOString().split("T")[0],
-      status: a.isActive && a.publishedAt ? "Sent" : "Draft"
+      status: statusArray
     };
   });
 
-  const sentCount = announcements.filter(a => a.status === "Sent").length;
-  const draftCount = announcements.filter(a => a.status === "Draft").length;
+  const sentCount = announcements.filter(a => a.publishedAt).length;
+  const draftCount = announcements.filter(a => !a.publishedAt).length;
 
   if (isLoading) {
     return (
@@ -106,8 +129,18 @@ export default function Announcements() {
             ]}
             data={announcements}
             actions={[
-              { label: "View", icon: <Eye className="w-3 h-3" />, onClick: () => {}, variant: "ghost" },
-              { label: "Resend", icon: <Send className="w-3 h-3" />, onClick: () => {}, variant: "ghost" },
+              { 
+                label: "View", 
+                icon: <Eye className="w-3 h-3" />, 
+                to: (a: any) => `/dashboard/announcements/${a.id}`, 
+                variant: "ghost" 
+              },
+              { 
+                label: "Edit", 
+                icon: <Pencil className="w-3 h-3" />, 
+                to: (a: any) => `/dashboard/announcements/${a.id}?edit=true`, 
+                variant: "ghost" 
+              },
             ]}
             emptyMessage="No announcements found."
           />

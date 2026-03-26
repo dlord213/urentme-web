@@ -351,7 +351,6 @@ export default function LeaseDetail() {
                         <option value="draft">Draft</option>
                         <option value="active">Active</option>
                         <option value="terminated">Terminated</option>
-                        <option value="expired">Expired</option>
                       </select>
                     </div>
 

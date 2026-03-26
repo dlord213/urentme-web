@@ -13,10 +13,7 @@ export default [
   layout("routes/dashboard.tsx", [
     route("dashboard", "routes/dashboard/index.tsx"),
 
-    route(
-      "dashboard/properties",
-      "routes/dashboard/rentals/properties.tsx",
-    ),
+    route("dashboard/properties", "routes/dashboard/rentals/properties.tsx"),
     route(
       "dashboard/properties/add",
       "routes/dashboard/rentals/add-property.tsx",
@@ -49,6 +46,10 @@ export default [
     route(
       "dashboard/announcements",
       "routes/dashboard/communication/announcements.tsx",
+    ),
+    route(
+      "dashboard/announcements/:id",
+      "routes/dashboard/communication/view-announcement.tsx",
     ),
     route(
       "dashboard/announcements/new",
