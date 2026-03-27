@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { StatusBadge } from "~/components/StatusBadge";
 import { PageHeader } from "~/components/PageHeader";
 
 export default function ViewAnnouncement() {
@@ -239,12 +240,8 @@ export default function ViewAnnouncement() {
                     <span className="font-bold text-lg">Announcement Content</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className={`badge badge-sm ${announcement.isActive ? 'badge-info' : 'badge-error'} font-bold`}>
-                      {announcement.isActive ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
-                    <span className={`badge badge-sm ${announcement.publishedAt ? 'badge-success text-white' : 'badge-ghost'} font-bold`}>
-                      {announcement.publishedAt ? 'SENT' : 'DRAFT'}
-                    </span>
+                    <StatusBadge status={announcement.isActive ? 'active' : 'inactive'} label={announcement.isActive ? 'ACTIVE' : 'INACTIVE'} />
+                    <StatusBadge status={announcement.publishedAt ? 'sent' : 'draft'} label={announcement.publishedAt ? 'SENT' : 'DRAFT'} />
                   </div>
                 </div>
                 <div className="prose max-w-none">
@@ -296,7 +293,7 @@ export default function ViewAnnouncement() {
                     <div className="flex flex-wrap gap-1.5">
                       {announcement.propertyAnnouncements?.length > 0 ? (
                         announcement.propertyAnnouncements.map((pa: any) => (
-                          <span key={pa.id} className="badge badge-sm badge-outline opacity-80">{pa.property.name}</span>
+                          <StatusBadge key={pa.id} status="ghost" label={pa.property.name} className="opacity-80" />
                         ))
                       ) : (
                         <span className="text-xs opacity-40 italic">None selected</span>
@@ -308,7 +305,7 @@ export default function ViewAnnouncement() {
                     <div className="flex flex-wrap gap-1.5">
                       {announcement.unitAnnouncements?.length > 0 ? (
                         announcement.unitAnnouncements.map((ua: any) => (
-                          <span key={ua.id} className="badge badge-sm badge-outline opacity-80">{ua.unit.property.name} - Unit {ua.unit.unitNumber}</span>
+                          <StatusBadge key={ua.id} status="ghost" label={`${ua.unit.property.name} - Unit ${ua.unit.unitNumber}`} className="opacity-80" />
                         ))
                       ) : (
                         <span className="text-xs opacity-40 italic">None selected</span>

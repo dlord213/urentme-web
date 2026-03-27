@@ -13,6 +13,7 @@ import { StatsCard } from "../../components/StatsCard";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { StatusBadge } from "~/components/StatusBadge";
 
 const statusColorMap: Record<string, string> = {
   success: "badge-success",
@@ -64,19 +65,19 @@ export default function DashboardOverview() {
   return (
     <div className="animate-in fade-in duration-300 space-y-8">
       {/* Welcome Banner */}
-      <div className="rounded-2xl bg-linear-to-br from-primary to-primary/70 text-primary-content p-6 lg:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
+      <div className="rounded-2xl bg-linear-to-br from-primary to-primary/70 text-primary-content p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
         <div>
-          <p className="text-primary-content/70 text-sm font-semibold uppercase tracking-wider mb-1">
+          <p className="text-primary-content/70 text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1">
             Welcome back
           </p>
-          <h1 className="text-3xl font-extrabold">Portfolio Overview</h1>
-          <p className="mt-1 text-primary-content/80">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold">Portfolio Overview</h1>
+          <p className="mt-1 text-primary-content/80 text-sm sm:text-base">
             Here's what's happening across your properties today.
           </p>
         </div>
         <Link
           to="/dashboard/properties"
-          className="btn btn-primary-content bg-white/20 hover:bg-white/30 border-white/30 text-white gap-2"
+          className="btn btn-primary-content bg-white/20 hover:bg-white/30 border-white/30 text-white gap-2 btn-sm sm:btn-md w-full sm:w-auto"
         >
           View Properties <ArrowRight className="w-4 h-4" />
         </Link>
@@ -137,11 +138,13 @@ export default function DashboardOverview() {
                       key={item.id}
                       className="flex items-start gap-3 p-3 rounded-xl hover:bg-base-200/50 transition-colors"
                     >
-                      <div
-                        className={`badge ${statusColorMap[item.status] || "badge-ghost"} badge-sm mt-1 p-1`}
+                      <StatusBadge 
+                        status={item.status} 
+                        label="" 
+                        className="mt-1 p-0 flex items-center justify-center w-6 h-6 rounded-full"
                       >
                         <Icon className="w-3 h-3" />
-                      </div>
+                      </StatusBadge>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-base-content truncate">
                           {item.desc}

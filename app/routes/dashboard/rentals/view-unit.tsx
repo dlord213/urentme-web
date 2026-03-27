@@ -21,6 +21,7 @@ import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { DataTable } from "~/components/DataTable";
+import { StatusBadge } from "~/components/StatusBadge";
 
 export default function UnitDetail() {
   const { id } = useParams();
@@ -162,12 +163,10 @@ export default function UnitDetail() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">Unit {unit.unitNumber}</h1>
-              <span className={`badge badge-sm ${unit.status === 'occupied' ? 'badge-success' : 'badge-warning'}`}>
-                {unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}
-              </span>
-              {unit.isActive === false && <span className="badge badge-sm badge-error">Inactive</span>}
-              {unit.isUnderRepair && <span className="badge badge-sm badge-warning">Under Repair</span>}
-              {unit.isUnderRenovation && <span className="badge badge-sm badge-info">Under Renovation</span>}
+              <StatusBadge status={unit.status} />
+              {unit.isActive === false && <StatusBadge status="inactive" />}
+              {unit.isUnderRepair && <StatusBadge status="Under Repair" />}
+              {unit.isUnderRenovation && <StatusBadge status="Under Renovation" />}
             </div>
             <p className="text-sm opacity-60 flex items-center gap-1">
               <Building2 className="w-3 h-3" /> {currentProperty?.name} — {unit.floor || "No Floor Info"}
@@ -406,11 +405,7 @@ export default function UnitDetail() {
               <DataTable
                 columns={[
                   { key: "tenant", label: "Tenant", render: (t) => t ? `${t.firstName} ${t.lastName}` : "Unknown" },
-                  { key: "status", label: "Status", render: (s) => (
-                    <span className={`badge badge-sm font-semibold ${s === 'active' ? 'badge-success' : 'badge-ghost'}`}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </span>
-                  )},
+                  { key: "status", label: "Status", render: (s) => <StatusBadge status={s} /> },
                   { key: "leaseStartDate", label: "Start Date", render: (d) => new Date(d).toLocaleDateString() },
                   { key: "leaseEndDate", label: "End Date", render: (d) => new Date(d).toLocaleDateString() },
                 ]}

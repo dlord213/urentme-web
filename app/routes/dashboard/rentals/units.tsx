@@ -15,6 +15,7 @@ import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
 import { useState } from "react";
+import { StatusBadge } from "~/components/StatusBadge";
 
 export interface Unit {
   id: string;
@@ -47,27 +48,16 @@ interface PaginatedResponse {
 }
 
 const renderUnitStatus = (item: Unit) => {
-  const map: Record<string, string> = {
-    occupied: "badge-success",
-    vacant: "badge-warning",
-    maintenance: "badge-error",
-    reserved: "badge-info",
-  };
-
   const flags: string[] = [];
   if (item.isUnderRepair) flags.push("Under Repair");
-  if (item.isUnderRenovation) flags.push("Renovating");
+  if (item.isUnderRenovation) flags.push("Under Renovation");
   if (!item.isActive) flags.push("Inactive");
 
   return (
     <div className="flex flex-wrap gap-1">
-      <span className={`badge badge-sm font-semibold ${map[item.status] ?? "badge-ghost"}`}>
-        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-      </span>
+      <StatusBadge status={item.status} />
       {flags.map((flag) => (
-        <span key={flag} className="badge badge-sm badge-outline text-[10px]">
-          {flag}
-        </span>
+        <StatusBadge key={flag} status={flag} size="xs" />
       ))}
     </div>
   );

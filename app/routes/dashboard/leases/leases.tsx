@@ -13,6 +13,7 @@ import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
 import { useState } from "react";
+import { StatusBadge } from "~/components/StatusBadge";
 
 export interface Lease {
   id: string;
@@ -38,7 +39,7 @@ interface PaginatedResponse {
   totalPages: number;
 }
 
-const StatusBadge = ({ lease }: { lease: any }) => {
+const LeaseStatusBadge = ({ lease }: { lease: any }) => {
   const now = new Date();
   const end = new Date(lease.leaseEndDate);
   const diffInDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
@@ -46,24 +47,13 @@ const StatusBadge = ({ lease }: { lease: any }) => {
   if (lease.status === "active" && diffInDays <= 7 && diffInDays > 0) {
     return (
       <div className="flex flex-col gap-1 items-start">
-        <span className="badge badge-xs badge-success font-semibold capitalize">Active</span>
-        <span className="badge badge-xs badge-warning font-bold animate-pulse py-2 px-2 whitespace-nowrap shadow-sm">Expiring Soon</span>
+        <StatusBadge status="active" />
+        <StatusBadge status="warning" label="Expiring Soon" size="xs" pulse />
       </div>
     );
   }
 
-  const map: Record<string, string> = {
-    active: "badge-success",
-    draft: "badge-ghost",
-    terminated: "badge-error",
-    expired: "badge-warning",
-  };
-  
-  return (
-    <span className={`badge badge-xs font-semibold capitalize ${map[lease.status] || "badge-ghost"}`}>
-      {lease.status}
-    </span>
-  );
+  return <StatusBadge status={lease.status} />;
 };
 
 export default function Leases() {
@@ -178,7 +168,7 @@ export default function Leases() {
                    {l.endDate}
                  </span>
                )},
-               { key: "status", label: "Status", render: (_, l) => <StatusBadge lease={l} /> },
+               { key: "status", label: "Status", render: (_, l) => <LeaseStatusBadge lease={l} /> },
             ]}
             data={leases}
             actions={[

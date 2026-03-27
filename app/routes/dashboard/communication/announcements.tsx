@@ -7,6 +7,7 @@ import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
 import { useState } from "react";
+import { StatusBadge } from "~/components/StatusBadge";
 
 export interface Announcement {
   id: string;
@@ -27,21 +28,10 @@ interface PaginatedResponse {
 }
 
 const statusBadge = (s: string[]) => {
-  const map: Record<string, string> = {
-    Active: "badge-info",
-    Inactive: "badge-error",
-    Sent: "badge-success text-white",
-    Draft: "badge-ghost",
-  };
   return (
     <div className="flex gap-1 flex-wrap">
       {s.map((status) => (
-        <span
-          key={status}
-          className={`badge badge-xs font-semibold ${map[status] || "badge-ghost"}`}
-        >
-          {status}
-        </span>
+        <StatusBadge key={status} status={status} />
       ))}
     </div>
   );

@@ -14,6 +14,7 @@ import { StatsCard } from "~/components/StatsCard";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
+import { StatusBadge } from "~/components/StatusBadge";
 import { Link } from "react-router";
 import { useState } from "react";
 
@@ -55,23 +56,11 @@ interface PaginatedResponse {
 }
 
 const statusBadge = (s: string | string[]) => {
-  const map: Record<string, string> = {
-    Active: "badge badge-xs font-semibold badge-success",
-    Inactive: "badge badge-xs font-semibold badge-error",
-    Flagged: "badge badge-xs font-semibold badge-warning",
-  };
-
   const statuses = Array.isArray(s) ? s : [s];
-
   return (
     <div className="flex gap-1 flex-wrap">
       {statuses.map((status) => (
-        <span
-          key={status}
-          className={`badge badge-sm font-semibold ${map[status] || "badge-ghost"}`}
-        >
-          {status}
-        </span>
+        <StatusBadge key={status} status={status} />
       ))}
     </div>
   );

@@ -22,6 +22,7 @@ import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { DataTable } from "~/components/DataTable";
+import { StatusBadge } from "~/components/StatusBadge";
 
 const calculateTotalLeaseAmount = (
   startDate: string,
@@ -77,16 +78,11 @@ const calculateTotalLeaseAmount = (
 };
 
 const getPaymentStatus = (paid: number, total: number) => {
-  if (total <= 0) return { label: "N/A", color: "badge-ghost" };
+  if (total <= 0) return { label: "N/A", status: "ghost" };
   const ratio = paid / total;
-  if (ratio >= 0.999)
-    return { label: "Fully Paid", color: "badge-success text-white" };
-  if (ratio > 0)
-    return {
-      label: "Partially Paid",
-      color: "badge-warning text-warning-content",
-    };
-  return { label: "Unpaid", color: "badge-error text-white" };
+  if (ratio >= 0.999) return { label: "Fully Paid", status: "fully paid" };
+  if (ratio > 0) return { label: "Partially Paid", status: "partial" };
+  return { label: "Unpaid", status: "unpaid" };
 };
 
 export default function TenantDetail() {
@@ -265,13 +261,9 @@ export default function TenantDetail() {
               <h1 className="text-2xl font-bold">
                 {tenant.firstName} {tenant.lastName}
               </h1>
-              <span
-                className={`badge badge-sm ${tenant.isActive ? "badge-success" : "badge-error"}`}
-              >
-                {tenant.isActive ? "Active" : "Inactive"}
-              </span>
+              <StatusBadge status={tenant.isActive ? "active" : "inactive"} />
               {tenant.isFlagged && (
-                <span className="badge badge-sm badge-warning">Flagged</span>
+                <StatusBadge status="flagged" />
               )}
             </div>
             <p className="text-sm opacity-60 flex items-center gap-3">
@@ -682,9 +674,7 @@ export default function TenantDetail() {
                                   {l.unit?.unitNumber}
                                 </p>
                                 {expiringSoon && (
-                                  <span className="badge badge-xs badge-warning font-bold animate-pulse">
-                                    EXPIRING
-                                  </span>
+                                  <StatusBadge status="warning" label="EXPIRING" size="xs" pulse />
                                 )}
                               </div>
                               <p
@@ -726,11 +716,7 @@ export default function TenantDetail() {
                                           {(total - paid).toLocaleString()}
                                         </p>
                                       )}
-                                      <span
-                                        className={`badge badge-xs font-bold ${status.color}`}
-                                      >
-                                        {status.label}
-                                      </span>
+                                      <StatusBadge status={status.status} label={status.label} size="xs" />
                                     </div>
                                     <progress
                                       className={`progress w-full h-1.5 ${paid >= total ? "progress-success" : "progress-warning"}`}
@@ -785,11 +771,7 @@ export default function TenantDetail() {
                     key: "status",
                     label: "Status",
                     render: (s) => (
-                      <span
-                        className={`badge badge-sm font-semibold capitalize ${s === "active" ? "badge-success" : "badge-ghost"}`}
-                      >
-                        {s}
-                      </span>
+                        <StatusBadge status={s} />
                     ),
                   },
                   {
@@ -827,11 +809,7 @@ export default function TenantDetail() {
                           <span className="font-bold text-success">
                             ₱{paid.toLocaleString()}
                           </span>
-                          <span
-                            className={`badge badge-xs font-bold ${status.color}`}
-                          >
-                            {status.label}
-                          </span>
+                          <StatusBadge status={status.status} label={status.label} size="xs" />
                         </div>
                       );
                     },

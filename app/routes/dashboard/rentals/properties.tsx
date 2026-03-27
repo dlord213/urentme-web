@@ -15,6 +15,7 @@ import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
 import { useState } from "react";
+import { StatusBadge } from "~/components/StatusBadge";
 
 export interface Unit {
   id: string;
@@ -48,33 +49,23 @@ const renderPropertyStatus = (item: Property) => {
   return (
     <div className="flex flex-wrap gap-1">
       {item.isActive === false && (
-        <span className="badge badge-xs font-semibold badge-error">Inactive</span>
+        <StatusBadge status="inactive" />
       )}
       {item.isUnderRepair && (
-        <span className="badge badge-xs font-semibold badge-warning">Repair</span>
+        <StatusBadge status="Under Repair" />
       )}
       {item.isUnderRenovation && (
-        <span className="badge badge-xs font-semibold badge-info">Renovation</span>
+        <StatusBadge status="Under Renovation" />
       )}
       {item.isActive !== false && (
-        <span className="badge badge-xs font-semibold badge-success">Active</span>
+        <StatusBadge status="active" />
       )}
     </div>
   );
 };
 
 const typeBadge = (type: string) => {
-  const map: Record<string, string> = {
-    Residential: "badge-primary badge-outline",
-    Commercial: "badge-secondary badge-outline",
-  };
-  return (
-    <span
-      className={`badge badge-sm ${map[type] || "badge-ghost badge-outline"}`}
-    >
-      {type}
-    </span>
-  );
+  return <StatusBadge status={type} />
 };
 
 const occupancyBar = (_: any, item: any) => {

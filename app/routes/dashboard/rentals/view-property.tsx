@@ -20,6 +20,7 @@ import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { DataTable } from "~/components/DataTable";
 import { psgcApi } from "~/lib/psgc";
+import { StatusBadge } from "~/components/StatusBadge";
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -218,12 +219,10 @@ export default function PropertyDetail() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">{property.name}</h1>
-              <span className={`badge badge-sm ${property.type === 'Commercial' ? 'badge-secondary' : 'badge-primary'}`}>
-                {property.type}
-              </span>
-              {property.isActive === false && <span className="badge badge-sm badge-error">Inactive</span>}
-              {property.isUnderRepair && <span className="badge badge-sm badge-warning">Under Repair</span>}
-              {property.isUnderRenovation && <span className="badge badge-sm badge-info">Under Renovation</span>}
+              <StatusBadge status={property.type} />
+              {property.isActive === false && <StatusBadge status="inactive" />}
+              {property.isUnderRepair && <StatusBadge status="Under Repair" />}
+              {property.isUnderRenovation && <StatusBadge status="Under Renovation" />}
             </div>
             <p className="text-sm opacity-60 flex items-center gap-1">
               <MapPin className="w-3 h-3" /> {property.street}, {property.barangay}, {property.city}
@@ -455,11 +454,7 @@ export default function PropertyDetail() {
                   { key: "unitNumber", label: "Unit #" },
                   { key: "floor", label: "Floor" },
                   { key: "monthlyRentAmount", label: "Monthly Rent", render: (v) => `₱${v.toLocaleString()}` },
-                  { key: "status", label: "Status", render: (s) => (
-                    <span className={`badge badge-sm font-semibold ${s === 'occupied' ? 'badge-success' : 'badge-warning'}`}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </span>
-                  )},
+                  { key: "status", label: "Status", render: (s) => <StatusBadge status={s} /> },
                 ]}
                 data={units}
                 actions={[

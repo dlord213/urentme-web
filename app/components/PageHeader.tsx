@@ -12,19 +12,19 @@ export function PageHeader({ title, description, actionButton, showBack }: PageH
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="flex items-center gap-3 min-w-0">
         {showBack && (
           <button 
             onClick={() => navigate(-1)} 
-            className="btn btn-circle btn-ghost btn-sm"
+            className="btn btn-circle btn-ghost btn-sm shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
         )}
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-base-content">{title}</h1>
-          {description && <p className="text-base-content/60 mt-1">{description}</p>}
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-base-content truncate">{title}</h1>
+          {description && <p className="text-sm sm:text-base text-base-content/60 mt-0.5 sm:mt-1 line-clamp-2">{description}</p>}
         </div>
       </div>
       {actionButton && (

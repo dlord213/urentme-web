@@ -66,7 +66,7 @@ export function Sidebar() {
         <ul className="flex-1 w-full gap-2 overflow-y-auto pb-20">
           {NAV_GROUPS.map((group, i) => (
             <li key={i}>
-              <details open={i < 4}>
+              <details>
                 <summary className="font-semibold text-base py-3">
                   <group.icon className="w-5 h-5 opacity-70" />
                   {group.title}
@@ -77,6 +77,10 @@ export function Sidebar() {
                       <NavLink 
                         to={item.to} 
                         end={item.to === '/dashboard'}
+                        onClick={() => {
+                          const el = document.getElementById("dashboard-drawer") as HTMLInputElement;
+                          if (el) el.checked = false;
+                        }}
                         className={({ isActive }) => 
                           isActive ? "active bg-primary/10 text-primary font-medium" : ""
                         }

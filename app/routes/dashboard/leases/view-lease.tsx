@@ -21,6 +21,7 @@ import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { DataTable } from "~/components/DataTable";
+import { StatusBadge } from "~/components/StatusBadge";
 
 export default function LeaseDetail() {
   const { id } = useParams();
@@ -182,21 +183,11 @@ export default function LeaseDetail() {
               <h1 className="text-2xl font-bold">
                 Lease Agreement #{lease.id.slice(-6).toUpperCase()}
               </h1>
-              <span
-                className={`badge badge-sm font-bold ${
-                  isExpiringSoon
-                    ? "badge-warning animate-pulse"
-                    : lease.status === "active"
-                      ? "badge-success"
-                      : lease.status === "draft"
-                        ? "badge-ghost"
-                        : lease.status === "terminated"
-                          ? "badge-error"
-                          : "badge-warning"
-                }`}
-              >
-                {isExpiringSoon ? "Expiring Soon" : lease.status.charAt(0).toUpperCase() + lease.status.slice(1)}
-              </span>
+              {isExpiringSoon ? (
+                <StatusBadge status="warning" label="Expiring Soon" pulse />
+              ) : (
+                <StatusBadge status={lease.status} />
+              )}
             </div>
             <p className="text-sm opacity-60 flex items-center gap-2">
               <Home className="w-3 h-3" /> {property?.name} — Unit{" "}
