@@ -6,12 +6,14 @@ import {
   Eye,
   Plus,
 } from "lucide-react";
-import { DataTable } from "~/components/DataTable";
+import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
+import { useState } from "react";
 
 export interface Transaction {
   id: string;
@@ -33,6 +35,13 @@ export interface Transaction {
   };
 }
 
+interface PaginatedResponse {
+  data: Transaction[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 const amountCell = (val: number) => {
   const formatted = new Intl.NumberFormat("en-PH", {
     style: "currency",
@@ -49,14 +58,30 @@ const amountCell = (val: number) => {
 };
 
 export default function Transactions() {
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
+  const search = useDebounce(searchInput);
+
   const {
-    data: rawTxns = [],
+    data: response,
     isLoading,
     isError,
-  } = useQuery<Transaction[]>({
-    queryKey: ["transactions"],
-    queryFn: () => apiFetch("/transactions"),
+  } = useQuery<PaginatedResponse>({
+    queryKey: ["transactions", page, search, monthFilter],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page) });
+      if (search) params.set("search", search);
+      if (monthFilter) params.set("month", monthFilter);
+      return apiFetch(`/transactions?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
+
+  const rawTxns = response?.data ?? [];
+  const pagination: PaginationMeta | undefined = response
+    ? { page: response.page, totalPages: response.totalPages, total: response.total }
+    : undefined;
 
   const transactions = rawTxns.map((t) => ({
     ...t,
@@ -69,6 +94,16 @@ export default function Transactions() {
   const totalCollected = transactions
     .filter((t) => t.amount > 0)
     .reduce((acc, t) => acc + t.amount, 0);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+    setPage(1);
+  };
+
+  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMonthFilter(e.target.value);
+    setPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -113,7 +148,7 @@ export default function Transactions() {
         />
         <StatsCard
           title="Total Transactions"
-          value={transactions.length}
+          value={pagination?.total ?? transactions.length}
           icon={ReceiptText}
           color="primary"
         />
@@ -126,10 +161,14 @@ export default function Transactions() {
               type="text"
               placeholder="Search transactions..."
               className="input input-bordered input-sm flex-1 max-w-sm"
+              value={searchInput}
+              onChange={handleSearchChange}
             />
             <input
               type="month"
               className="input input-bordered input-sm w-40"
+              value={monthFilter}
+              onChange={handleMonthChange}
             />
           </div>
           <DataTable
@@ -152,6 +191,8 @@ export default function Transactions() {
               },
             ]}
             emptyMessage="No transactions found."
+            pagination={pagination}
+            onPageChange={setPage}
           />
         </div>
       </div>

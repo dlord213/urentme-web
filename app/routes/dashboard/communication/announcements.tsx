@@ -1,10 +1,12 @@
 import { Megaphone, Users, CheckCircle2, Clock, Eye, Send, Plus, Pencil } from "lucide-react";
-import { DataTable } from "~/components/DataTable";
+import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
+import { useState } from "react";
 
 export interface Announcement {
   id: string;
@@ -15,6 +17,13 @@ export interface Announcement {
   createdAt: string;
   propertyAnnouncements: { property: { name: string } }[];
   unitAnnouncements: { unit: { unitNumber: string, property: { name: string } } }[];
+}
+
+interface PaginatedResponse {
+  data: Announcement[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 const statusBadge = (s: string[]) => {
@@ -39,10 +48,26 @@ const statusBadge = (s: string[]) => {
 };
 
 export default function Announcements() {
-  const { data: rawAnnouncements = [], isLoading, isError } = useQuery<Announcement[]>({
-    queryKey: ["announcements"],
-    queryFn: () => apiFetch("/announcements"),
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const search = useDebounce(searchInput);
+
+  const { data: response, isLoading, isError } = useQuery<PaginatedResponse>({
+    queryKey: ["announcements", page, search, statusFilter],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page) });
+      if (search) params.set("search", search);
+      if (statusFilter) params.set("status", statusFilter);
+      return apiFetch(`/announcements?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
+
+  const rawAnnouncements = response?.data ?? [];
+  const pagination: PaginationMeta | undefined = response
+    ? { page: response.page, totalPages: response.totalPages, total: response.total }
+    : undefined;
 
   const announcements = rawAnnouncements.map((a) => {
     let audience = "All";
@@ -71,6 +96,16 @@ export default function Announcements() {
 
   const sentCount = announcements.filter(a => a.publishedAt).length;
   const draftCount = announcements.filter(a => !a.publishedAt).length;
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -104,7 +139,7 @@ export default function Announcements() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatsCard title="Total Announcements" value={announcements.length} icon={Megaphone} color="primary" />
+        <StatsCard title="Total Announcements" value={pagination?.total ?? announcements.length} icon={Megaphone} color="primary" />
         <StatsCard title="Sent" value={sentCount} icon={CheckCircle2} color="success" />
         <StatsCard title="Drafts" value={draftCount} icon={Clock} color="warning" />
       </div>
@@ -112,11 +147,21 @@ export default function Announcements() {
       <div className="card bg-base-100 shadow-sm border border-base-200">
         <div className="card-body">
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <input type="text" placeholder="Search announcements..." className="input input-bordered input-sm flex-1 max-w-sm" />
-            <select className="select select-bordered select-sm w-36">
-              <option>All Statuses</option>
-              <option>Sent</option>
-              <option>Draft</option>
+            <input
+              type="text"
+              placeholder="Search announcements..."
+              className="input input-bordered input-sm flex-1 max-w-sm"
+              value={searchInput}
+              onChange={handleSearchChange}
+            />
+            <select
+              className="select select-bordered select-sm w-36"
+              value={statusFilter}
+              onChange={handleStatusChange}
+            >
+              <option value="">All Statuses</option>
+              <option value="sent">Sent</option>
+              <option value="draft">Draft</option>
             </select>
           </div>
           <DataTable
@@ -143,6 +188,8 @@ export default function Announcements() {
               },
             ]}
             emptyMessage="No announcements found."
+            pagination={pagination}
+            onPageChange={setPage}
           />
         </div>
       </div>

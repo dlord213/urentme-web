@@ -55,5 +55,6 @@ export default [
       "dashboard/announcements/new",
       "routes/dashboard/communication/add-announcement.tsx",
     ),
+    route("dashboard/profile", "routes/dashboard/profile.tsx"),
   ]),
 ] satisfies RouteConfig;

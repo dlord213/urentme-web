@@ -8,12 +8,14 @@ import {
   Mail,
   Pencil,
 } from "lucide-react";
-import { DataTable } from "~/components/DataTable";
+import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
+import { useState } from "react";
 
 export interface Property {
   id: string;
@@ -45,6 +47,13 @@ export interface Tenants {
   leases: Lease[];
 }
 
+interface PaginatedResponse {
+  data: Tenants[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 const statusBadge = (s: string | string[]) => {
   const map: Record<string, string> = {
     Active: "badge badge-xs font-semibold badge-success",
@@ -69,14 +78,30 @@ const statusBadge = (s: string | string[]) => {
 };
 
 export default function Tenants() {
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const search = useDebounce(searchInput);
+
   const {
-    data: rawTenants = [],
+    data: response,
     isLoading,
     isError,
-  } = useQuery<Tenants[]>({
-    queryKey: ["tenants"],
-    queryFn: () => apiFetch("/people/tenants"),
+  } = useQuery<PaginatedResponse>({
+    queryKey: ["tenants", page, search, statusFilter],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page) });
+      if (search) params.set("search", search);
+      if (statusFilter) params.set("status", statusFilter);
+      return apiFetch(`/people/tenants?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
+
+  const rawTenants = response?.data ?? [];
+  const pagination: PaginationMeta | undefined = response
+    ? { page: response.page, totalPages: response.totalPages, total: response.total }
+    : undefined;
 
   const tenants = rawTenants.map((t) => {
     const statusArray = [];
@@ -86,7 +111,6 @@ export default function Tenants() {
 
     if (t.isFlagged) statusArray.push("Flagged");
 
-    // Prioritize active leases
     const activeLeases = t.leases.filter((l) => l.status === "active");
     const primaryLease =
       activeLeases.length > 0 ? activeLeases[0] : t.leases[0];
@@ -98,11 +122,9 @@ export default function Tenants() {
     if (activeLeases.length > 1) {
       unitText = `${unitText} (+${activeLeases.length - 1} more)`;
     } else if (!activeLeases.length && t.leases.length > 1) {
-      // If no active but multiple others (e.g. past), just show first as before or indicate
       unitText = `${unitText} (Past)`;
     }
 
-    // For lease end, if multiple active, show the one ending soonest (most urgent)
     const relevantLeaseEnd =
       activeLeases.length > 0
         ? activeLeases.reduce((soonest, curr) =>
@@ -112,7 +134,6 @@ export default function Tenants() {
           ).leaseEndDate
         : primaryLease?.leaseEndDate;
 
-    // Check if expiring soon (7 days)
     const isExpiringSoon =
       relevantLeaseEnd &&
       activeLeases.length > 0 &&
@@ -132,7 +153,7 @@ export default function Tenants() {
     };
   });
 
-  const totalTenants = tenants.length;
+  const totalTenants = pagination?.total ?? tenants.length;
   const currentTenants = tenants.filter((t) =>
     t.status.includes("Active"),
   ).length;
@@ -142,6 +163,16 @@ export default function Tenants() {
   const flaggedTenants = tenants.filter((t) =>
     t.status.includes("Flagged"),
   ).length;
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -175,30 +206,10 @@ export default function Tenants() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total Tenants"
-          value={totalTenants}
-          icon={Users}
-          color="primary"
-        />
-        <StatsCard
-          title="Active Tenants"
-          value={currentTenants}
-          icon={Home}
-          color="success"
-        />
-        <StatsCard
-          title="Past Tenants"
-          value={pastTenants}
-          icon={AlertTriangle}
-          color="info"
-        />
-        <StatsCard
-          title="Flagged Tenants"
-          value={flaggedTenants}
-          icon={AlertTriangle}
-          color="warning"
-        />
+        <StatsCard title="Total Tenants" value={totalTenants} icon={Users} color="primary" />
+        <StatsCard title="Active Tenants" value={currentTenants} icon={Home} color="success" />
+        <StatsCard title="Past Tenants" value={pastTenants} icon={AlertTriangle} color="info" />
+        <StatsCard title="Flagged Tenants" value={flaggedTenants} icon={AlertTriangle} color="warning" />
       </div>
 
       <div className="card bg-base-100 shadow-sm border border-base-200">
@@ -208,11 +219,17 @@ export default function Tenants() {
               type="text"
               placeholder="Search tenants..."
               className="input input-bordered input-sm flex-1 max-w-sm"
+              value={searchInput}
+              onChange={handleSearchChange}
             />
-            <select className="select select-bordered select-sm w-44">
-              <option>All Statuses</option>
-              <option>Current</option>
-              <option>Past Tenant</option>
+            <select
+              className="select select-bordered select-sm w-44"
+              value={statusFilter}
+              onChange={handleStatusChange}
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </select>
           </div>
           <DataTable
@@ -226,9 +243,7 @@ export default function Tenants() {
                 key: "leaseEnd",
                 label: "Lease End",
                 render: (val, t) => (
-                  <span
-                    className={t.isExpiringSoon ? "text-warning font-bold" : ""}
-                  >
+                  <span className={t.isExpiringSoon ? "text-warning font-bold" : ""}>
                     {val}
                   </span>
                 ),
@@ -262,14 +277,10 @@ export default function Tenants() {
                 to: (t: any) => `/dashboard/tenants/${t.id}?edit=true`,
                 variant: "ghost",
               },
-              {
-                label: "Message",
-                icon: <MessageSquare className="w-3 h-3" />,
-                onClick: () => {},
-                variant: "ghost",
-              },
             ]}
             emptyMessage="No tenants found."
+            pagination={pagination}
+            onPageChange={setPage}
           />
         </div>
       </div>

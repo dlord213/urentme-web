@@ -24,10 +24,11 @@ export default function AddUnit() {
     isUnderRenovation: false,
   });
 
-  const { data: properties = [], isLoading: propertiesLoading } = useQuery({
+  const { data: propertiesResponse, isLoading: propertiesLoading } = useQuery({
     queryKey: ["properties"],
     queryFn: () => apiFetch("/properties"),
   });
+  const properties = propertiesResponse?.data ?? [];
 
   const selectedProperty = properties.find((p: any) => p.id === formData.propertyId);
 

@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ArrowLeft, Save, Megaphone, FileText, Globe, Home, Building, Info, Send, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Megaphone,
+  FileText,
+  Globe,
+  Home,
+  Building,
+  Info,
+  Send,
+  Check,
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
@@ -18,15 +29,17 @@ export default function NewAnnouncement() {
     selectedUnits: [] as string[],
   });
 
-  const { data: properties = [], isLoading: propertiesLoading } = useQuery({
+  const { data: propertiesResponse, isLoading: propertiesLoading } = useQuery({
     queryKey: ["properties"],
     queryFn: () => apiFetch("/properties"),
   });
+  const properties = propertiesResponse?.data ?? [];
 
-  const { data: units = [], isLoading: unitsLoading } = useQuery({
+  const { data: unitsResponse, isLoading: unitsLoading } = useQuery({
     queryKey: ["units"],
     queryFn: () => apiFetch("/units"),
   });
+  const units = unitsResponse?.data ?? [];
 
   const mutation = useMutation({
     mutationFn: (data: any) =>
@@ -49,8 +62,9 @@ export default function NewAnnouncement() {
     >,
   ) => {
     const { name, value, type } = e.target;
-    const val = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-    
+    const val =
+      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
+
     setFormData((prev) => ({
       ...prev,
       [name]: val,
@@ -77,11 +91,20 @@ export default function NewAnnouncement() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const { title, body, isActive, isPublished, selectedProperties, selectedUnits } = formData;
-    
+
+    const {
+      title,
+      body,
+      isActive,
+      isPublished,
+      selectedProperties,
+      selectedUnits,
+    } = formData;
+
     if (selectedProperties.length === 0 && selectedUnits.length === 0) {
-      alert("Please select at least one property or unit as the target audience.");
+      alert(
+        "Please select at least one property or unit as the target audience.",
+      );
       return;
     }
 
@@ -101,6 +124,10 @@ export default function NewAnnouncement() {
     mutation.mutate(payload);
   };
 
+  if (propertiesLoading) {
+    return <div></div>;
+  }
+
   return (
     <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12 text-sm">
       <div className="flex items-center gap-4">
@@ -110,7 +137,10 @@ export default function NewAnnouncement() {
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <PageHeader title="New Announcement" description="Send a message or notice to specific properties and units." />
+        <PageHeader
+          title="New Announcement"
+          description="Send a message or notice to specific properties and units."
+        />
       </div>
 
       <div className="card bg-base-100 shadow-sm border border-base-200">
@@ -122,10 +152,12 @@ export default function NewAnnouncement() {
                 <FileText className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold text-lg">Announcement Details</h3>
               </div>
-              
+
               <div className="form-control">
                 <label className="label p-1">
-                  <span className="label-text font-medium">Title <span className="text-error">*</span></span>
+                  <span className="label-text font-medium">
+                    Title <span className="text-error">*</span>
+                  </span>
                 </label>
                 <input
                   type="text"
@@ -140,7 +172,9 @@ export default function NewAnnouncement() {
 
               <div className="form-control">
                 <label className="label p-1">
-                  <span className="label-text font-medium">Message Body <span className="text-error">*</span></span>
+                  <span className="label-text font-medium">
+                    Message Body <span className="text-error">*</span>
+                  </span>
                 </label>
                 <textarea
                   name="body"
@@ -173,29 +207,40 @@ export default function NewAnnouncement() {
                   </div>
                   <div className="max-h-60 overflow-y-auto pr-2 space-y-1.5 scrollbar-thin">
                     {propertiesLoading ? (
-                      <div className="flex items-center gap-2 opacity-50"><span className="loading loading-spinner loading-xs"></span> Loading...</div>
-                    ) : properties.map((p: any) => (
-                      <label 
-                        key={p.id} 
-                        className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer hover:bg-base-200/50 ${
-                          formData.selectedProperties.includes(p.id) 
-                            ? "border-primary bg-primary/5 shadow-sm" 
-                            : "border-base-200 opacity-70"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-primary checkbox-xs"
-                          checked={formData.selectedProperties.includes(p.id)}
-                          onChange={() => toggleProperty(p.id)}
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{p.name}</span>
-                          <span className="text-[10px] opacity-50">{p.type} • {p.address}</span>
-                        </div>
-                      </label>
-                    ))}
-                    {!propertiesLoading && properties.length === 0 && <span className="text-xs opacity-50 italic">No properties found.</span>}
+                      <div className="flex items-center gap-2 opacity-50">
+                        <span className="loading loading-spinner loading-xs"></span>{" "}
+                        Loading...
+                      </div>
+                    ) : (
+                      properties.map((p: any) => (
+                        <label
+                          key={p.id}
+                          className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer hover:bg-base-200/50 ${
+                            formData.selectedProperties.includes(p.id)
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-base-200 opacity-70"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-primary checkbox-xs"
+                            checked={formData.selectedProperties.includes(p.id)}
+                            onChange={() => toggleProperty(p.id)}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-medium">{p.name}</span>
+                            <span className="text-[10px] opacity-50">
+                              {p.type} • {p.address}
+                            </span>
+                          </div>
+                        </label>
+                      ))
+                    )}
+                    {!propertiesLoading && properties.length === 0 && (
+                      <span className="text-xs opacity-50 italic">
+                        No properties found.
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -211,29 +256,42 @@ export default function NewAnnouncement() {
                   </div>
                   <div className="max-h-60 overflow-y-auto pr-2 space-y-1.5 scrollbar-thin">
                     {unitsLoading ? (
-                      <div className="flex items-center gap-2 opacity-50"><span className="loading loading-spinner loading-xs"></span> Loading...</div>
-                    ) : units.map((u: any) => (
-                      <label 
-                        key={u.id} 
-                        className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer hover:bg-base-200/50 ${
-                          formData.selectedUnits.includes(u.id) 
-                            ? "border-primary bg-primary/5 shadow-sm" 
-                            : "border-base-200 opacity-70"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-primary checkbox-xs"
-                          checked={formData.selectedUnits.includes(u.id)}
-                          onChange={() => toggleUnit(u.id)}
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-medium">Unit {u.unitNumber}</span>
-                          <span className="text-[10px] opacity-50">{u.property?.name} • {u.status}</span>
-                        </div>
-                      </label>
-                    ))}
-                    {!unitsLoading && units.length === 0 && <span className="text-xs opacity-50 italic">No units found.</span>}
+                      <div className="flex items-center gap-2 opacity-50">
+                        <span className="loading loading-spinner loading-xs"></span>{" "}
+                        Loading...
+                      </div>
+                    ) : (
+                      units.map((u: any) => (
+                        <label
+                          key={u.id}
+                          className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer hover:bg-base-200/50 ${
+                            formData.selectedUnits.includes(u.id)
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-base-200 opacity-70"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-primary checkbox-xs"
+                            checked={formData.selectedUnits.includes(u.id)}
+                            onChange={() => toggleUnit(u.id)}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              Unit {u.unitNumber}
+                            </span>
+                            <span className="text-[10px] opacity-50">
+                              {u.property?.name} • {u.status}
+                            </span>
+                          </div>
+                        </label>
+                      ))
+                    )}
+                    {!unitsLoading && units.length === 0 && (
+                      <span className="text-xs opacity-50 italic">
+                        No units found.
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -243,7 +301,11 @@ export default function NewAnnouncement() {
                 <div>
                   <p className="font-medium">Summary of Reach</p>
                   <p className="opacity-70 mt-0.5">
-                    This message will be sent to all active tenants in <strong>{formData.selectedProperties.length}</strong> properties and <strong>{formData.selectedUnits.length}</strong> individual units.
+                    This message will be sent to all active tenants in{" "}
+                    <strong>{formData.selectedProperties.length}</strong>{" "}
+                    properties and{" "}
+                    <strong>{formData.selectedUnits.length}</strong> individual
+                    units.
                   </p>
                 </div>
               </div>
@@ -262,8 +324,12 @@ export default function NewAnnouncement() {
                       className="toggle toggle-info toggle-sm"
                     />
                     <div>
-                      <span className="font-semibold block text-sm">Publish Immediately</span>
-                      <span className="text-[10px] opacity-60">Visible to tenants if active.</span>
+                      <span className="font-semibold block text-sm">
+                        Publish Immediately
+                      </span>
+                      <span className="text-[10px] opacity-60">
+                        Visible to tenants if active.
+                      </span>
                     </div>
                   </label>
                 </div>
@@ -278,8 +344,12 @@ export default function NewAnnouncement() {
                       className="toggle toggle-success toggle-sm"
                     />
                     <div>
-                      <span className="font-semibold block text-sm">Active Status</span>
-                      <span className="text-[10px] opacity-60">Enable or disable this announcement.</span>
+                      <span className="font-semibold block text-sm">
+                        Active Status
+                      </span>
+                      <span className="text-[10px] opacity-60">
+                        Enable or disable this announcement.
+                      </span>
                     </div>
                   </label>
                 </div>
@@ -287,7 +357,10 @@ export default function NewAnnouncement() {
             </section>
 
             <div className="card-actions justify-end mt-6 pt-4 border-t gap-3">
-              <Link to="/dashboard/announcements" className="btn btn-ghost btn-sm">
+              <Link
+                to="/dashboard/announcements"
+                className="btn btn-ghost btn-sm"
+              >
                 Cancel
               </Link>
               <button
@@ -299,8 +372,14 @@ export default function NewAnnouncement() {
                   <span className="loading loading-spinner loading-xs"></span>
                 ) : (
                   <>
-                    {formData.isPublished ? <Send className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                    {formData.isPublished ? "Send Announcement" : "Save as Draft"}
+                    {formData.isPublished ? (
+                      <Send className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    {formData.isPublished
+                      ? "Send Announcement"
+                      : "Save as Draft"}
                   </>
                 )}
               </button>

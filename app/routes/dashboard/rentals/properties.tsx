@@ -7,12 +7,14 @@ import {
   Eye,
   Pencil,
 } from "lucide-react";
-import { DataTable } from "~/components/DataTable";
+import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
+import { useState } from "react";
 
 export interface Unit {
   id: string;
@@ -33,6 +35,13 @@ export interface Property {
   isUnderRenovation: boolean;
   unitsCount?: number;
   occupiedCount?: number;
+}
+
+interface PaginatedResponse {
+  data: Property[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 const renderPropertyStatus = (item: Property) => {
@@ -86,14 +95,30 @@ const occupancyBar = (_: any, item: any) => {
 };
 
 export default function Properties() {
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const search = useDebounce(searchInput);
+
   const {
-    data: rawProperties = [],
+    data: response,
     isLoading,
     isError,
-  } = useQuery<Property[]>({
-    queryKey: ["properties"],
-    queryFn: () => apiFetch("/properties"),
+  } = useQuery<PaginatedResponse>({
+    queryKey: ["properties", page, search, typeFilter],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page) });
+      if (search) params.set("search", search);
+      if (typeFilter) params.set("type", typeFilter);
+      return apiFetch(`/properties?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
+
+  const rawProperties = response?.data ?? [];
+  const pagination: PaginationMeta | undefined = response
+    ? { page: response.page, totalPages: response.totalPages, total: response.total }
+    : undefined;
 
   const properties = rawProperties.map((p) => ({
     ...p,
@@ -114,6 +139,16 @@ export default function Properties() {
   );
   const occupancyRate =
     totalUnits > 0 ? Math.round((totalOccupied / totalUnits) * 100) : 0;
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+    setPage(1);
+  };
+
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTypeFilter(e.target.value);
+    setPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -146,7 +181,7 @@ export default function Properties() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total Properties"
-          value={properties.length}
+          value={pagination?.total ?? properties.length}
           icon={Building2}
           color="primary"
         />
@@ -179,11 +214,18 @@ export default function Properties() {
               type="text"
               placeholder="Search properties..."
               className="input input-bordered input-sm flex-1 max-w-sm"
+              value={searchInput}
+              onChange={handleSearchChange}
             />
-            <select className="select select-bordered select-sm w-40">
-              <option>All Types</option>
-              <option>Residential</option>
-              <option>Commercial</option>
+            <select
+              className="select select-bordered select-sm w-40"
+              value={typeFilter}
+              onChange={handleTypeChange}
+            >
+              <option value="">All Types</option>
+              <option value="Residential">Residential</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Mixed">Mixed</option>
             </select>
           </div>
           <DataTable
@@ -211,6 +253,8 @@ export default function Properties() {
               },
             ]}
             emptyMessage="No properties found."
+            pagination={pagination}
+            onPageChange={setPage}
           />
         </div>
       </div>

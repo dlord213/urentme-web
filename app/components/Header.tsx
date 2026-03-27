@@ -1,8 +1,8 @@
-import { Bell, Menu, Search, User } from "lucide-react";
+import { Bell, Menu, User } from "lucide-react";
 import { useAuthStore } from "../store/auth.store";
 import { useMutation } from "@tanstack/react-query";
 import { apiFetch } from "../lib/api";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 export function Header() {
   const clearAuth = useAuthStore((state) => state.clearAuth);
@@ -30,17 +30,17 @@ export function Header() {
       </div>
       
       <div className="hidden lg:flex flex-1">
-        <div className="form-control w-full max-w-md relative">
+        {/* <div className="form-control w-full max-w-md relative">
           <Search className="w-5 h-5 absolute left-3 top-3 opacity-50" />
           <input type="text" placeholder="Search everywhere..." className="input input-bordered w-full pl-10 bg-base-200/50" />
-        </div>
+        </div> */}
       </div>
 
       <div className="flex-none gap-4">
         <button className="btn btn-ghost btn-circle">
           <div className="indicator">
             <Bell className="w-5 h-5" />
-            <span className="badge badge-sm badge-primary indicator-item">3</span>
+            <span className="badge badge-sm badge-primary indicator-item">1</span>
           </div>
         </button>
         <div className="dropdown dropdown-end">
@@ -50,7 +50,7 @@ export function Header() {
             </div>
           </div>
           <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
-            <li><a className="justify-between">Profile<span className="badge badge-primary">New</span></a></li>
+            <li><Link to="/dashboard/profile">Profile</Link></li>
             <li><a>Settings</a></li>
             <div className="divider my-1"></div>
             <li><button 

@@ -5,12 +5,14 @@ import {
   Eye,
   Pencil,
 } from "lucide-react";
-import { DataTable } from "~/components/DataTable";
+import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { useDebounce } from "~/lib/useDebounce";
 import { Link } from "react-router";
+import { useState } from "react";
 
 export interface Lease {
   id: string;
@@ -27,6 +29,13 @@ export interface Lease {
     firstName: string;
     lastName: string;
   };
+}
+
+interface PaginatedResponse {
+  data: Lease[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 const StatusBadge = ({ lease }: { lease: any }) => {
@@ -58,10 +67,26 @@ const StatusBadge = ({ lease }: { lease: any }) => {
 };
 
 export default function Leases() {
-  const { data: rawLeases = [], isLoading, isError } = useQuery<Lease[]>({
-    queryKey: ["leases"],
-    queryFn: () => apiFetch("/leases"),
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const search = useDebounce(searchInput);
+
+  const { data: response, isLoading, isError } = useQuery<PaginatedResponse>({
+    queryKey: ["leases", page, search, statusFilter],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page) });
+      if (search) params.set("search", search);
+      if (statusFilter) params.set("status", statusFilter);
+      return apiFetch(`/leases?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
+
+  const rawLeases = response?.data ?? [];
+  const pagination: PaginationMeta | undefined = response
+    ? { page: response.page, totalPages: response.totalPages, total: response.total }
+    : undefined;
 
   const leases = rawLeases.map((l) => ({
     ...l,
@@ -73,6 +98,16 @@ export default function Leases() {
 
   const activeLeases = leases.filter(l => l.status === "active").length;
   const draftLeases = leases.filter(l => l.status === "draft").length;
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -106,19 +141,9 @@ export default function Leases() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatsCard title="Total Leases" value={leases.length} icon={FileText} color="primary" />
-        <StatsCard
-          title="Active Leases"
-          value={activeLeases}
-          icon={Key}
-          color="success"
-        />
-        <StatsCard
-          title="Draft Leases"
-          value={draftLeases}
-          icon={FileText}
-          color="warning"
-        />
+        <StatsCard title="Total Leases" value={pagination?.total ?? leases.length} icon={FileText} color="primary" />
+        <StatsCard title="Active Leases" value={activeLeases} icon={Key} color="success" />
+        <StatsCard title="Draft Leases" value={draftLeases} icon={FileText} color="warning" />
       </div>
 
       <div className="card bg-base-100 shadow-sm border border-base-200">
@@ -128,12 +153,18 @@ export default function Leases() {
               type="text"
               placeholder="Search leases..."
               className="input input-bordered input-sm flex-1 max-w-sm"
+              value={searchInput}
+              onChange={handleSearchChange}
             />
-            <select className="select select-bordered select-sm w-36">
-              <option>All Statuses</option>
-              <option>Active</option>
-              <option>Draft</option>
-              <option>Expired</option>
+            <select
+              className="select select-bordered select-sm w-36"
+              value={statusFilter}
+              onChange={handleStatusChange}
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+              <option value="expired">Expired</option>
             </select>
           </div>
           <DataTable
@@ -165,6 +196,8 @@ export default function Leases() {
               },
             ]}
             emptyMessage="No leases found."
+            pagination={pagination}
+            onPageChange={setPage}
           />
         </div>
       </div>

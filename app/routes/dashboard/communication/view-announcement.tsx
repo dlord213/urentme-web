@@ -45,15 +45,17 @@ export default function ViewAnnouncement() {
     enabled: !!id,
   });
 
-  const { data: properties = [], isLoading: propertiesLoading } = useQuery({
+  const { data: propertiesResponse, isLoading: propertiesLoading } = useQuery({
     queryKey: ["properties"],
     queryFn: () => apiFetch("/properties"),
   });
+  const properties = propertiesResponse?.data ?? [];
 
-  const { data: units = [], isLoading: unitsLoading } = useQuery({
+  const { data: unitsResponse, isLoading: unitsLoading } = useQuery({
     queryKey: ["units"],
     queryFn: () => apiFetch("/units"),
   });
+  const units = unitsResponse?.data ?? [];
 
   // Initialize form data when announcement is loaded
   useEffect(() => {

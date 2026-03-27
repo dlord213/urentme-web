@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 interface Action {
   label: string;
@@ -6,6 +7,7 @@ interface Action {
   to?: (item: any) => string;
   icon?: React.ReactNode;
   variant?: 'primary' | 'error' | 'ghost' | 'outline' | 'secondary';
+  show?: (item: any) => boolean;
 }
 
 interface Column {
@@ -14,14 +16,47 @@ interface Column {
   render?: (val: any, item: any) => React.ReactNode;
 }
 
+export interface PaginationMeta {
+  page: number;
+  totalPages: number;
+  total: number;
+}
+
 interface DataTableProps {
   columns: Column[];
   data: any[];
   actions?: Action[];
   emptyMessage?: string;
+  pagination?: PaginationMeta;
+  onPageChange?: (page: number) => void;
 }
 
-export function DataTable({ columns, data, actions, emptyMessage = "No items found." }: DataTableProps) {
+export function DataTable({ columns, data, actions, emptyMessage = "No items found.", pagination, onPageChange }: DataTableProps) {
+  const currentPage = pagination?.page ?? 1;
+  const totalPages = pagination?.totalPages ?? 1;
+  const total = pagination?.total ?? data.length;
+
+  const PAGE_SIZE = 10;
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + data.length, total);
+
+  // Generate page numbers with ellipsis
+  const getPageNumbers = (): (number | "...")[] => {
+    const pages: (number | "...")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   if (!data || data.length === 0) {
     return (
       <div className="bg-base-100 rounded-box border border-base-200 p-12 flex flex-col items-center justify-center text-center shadow-sm">
@@ -62,7 +97,7 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
                 {actions && actions.length > 0 && (
                   <td className="text-right">
                     <div className="flex justify-end gap-2">
-                      {actions.map((act, i) => {
+                      {actions.filter((act) => !act.show || act.show(item)).map((act, i) => {
                         const className = `btn btn-sm ${act.variant ? `btn-${act.variant}` : 'btn-ghost'}`;
                         
                         if (act.to) {
@@ -98,15 +133,63 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
         </table>
       </div>
       
-      {/* Pagination stub */}
-      <div className="p-4 border-t border-base-200 flex justify-between items-center bg-base-50">
-        <span className="text-sm text-base-content/60">Showing 1 to {data.length} of {data.length} entries</span>
-        <div className="join">
-          <button className="join-item btn btn-sm btn-disabled">«</button>
-          <button className="join-item btn btn-sm">Page 1</button>
-          <button className="join-item btn btn-sm btn-disabled">»</button>
+      {/* Pagination */}
+      {pagination && onPageChange && (
+        <div className="p-4 border-t border-base-200 flex flex-col sm:flex-row justify-between items-center gap-3 bg-base-50">
+          <span className="text-sm text-base-content/60">
+            Showing {startIndex + 1} to {endIndex} of {total} entries
+          </span>
+          <div className="join">
+            <button
+              className="join-item btn btn-sm"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(1)}
+              aria-label="First page"
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button
+              className="join-item btn btn-sm"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {getPageNumbers().map((page, i) =>
+              page === "..." ? (
+                <button key={`ellipsis-${i}`} className="join-item btn btn-sm btn-disabled">
+                  …
+                </button>
+              ) : (
+                <button
+                  key={page}
+                  className={`join-item btn btn-sm ${currentPage === page ? "btn-active" : ""}`}
+                  onClick={() => onPageChange(page)}
+                >
+                  {page}
+                </button>
+              )
+            )}
+            <button
+              className="join-item btn btn-sm"
+              disabled={currentPage === totalPages}
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              aria-label="Next page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              className="join-item btn btn-sm"
+              disabled={currentPage === totalPages}
+              onClick={() => onPageChange(totalPages)}
+              aria-label="Last page"
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

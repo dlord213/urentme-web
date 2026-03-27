@@ -40,11 +40,12 @@ export default function UnitDetail() {
   });
 
   // Properties for the dropdown in edit mode
-  const { data: properties = [] } = useQuery({
+  const { data: propertiesResponse } = useQuery({
     queryKey: ["properties"],
     queryFn: () => apiFetch("/properties"),
     enabled: isEditing,
   });
+  const properties = propertiesResponse?.data ?? [];
 
   // Form State
   const [formData, setFormData] = useState({

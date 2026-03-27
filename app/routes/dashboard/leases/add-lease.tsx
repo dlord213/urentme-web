@@ -21,15 +21,17 @@ export default function CreateLease() {
 
   const [selectedUnitRent, setSelectedUnitRent] = useState<number | null>(null);
 
-  const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
+  const { data: tenantsResponse, isLoading: tenantsLoading } = useQuery({
     queryKey: ["tenants"],
     queryFn: () => apiFetch("/people/tenants"),
   });
+  const tenants = tenantsResponse?.data ?? [];
 
-  const { data: units = [], isLoading: unitsLoading } = useQuery({
+  const { data: unitsResponse, isLoading: unitsLoading } = useQuery({
     queryKey: ["units"],
     queryFn: () => apiFetch("/units"),
   });
+  const units = unitsResponse?.data ?? [];
 
   // Track the rent of the selected unit
   useEffect(() => {
