@@ -52,9 +52,6 @@ export default function PropertyDetail() {
     description: "",
     houseRules: "", // Store as newline-separated string for editing
     imageUrls: "",  // Store as newline-separated string for editing
-    isActive: true,
-    isUnderRepair: false,
-    isUnderRenovation: false,
   });
 
   // PSGC State
@@ -77,9 +74,6 @@ export default function PropertyDetail() {
         description: property.description || "",
         houseRules: Array.isArray(property.houseRules) ? property.houseRules.join("\n") : "",
         imageUrls: Array.isArray(property.imageUrls) ? property.imageUrls.join("\n") : "",
-        isActive: property.isActive ?? true,
-        isUnderRepair: property.isUnderRepair ?? false,
-        isUnderRenovation: property.isUnderRenovation ?? false,
       });
     }
   }, [property]);
@@ -176,6 +170,21 @@ export default function PropertyDetail() {
     },
   });
 
+  const toggleStatusMutation = useMutation({
+    mutationFn: (data: { isActive?: boolean; isUnderRepair?: boolean; isUnderRenovation?: boolean }) =>
+      apiFetch(`/properties/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["property", id] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+    },
+    onError: (error: any) => {
+      alert(error.message || "Failed to update status.");
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => apiFetch(`/properties/${id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -211,45 +220,75 @@ export default function PropertyDetail() {
   return (
     <div className="animate-in fade-in duration-300 space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link to="/dashboard/properties" className="btn btn-ghost btn-sm btn-square">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">{property.name}</h1>
-              <StatusBadge status={property.type} />
+      <PageHeader
+        title={property.name}
+        showBack
+        backTo="/dashboard/properties"
+        titleSuffix={
+          <div className="flex items-center gap-4 flex-wrap ml-2">
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={property.isActive}
+                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
+                className="checkbox checkbox-primary checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Active</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={property.isUnderRepair}
+                onChange={(e) => toggleStatusMutation.mutate({ isUnderRepair: e.target.checked })}
+                className="checkbox checkbox-warning checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Repair</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={property.isUnderRenovation}
+                onChange={(e) => toggleStatusMutation.mutate({ isUnderRenovation: e.target.checked })}
+                className="checkbox checkbox-info checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Renovation</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <StatusBadge status={property.type} label={property.type} />
               {property.isActive === false && <StatusBadge status="inactive" />}
-              {property.isUnderRepair && <StatusBadge status="Under Repair" />}
-              {property.isUnderRenovation && <StatusBadge status="Under Renovation" />}
+              {property.isUnderRepair && <StatusBadge status="under repair" label="Under Repair" />}
+              {property.isUnderRenovation && <StatusBadge status="under renovation" label="Under Renovation" />}
             </div>
-            <p className="text-sm opacity-60 flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> {property.street}, {property.barangay}, {property.city}
-            </p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isEditing ? (
-            <>
-              <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
-                <Edit2 className="w-4 h-4" /> Edit
+        }
+        description={
+          <p className="text-sm opacity-60 flex items-center gap-1">
+            <MapPin className="w-3 h-3" /> {property.street}, {property.barangay}, {property.city}
+          </p>
+        }
+        actionButton={
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <>
+                <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
+                  <Edit2 className="w-4 h-4" /> Edit
+                </button>
+                <button 
+                  onClick={handleDelete} 
+                  className="btn btn-ghost text-error btn-sm btn-square"
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setIsEditing(false)} className="btn btn-ghost btn-sm">
+                Cancel
               </button>
-              <button 
-                onClick={handleDelete} 
-                className="btn btn-ghost text-error btn-sm btn-square"
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setIsEditing(false)} className="btn btn-ghost btn-sm">
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        }
+      />
 
       {/* Stats Summary */}
       {!isEditing && (
@@ -300,24 +339,6 @@ export default function PropertyDetail() {
                     <div className="form-control">
                       <label className="label"><span className="label-text">Year Built</span></label>
                       <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="input input-bordered w-full" />
-                    </div>
-
-                    <div className="space-y-3 pt-2">
-                      <label className="label-text font-semibold">Status Flags</label>
-                      <div className="grid grid-cols-1 gap-2">
-                        <label className="label cursor-pointer justify-start gap-3">
-                          <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData(p => ({...p, isActive: e.target.checked}))} className="checkbox checkbox-primary checkbox-sm" />
-                          <span className="label-text">Property is Active</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3">
-                          <input type="checkbox" checked={formData.isUnderRepair} onChange={(e) => setFormData(p => ({...p, isUnderRepair: e.target.checked}))} className="checkbox checkbox-warning checkbox-sm" />
-                          <span className="label-text">Under Repair</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3">
-                          <input type="checkbox" checked={formData.isUnderRenovation} onChange={(e) => setFormData(p => ({...p, isUnderRenovation: e.target.checked}))} className="checkbox checkbox-info checkbox-sm" />
-                          <span className="label-text">Under Renovation</span>
-                        </label>
-                      </div>
                     </div>
                   </div>
 

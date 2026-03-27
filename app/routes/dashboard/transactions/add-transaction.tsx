@@ -41,10 +41,11 @@ export default function NewTransaction() {
     setFormData(prev => ({ ...prev, reference: generateReference() }));
   };
 
-  const { data: leases = [], isLoading: leasesLoading } = useQuery({
+  const { data: leasesResponse, isLoading: leasesLoading } = useQuery({
     queryKey: ["leases"],
     queryFn: () => apiFetch("/leases"),
   });
+  const leases = leasesResponse?.data || [];
 
   const mutation = useMutation({
     mutationFn: (data: any) =>
@@ -136,7 +137,7 @@ export default function NewTransaction() {
                   </option>
                   {leases.map((l: any) => (
                     <option key={l.id} value={l.id}>
-                      {l.tenant.firstName} {l.tenant.lastName} - {l.unit.property.name} - Unit{" "}
+                      {l.tenant.firstName} {l.tenant.lastName} - {l.unit.property?.name} - Unit{" "}
                       {l.unit.unitNumber} ({l.status.charAt(0).toUpperCase() + l.status.slice(1)})
                     </option>
                   ))}

@@ -170,61 +170,53 @@ export default function LeaseDetail() {
   return (
     <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            to="/dashboard/leases"
-            className="btn btn-ghost btn-sm btn-square"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">
-                Lease Agreement #{lease.id.slice(-6).toUpperCase()}
-              </h1>
-              {isExpiringSoon ? (
-                <StatusBadge status="warning" label="Expiring Soon" pulse />
-              ) : (
-                <StatusBadge status={lease.status} />
-              )}
-            </div>
-            <p className="text-sm opacity-60 flex items-center gap-2">
-              <Home className="w-3 h-3" /> {property?.name} — Unit{" "}
-              {unit?.unitNumber}
-              <span className="opacity-40">|</span>
-              <User className="w-3 h-3" /> {tenant?.firstName}{" "}
-              {tenant?.lastName}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isEditing ? (
-            <>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="btn btn-outline btn-sm gap-2"
-              >
-                <Edit2 className="w-4 h-4" /> Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                className="btn btn-ghost text-error btn-sm btn-square"
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
+      <PageHeader
+        title={`Lease Agreement #${lease.id.slice(-6).toUpperCase()}`}
+        showBack
+        backTo="/dashboard/leases"
+        titleSuffix={
+          isExpiringSoon ? (
+            <StatusBadge status="warning" label="Expiring Soon" pulse />
           ) : (
-            <button
-              onClick={() => setIsEditing(false)}
-              className="btn btn-ghost btn-sm"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
+            <StatusBadge status={lease.status} />
+          )
+        }
+        description={
+          <p className="text-sm opacity-60 flex items-center gap-2">
+            <Home className="w-3 h-3" /> {property?.name} — Unit {unit?.unitNumber}
+            <span className="opacity-40">|</span>
+            <User className="w-3 h-3" /> {tenant?.firstName} {tenant?.lastName}
+          </p>
+        }
+        actionButton={
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="btn btn-outline btn-sm gap-2"
+                >
+                  <Edit2 className="w-4 h-4" /> Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="btn btn-ghost text-error btn-sm btn-square"
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsEditing(false)}
+                className="btn btn-ghost btn-sm"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        }
+      />
 
       {/* Expiration Warning */}
       {isExpiringSoon && (

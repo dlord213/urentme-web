@@ -175,12 +175,16 @@ export default function Properties() {
           value={pagination?.total ?? properties.length}
           icon={Building2}
           color="primary"
+          className="animate-fade-in-up"
+          style={{ animationDelay: "50ms" }}
         />
         <StatsCard
           title="Total Units"
           value={totalUnits}
           icon={Home}
           color="info"
+          className="animate-fade-in-up"
+          style={{ animationDelay: "100ms" }}
         />
         <StatsCard
           title="Occupied Units"
@@ -188,6 +192,8 @@ export default function Properties() {
           icon={TrendingUp}
           color="success"
           trend={{ value: `${occupancyRate}% occupancy rate`, positive: true }}
+          className="animate-fade-in-up"
+          style={{ animationDelay: "150ms" }}
         />
         <StatsCard
           title="Vacant Units"
@@ -195,6 +201,8 @@ export default function Properties() {
           icon={MapPin}
           color="warning"
           subtitle="Available to lease"
+          className="animate-fade-in-up"
+          style={{ animationDelay: "200ms" }}
         />
       </div>
 

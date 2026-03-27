@@ -172,7 +172,11 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
           </thead>
           <tbody>
             {data.map((item, idx) => (
-              <tr key={item.id || idx} className="hover">
+              <tr 
+                key={item.id || idx} 
+                className="hover animate-fade-in-up"
+                style={{ animationDelay: `${idx * 50}ms` }}
+              >
                 {columns.map((c) => (
                   <td key={c.key}>
                     {c.render ? c.render(item[c.key], item) : item[c.key]}
@@ -197,7 +201,11 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
         {data.map((item, idx) => {
           const itemActions = visibleActions(item);
           return (
-            <div key={item.id || idx} className="p-4 space-y-3">
+            <div 
+              key={item.id || idx} 
+              className="p-4 space-y-3 animate-fade-in-up"
+              style={{ animationDelay: `${idx * 50}ms` }}
+            >
               {/* Card rows for each column */}
               <div className="space-y-2">
                 {columns.map((c) => {

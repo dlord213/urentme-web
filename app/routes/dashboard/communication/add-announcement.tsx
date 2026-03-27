@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   ArrowLeft,
-  Save,
   Megaphone,
   FileText,
   Globe,
@@ -10,7 +9,7 @@ import {
   Building,
   Info,
   Send,
-  Check,
+  Save,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
@@ -23,7 +22,6 @@ export default function NewAnnouncement() {
   const [formData, setFormData] = useState({
     title: "",
     body: "",
-    isActive: true,
     isPublished: true,
     selectedProperties: [] as string[],
     selectedUnits: [] as string[],
@@ -72,19 +70,19 @@ export default function NewAnnouncement() {
   };
 
   const toggleProperty = (id: string) => {
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       selectedProperties: prev.selectedProperties.includes(id)
-        ? prev.selectedProperties.filter((p) => p !== id)
+        ? prev.selectedProperties.filter((p: string) => p !== id)
         : [...prev.selectedProperties, id],
     }));
   };
 
   const toggleUnit = (id: string) => {
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       selectedUnits: prev.selectedUnits.includes(id)
-        ? prev.selectedUnits.filter((u) => u !== id)
+        ? prev.selectedUnits.filter((u: string) => u !== id)
         : [...prev.selectedUnits, id],
     }));
   };
@@ -95,7 +93,6 @@ export default function NewAnnouncement() {
     const {
       title,
       body,
-      isActive,
       isPublished,
       selectedProperties,
       selectedUnits,
@@ -111,7 +108,7 @@ export default function NewAnnouncement() {
     const payload: any = {
       title,
       body,
-      isActive,
+      isActive: true, // Default to true on creation
       publishedAt: isPublished ? new Date().toISOString() : null,
       propertyAnnouncements: {
         create: selectedProperties.map((id) => ({ propertyId: id })),
@@ -125,7 +122,11 @@ export default function NewAnnouncement() {
   };
 
   if (propertiesLoading) {
-    return <div></div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <span className="loading loading-spinner text-primary loading-lg"></span>
+      </div>
+    );
   }
 
   return (
@@ -144,7 +145,7 @@ export default function NewAnnouncement() {
       </div>
 
       <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body">
+        <div className="card-body p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Content Section */}
             <section className="space-y-4">
@@ -296,18 +297,15 @@ export default function NewAnnouncement() {
                 </div>
               </div>
 
-              <div className="p-3 bg-base-200 rounded-lg flex items-start gap-3 text-xs">
+              <div className="p-3 bg-base-200 rounded-lg flex items-start gap-3 text-xs border border-base-300/50">
                 <Info className="w-4 h-4 mt-0.5 text-info shrink-0" />
-                <div>
-                  <p className="font-medium">Summary of Reach</p>
-                  <p className="opacity-70 mt-0.5">
-                    This message will be sent to all active tenants in{" "}
-                    <strong>{formData.selectedProperties.length}</strong>{" "}
-                    properties and{" "}
-                    <strong>{formData.selectedUnits.length}</strong> individual
-                    units.
-                  </p>
-                </div>
+                <p className="opacity-70 mt-0.5">
+                  This message will be sent to all active tenants in{" "}
+                  <strong>{formData.selectedProperties.length}</strong>{" "}
+                  properties and{" "}
+                  <strong>{formData.selectedUnits.length}</strong> individual
+                  units.
+                </p>
               </div>
             </section>
 
@@ -334,29 +332,17 @@ export default function NewAnnouncement() {
                   </label>
                 </div>
 
-                <div className="form-control">
-                  <label className="label cursor-pointer flex items-center justify-start gap-4 p-0">
-                    <input
-                      type="checkbox"
-                      name="isActive"
-                      checked={formData.isActive}
-                      onChange={handleChange}
-                      className="toggle toggle-success toggle-sm"
-                    />
-                    <div>
-                      <span className="font-semibold block text-sm">
-                        Active Status
-                      </span>
-                      <span className="text-[10px] opacity-60">
-                        Enable or disable this announcement.
-                      </span>
-                    </div>
-                  </label>
+                <div className="bg-base-200/50 p-3 rounded-xl flex items-center gap-3 text-xs border border-base-300/50 flex-1">
+                  <Info className="w-4 h-4 text-info shrink-0" />
+                  <p className="opacity-70">
+                    New announcements are set to <strong>Active</strong> by default.
+                    Drafts remain hidden until published.
+                  </p>
                 </div>
               </div>
             </section>
 
-            <div className="card-actions justify-end mt-6 pt-4 border-t gap-3">
+            <div className="card-actions justify-end mt-6 pt-6 border-t gap-3">
               <Link
                 to="/dashboard/announcements"
                 className="btn btn-ghost btn-sm"
@@ -365,11 +351,11 @@ export default function NewAnnouncement() {
               </Link>
               <button
                 type="submit"
-                className="btn btn-primary h-10 px-8 shadow-md shadow-primary/20"
+                className="btn btn-primary h-12 px-10 shadow-lg shadow-primary/20"
                 disabled={mutation.isPending}
               >
                 {mutation.isPending ? (
-                  <span className="loading loading-spinner loading-xs"></span>
+                  <span className="loading loading-spinner loading-sm"></span>
                 ) : (
                   <>
                     {formData.isPublished ? (

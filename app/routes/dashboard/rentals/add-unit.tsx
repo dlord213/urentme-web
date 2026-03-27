@@ -4,6 +4,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
+import { formatFloor } from "~/lib/format";
 
 export default function AddUnit() {
   const navigate = useNavigate();
@@ -18,10 +19,6 @@ export default function AddUnit() {
     squareFeet: "",
     monthlyRentAmount: "",
     description: "",
-    status: "vacant",
-    isActive: true,
-    isUnderRepair: false,
-    isUnderRenovation: false,
   });
 
   const { data: propertiesResponse, isLoading: propertiesLoading } = useQuery({
@@ -52,14 +49,11 @@ export default function AddUnit() {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => {
-    const { name, value, type } = e.target as any;
-    const isCheckbox = type === 'checkbox';
+    const { name, value } = e.target;
     
     setFormData((prev) => ({
       ...prev,
-      [name]: isCheckbox 
-        ? (e.target as HTMLInputElement).checked
-        : ["bedrooms", "bathrooms"].includes(name)
+      [name]: ["bedrooms", "bathrooms"].includes(name)
         ? parseInt(value) || 0
         : value,
     }));
@@ -74,8 +68,14 @@ export default function AddUnit() {
 
     const payload = {
       ...formData,
+      floor: formatFloor(formData.floor),
       monthlyRentAmount: parseFloat(formData.monthlyRentAmount) || 0,
       squareFeet: formData.squareFeet ? parseFloat(formData.squareFeet) : null,
+      // Default statuses for new units
+      status: "vacant",
+      isActive: true,
+      isUnderRepair: false,
+      isUnderRenovation: false,
       // Reset residential fields if commercial
       bedrooms: selectedProperty?.type === "Commercial" ? 0 : formData.bedrooms,
       bathrooms: selectedProperty?.type === "Commercial" ? 0 : formData.bathrooms,
@@ -97,219 +97,185 @@ export default function AddUnit() {
       </div>
 
       <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="card-body p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Unit Details */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">
-                  Unit Details
-                </h3>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Select Property <span className="text-error">*</span></span>
-                  </label>
-                  <select
-                    name="propertyId"
-                    value={formData.propertyId}
-                    onChange={handleChange}
-                    required
-                    className="select select-bordered w-full"
-                    disabled={propertiesLoading}
-                  >
-                    <option value="" disabled>
-                      {propertiesLoading ? "Loading properties..." : "Select a property"}
-                    </option>
-                    {properties.map((p: any) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.type})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Unit Number <span className="text-error">*</span></span>
-                    </label>
-                    <input
-                      type="text"
-                      name="unitNumber"
-                      required
-                      value={formData.unitNumber}
-                      onChange={handleChange}
-                      className="input input-bordered w-full"
-                      placeholder="e.g. 101"
-                    />
-                  </div>
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Floor <span className="text-error">*</span></span>
-                    </label>
-                    <input
-                      type="text"
-                      name="floor"
-                      required
-                      value={formData.floor}
-                      onChange={handleChange}
-                      className="input input-bordered w-full"
-                      placeholder="e.g. 1st Floor"
-                    />
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-bold text-lg border-b pb-2 mb-4">Unit Identity</h3>
+                  <div className="space-y-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-semibold">Select Property <span className="text-error">*</span></span>
+                      </label>
+                      <select
+                        name="propertyId"
+                        value={formData.propertyId}
+                        onChange={handleChange}
+                        required
+                        className="select select-bordered w-full"
+                        disabled={propertiesLoading}
+                      >
+                        <option value="" disabled>
+                          {propertiesLoading ? "Loading properties..." : "Select a property"}
+                        </option>
+                        {properties.map((p: any) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.type})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-semibold">Unit Number <span className="text-error">*</span></span>
+                        </label>
+                        <input
+                          type="text"
+                          name="unitNumber"
+                          required
+                          value={formData.unitNumber}
+                          onChange={handleChange}
+                          className="input input-bordered w-full"
+                          placeholder="e.g. 101"
+                        />
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-semibold">Floor <span className="text-error">*</span></span>
+                        </label>
+                        <input
+                          type="number"
+                          name="floor"
+                          required
+                          min="0"
+                          value={formData.floor}
+                          onChange={handleChange}
+                          className="input input-bordered w-full"
+                          placeholder="e.g. 1"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {selectedProperty?.type !== "Commercial" && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">Bedrooms <span className="text-error">*</span></span>
-                      </label>
-                      <input
-                        type="number"
-                        name="bedrooms"
-                        min="0"
-                        required
-                        value={formData.bedrooms}
-                        onChange={handleChange}
-                        className="input input-bordered w-full"
-                      />
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">Bathrooms <span className="text-error">*</span></span>
-                      </label>
-                      <input
-                        type="number"
-                        name="bathrooms"
-                        min="0"
-                        required
-                        value={formData.bathrooms}
-                        onChange={handleChange}
-                        className="input input-bordered w-full"
-                      />
+                  <div>
+                    <h3 className="font-bold text-lg border-b pb-2 mb-4">Layout</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-semibold">Bedrooms <span className="text-error">*</span></span>
+                        </label>
+                        <input
+                          type="number"
+                          name="bedrooms"
+                          min="0"
+                          required
+                          value={formData.bedrooms}
+                          onChange={handleChange}
+                          className="input input-bordered w-full"
+                        />
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-semibold">Bathrooms <span className="text-error">*</span></span>
+                        </label>
+                        <input
+                          type="number"
+                          name="bathrooms"
+                          min="0"
+                          required
+                          value={formData.bathrooms}
+                          onChange={handleChange}
+                          className="input input-bordered w-full"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
-
-                <div className="form-control flex flex-col">
-                  <label className="label">
-                    <span className="label-text">Description</span>
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="textarea textarea-bordered h-24 w-full"
-                    placeholder="Optional description of the unit..."
-                  />
-                </div>
               </div>
 
-              {/* Financial & Status */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">
-                  Financial & Status
-                </h3>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Monthly Rent (PHP) <span className="text-error">*</span></span>
-                  </label>
-                  <input
-                    type="number"
-                    name="monthlyRentAmount"
-                    required
-                    min="0"
-                    step="0.01"
-                    value={formData.monthlyRentAmount}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Square Feet</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="squareFeet"
-                    min="0"
-                    step="0.01"
-                    value={formData.squareFeet}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                    placeholder="e.g. 25.5"
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Status</span>
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className="select select-bordered w-full"
-                  >
-                    <option value="vacant">Vacant</option>
-                    <option value="occupied">Occupied</option>
-                    <option value="reserved">Reserved</option>
-                  </select>
+              {/* Financials & Description */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-bold text-lg border-b pb-2 mb-4">Financials & Details</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-semibold">Monthly Rent (PHP) <span className="text-error">*</span></span>
+                        </label>
+                        <input
+                          type="number"
+                          name="monthlyRentAmount"
+                          required
+                          min="0"
+                          step="0.01"
+                          value={formData.monthlyRentAmount}
+                          onChange={handleChange}
+                          className="input input-bordered w-full"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-semibold">Square Feet</span>
+                        </label>
+                        <input
+                          type="number"
+                          name="squareFeet"
+                          min="0"
+                          step="0.01"
+                          value={formData.squareFeet}
+                          onChange={handleChange}
+                          className="input input-bordered w-full"
+                          placeholder="e.g. 25.5"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-semibold">Description</span>
+                      </label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        className="textarea textarea-bordered h-32 w-full"
+                        placeholder="Optional description of the unit (e.g. amenities, views, etc.)"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-3 pt-2">
-                  <label className="label-text font-semibold">Status Flags</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    <label className="label cursor-pointer justify-start gap-3">
-                      <input 
-                        type="checkbox" 
-                        name="isActive" 
-                        checked={formData.isActive} 
-                        onChange={handleChange} 
-                        className="checkbox checkbox-primary checkbox-sm" 
-                      />
-                      <span className="label-text">Unit is Active</span>
-                    </label>
-                    <label className="label cursor-pointer justify-start gap-3">
-                      <input 
-                        type="checkbox" 
-                        name="isUnderRepair" 
-                        checked={formData.isUnderRepair} 
-                        onChange={handleChange} 
-                        className="checkbox checkbox-warning checkbox-sm" 
-                      />
-                      <span className="label-text">Under Repair</span>
-                    </label>
-                    <label className="label cursor-pointer justify-start gap-3">
-                      <input 
-                        type="checkbox" 
-                        name="isUnderRenovation" 
-                        checked={formData.isUnderRenovation} 
-                        onChange={handleChange} 
-                        className="checkbox checkbox-info checkbox-sm" 
-                      />
-                      <span className="label-text">Under Renovation</span>
-                    </label>
-                  </div>
+                <div className="bg-base-200/50 p-4 rounded-xl space-y-2 border border-base-300/50">
+                  <h4 className="text-xs font-black uppercase tracking-widest opacity-50">Status Info</h4>
+                  <p className="text-xs opacity-70">New units are created as <strong>Vacant</strong> and <strong>Active</strong> by default. Status can be updated from the Unit detail page after creation.</p>
                 </div>
               </div>
             </div>
 
-            <div className="card-actions justify-end mt-6 pt-4 border-t">
+            <div className="card-actions justify-end mt-6 pt-6 border-t gap-3">
               <Link to="/dashboard/units" className="btn btn-ghost">
                 Cancel
               </Link>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary px-8 shadow-lg shadow-primary/20"
                 disabled={mutation.isPending}
               >
                 {mutation.isPending ? (
                   <span className="loading loading-spinner loading-sm"></span>
                 ) : (
-                  <Save className="w-4 h-4 mr-2" />
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Unit
+                  </>
                 )}
-                Save Unit
               </button>
             </div>
           </form>

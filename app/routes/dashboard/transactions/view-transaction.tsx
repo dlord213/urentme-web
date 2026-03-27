@@ -113,38 +113,29 @@ export default function TransactionDetail() {
         `}
       </style>
 
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 print:hidden">
-        <div className="flex items-center gap-4">
-          <Link
-            to="/dashboard/transactions"
-            className="btn btn-ghost btn-sm btn-square"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">Transaction Details</h1>
-            <p className="text-sm opacity-60">
-              ID: {transaction.id.toUpperCase()}
-            </p>
+      <PageHeader
+        title="Transaction Details"
+        showBack
+        backTo="/dashboard/transactions"
+        description={`ID: ${transaction.id.toUpperCase()}`}
+        actionButton={
+          <div className="flex items-center gap-2 print:hidden">
+            <button
+              onClick={() => window.print()}
+              className="btn btn-ghost btn-sm gap-2"
+            >
+              <Printer className="w-4 h-4" /> Print
+            </button>
+            <button
+              onClick={handleDelete}
+              className="btn btn-ghost text-error btn-sm btn-square"
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => window.print()}
-            className="btn btn-ghost btn-sm gap-2"
-          >
-            <Printer className="w-4 h-4" /> Print
-          </button>
-          <button
-            onClick={handleDelete}
-            className="btn btn-ghost text-error btn-sm btn-square"
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start print:block print-receipt-container">
         {/* Receipt Visual */}

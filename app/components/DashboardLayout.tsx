@@ -9,7 +9,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="drawer-content flex flex-col">
         <Header />
         <main className="flex-1 p-4 lg:p-8 overflow-x-hidden w-full max-w-[100vw]">
-          {children}
+          <div className="animate-fade-in-up">
+            {children}
+          </div>
         </main>
       </div> 
       <Sidebar />

@@ -33,8 +33,6 @@ export default function ViewAnnouncement() {
   const [formData, setFormData] = useState({
     title: "",
     body: "",
-    isActive: true,
-    isPublished: true,
     selectedProperties: [] as string[],
     selectedUnits: [] as string[],
   });
@@ -64,8 +62,6 @@ export default function ViewAnnouncement() {
       setFormData({
         title: announcement.title || "",
         body: announcement.body || "",
-        isActive: announcement.isActive ?? true,
-        isPublished: !!announcement.publishedAt,
         selectedProperties: announcement.propertyAnnouncements?.map((pa: any) => pa.property?.id) || [],
         selectedUnits: announcement.unitAnnouncements?.map((ua: any) => ua.unit?.id) || [],
       });
@@ -89,6 +85,29 @@ export default function ViewAnnouncement() {
     },
   });
 
+  const toggleStatusMutation = useMutation({
+    mutationFn: (data: { isActive?: boolean; isPublished?: boolean }) => {
+      const payload: any = {};
+      if (data.isActive !== undefined) payload.isActive = data.isActive;
+      if (data.isPublished !== undefined) {
+        payload.publishedAt = data.isPublished 
+          ? (announcement.publishedAt || new Date().toISOString()) 
+          : null;
+      }
+      return apiFetch(`/announcements/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcement", id] });
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    },
+    onError: (error: any) => {
+      alert(error.message || "Failed to update status.");
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => apiFetch(`/announcements/${id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -101,9 +120,8 @@ export default function ViewAnnouncement() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    const val = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-    setFormData((prev) => ({ ...prev, [name]: val }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const toggleProperty = (propId: string) => {
@@ -126,7 +144,7 @@ export default function ViewAnnouncement() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const { title, body, isActive, isPublished, selectedProperties, selectedUnits } = formData;
+    const { title, body, selectedProperties, selectedUnits } = formData;
     
     if (selectedProperties.length === 0 && selectedUnits.length === 0) {
       alert("Please select at least one property or unit.");
@@ -136,10 +154,7 @@ export default function ViewAnnouncement() {
     const payload = {
       title,
       body,
-      isActive,
-      publishedAt: isPublished 
-        ? (announcement.publishedAt || new Date().toISOString()) 
-        : null,
+      // Statuses are managed via the PageHeader quick-toggles
       propertyAnnouncements: {
         create: selectedProperties.map((pid) => ({ propertyId: pid })),
       },
@@ -162,30 +177,67 @@ export default function ViewAnnouncement() {
 
   return (
     <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12 text-sm">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link to="/dashboard/announcements" className="btn btn-ghost btn-sm btn-square">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <PageHeader title={isEditing ? "Edit Announcement" : announcement.title} description={isEditing ? "Update notice details and audience." : `Created on ${new Date(announcement.createdAt).toLocaleDateString()}`} />
-        </div>
-        <div className="flex items-center gap-2">
-          {!isEditing ? (
-            <>
-              <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
-                <Edit2 className="w-4 h-4" /> Edit
+      <PageHeader
+        title={isEditing ? "Edit Announcement" : announcement.title}
+        showBack
+        backTo="/dashboard/announcements"
+        titleSuffix={
+          <div className="flex items-center gap-4 flex-wrap ml-2">
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={announcement.isActive}
+                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
+                className="checkbox checkbox-primary checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Active</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={!!announcement.publishedAt}
+                onChange={(e) => toggleStatusMutation.mutate({ isPublished: e.target.checked })}
+                className="checkbox checkbox-info checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Published</span>
+            </label>
+            <div className="flex gap-2">
+              <StatusBadge status={announcement.isActive ? 'active' : 'inactive'} label={announcement.isActive ? 'ACTIVE' : 'INACTIVE'} />
+              <StatusBadge status={announcement.publishedAt ? 'sent' : 'draft'} label={announcement.publishedAt ? 'SENT' : 'DRAFT'} />
+            </div>
+          </div>
+        }
+        description={
+          isEditing 
+            ? "Update notice details and audience." 
+            : `Created on ${new Date(announcement.createdAt).toLocaleDateString()}`
+        }
+        actionButton={
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <>
+                <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
+                  <Edit2 className="w-4 h-4" /> Edit
+                </button>
+                <button 
+                  onClick={handleDelete} 
+                  className="btn btn-ghost text-error btn-sm btn-square" 
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={() => setIsEditing(false)} 
+                className="btn btn-ghost btn-sm"
+              >
+                Cancel
               </button>
-              <button onClick={handleDelete} className="btn btn-ghost text-error btn-sm btn-square" disabled={deleteMutation.isPending}>
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setIsEditing(false)} className="btn btn-ghost btn-sm">
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -202,32 +254,18 @@ export default function ViewAnnouncement() {
                     <textarea name="body" required value={formData.body} onChange={handleChange} className="textarea textarea-bordered h-48 w-full" />
                   </div>
                   
-                  <div className="pt-4 border-t flex flex-col gap-4">
-                     <label className="flex items-center gap-3 cursor-pointer">
-                       <input type="checkbox" name="isPublished" checked={formData.isPublished} onChange={handleChange} className="toggle toggle-info toggle-sm" />
-                       <div className="flex flex-col">
-                         <span className="font-semibold text-xs">Published</span>
-                         <span className="text-[10px] opacity-60">Visible to tenants if active</span>
-                       </div>
-                     </label>
-
-                     <label className="flex items-center gap-3 cursor-pointer">
-                       <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="toggle toggle-success toggle-sm" />
-                       <div className="flex flex-col">
-                         <span className="font-semibold text-xs">Active Status</span>
-                         <span className="text-[10px] opacity-60">Enable or disable this announcement</span>
-                       </div>
-                     </label>
+                  <div className="pt-4 border-t">
+                    <p className="text-[10px] opacity-50 uppercase font-black tracking-widest mb-2">Audience settings can be managed in the sidebar</p>
                   </div>
 
-                  <div className="card-actions justify-end pt-4 border-t">
-                    <button type="submit" className="btn btn-primary h-10 px-8" disabled={updateMutation.isPending}>
-                      {updateMutation.isPending ? <span className="loading loading-spinner loading-xs"></span> : (
-                        formData.isPublished ? <Send className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />
-                      )}
-                      {formData.isPublished ? "Send Announcement" : "Save as Draft"}
-                    </button>
-                  </div>
+                    <div className="card-actions justify-end pt-4 border-t">
+                      <button type="submit" className="btn btn-primary h-12 px-10 shadow-lg shadow-primary/20" disabled={updateMutation.isPending}>
+                        {updateMutation.isPending ? <span className="loading loading-spinner loading-sm"></span> : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </button>
+                    </div>
                 </form>
               </div>
             </div>
@@ -238,10 +276,6 @@ export default function ViewAnnouncement() {
                   <div className="flex items-center gap-2">
                     <Megaphone className="w-5 h-5 text-primary" />
                     <span className="font-bold text-lg">Announcement Content</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <StatusBadge status={announcement.isActive ? 'active' : 'inactive'} label={announcement.isActive ? 'ACTIVE' : 'INACTIVE'} />
-                    <StatusBadge status={announcement.publishedAt ? 'sent' : 'draft'} label={announcement.publishedAt ? 'SENT' : 'DRAFT'} />
                   </div>
                 </div>
                 <div className="prose max-w-none">

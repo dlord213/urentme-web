@@ -208,13 +208,22 @@ export default function UnitsPage() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Total Units" value={pagination?.total ?? units.length} icon={Home} color="primary" />
+        <StatsCard 
+          title="Total Units" 
+          value={pagination?.total ?? units.length} 
+          icon={Home} 
+          color="primary" 
+          className="animate-fade-in-up" 
+          style={{ animationDelay: "50ms" }}
+        />
         <StatsCard
           title="Occupied"
           value={occupiedCount}
           icon={DoorOpen}
           color="success"
           trend={{ value: `${occupancyRate}% occupancy`, positive: true }}
+          className="animate-fade-in-up"
+          style={{ animationDelay: "100ms" }}
         />
         <StatsCard
           title="Vacant"
@@ -222,6 +231,8 @@ export default function UnitsPage() {
           icon={Home}
           color="warning"
           subtitle="Available to rent"
+          className="animate-fade-in-up"
+          style={{ animationDelay: "150ms" }}
         />
         <StatsCard
           title="Avg. Rent"
@@ -231,6 +242,8 @@ export default function UnitsPage() {
           }).format(avgRent)}
           icon={PhilippinePeso}
           color="accent"
+          className="animate-fade-in-up"
+          style={{ animationDelay: "200ms" }}
         />
       </div>
 

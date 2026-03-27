@@ -94,6 +94,8 @@ export default function TenantDetail() {
   const isEditingInitial = searchParams.get("edit") === "true";
   const [isEditing, setIsEditing] = useState(isEditingInitial);
   const [activeTab, setActiveTab] = useState("details");
+  const [showFlagModal, setShowFlagModal] = useState(false);
+  const [tempFlagReason, setTempFlagReason] = useState("");
 
   // Tenant Data
   const {
@@ -116,9 +118,6 @@ export default function TenantDetail() {
     emergencyName: "",
     emergencyPhone: "",
     notes: "",
-    isFlagged: false,
-    flagReason: "",
-    isActive: true,
     moveInDate: "",
     moveOutDate: "",
   });
@@ -137,9 +136,6 @@ export default function TenantDetail() {
         emergencyName: tenant.emergencyName || "",
         emergencyPhone: tenant.emergencyPhone || "",
         notes: tenant.notes || "",
-        isFlagged: tenant.isFlagged ?? false,
-        flagReason: tenant.flagReason || "",
-        isActive: tenant.isActive ?? true,
         moveInDate: tenant.moveInDate
           ? new Date(tenant.moveInDate).toISOString().split("T")[0]
           : "",
@@ -151,27 +147,11 @@ export default function TenantDetail() {
   }, [tenant]);
 
   const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
-
-    setFormData((prev) => {
-      const nextData = {
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      };
-
-      if (name === "isActive") {
-        if (checked === false && !nextData.moveOutDate) {
-          // Automation: Set moveOutDate when isActive is unchecked (set to false)
-          nextData.moveOutDate = new Date().toISOString().split("T")[0];
-        } else if (checked === true) {
-          // Automation: Clear moveOutDate and set moveInDate when isActive is checked (set to true)
-          nextData.moveOutDate = "";
-          nextData.moveInDate = new Date().toISOString().split("T")[0];
-        }
-      }
-
-      return nextData;
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // Mutations
@@ -188,6 +168,21 @@ export default function TenantDetail() {
     },
     onError: (error: any) => {
       alert(error.message || "Failed to update tenant.");
+    },
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: (data: { isActive?: boolean; isFlagged?: boolean; flagReason?: string }) =>
+      apiFetch(`/people/tenants/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenant", id] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+    },
+    onError: (error: any) => {
+      alert(error.message || "Failed to update status.");
     },
   });
 
@@ -248,62 +243,82 @@ export default function TenantDetail() {
   return (
     <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            to="/dashboard/tenants"
-            className="btn btn-ghost btn-sm btn-square"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">
-                {tenant.firstName} {tenant.lastName}
-              </h1>
+      <PageHeader
+        title={`${tenant.firstName} ${tenant.lastName}`}
+        showBack
+        backTo="/dashboard/tenants"
+        titleSuffix={
+          <div className="flex items-center gap-4 flex-wrap ml-2">
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={tenant.isActive}
+                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
+                className="checkbox checkbox-primary checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Active</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={tenant.isFlagged}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setTempFlagReason("");
+                    setShowFlagModal(true);
+                  } else {
+                    toggleStatusMutation.mutate({ isFlagged: false, flagReason: "" });
+                  }
+                }}
+                className="checkbox checkbox-warning checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Flagged</span>
+            </label>
+            <div className="flex items-center gap-2">
               <StatusBadge status={tenant.isActive ? "active" : "inactive"} />
-              {tenant.isFlagged && (
-                <StatusBadge status="flagged" />
-              )}
+              {tenant.isFlagged && <StatusBadge status="flagged" />}
             </div>
-            <p className="text-sm opacity-60 flex items-center gap-3">
-              <span className="flex items-center gap-1">
-                <Mail className="w-3 h-3" /> {tenant.email}
-              </span>
-              <span className="flex items-center gap-1">
-                <Phone className="w-3 h-3" />{" "}
-                {tenant.celNum || "No contact info"}
-              </span>
-            </p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isEditing ? (
-            <>
+        }
+        description={
+          <p className="text-sm opacity-60 flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Mail className="w-3 h-3" /> {tenant.email}
+            </span>
+            <span className="flex items-center gap-1">
+              <Phone className="w-3 h-3" /> {tenant.celNum || "No contact info"}
+            </span>
+          </p>
+        }
+        actionButton={
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="btn btn-outline btn-sm gap-2"
+                >
+                  <Edit2 className="w-4 h-4" /> Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="btn btn-ghost text-error btn-sm btn-square"
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
               <button
-                onClick={() => setIsEditing(true)}
-                className="btn btn-outline btn-sm gap-2"
+                onClick={() => setIsEditing(false)}
+                className="btn btn-ghost btn-sm"
               >
-                <Edit2 className="w-4 h-4" /> Edit
+                Cancel
               </button>
-              <button
-                onClick={handleDelete}
-                className="btn btn-ghost text-error btn-sm btn-square"
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setIsEditing(false)}
-              className="btn btn-ghost btn-sm"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        }
+      />
 
       {/* Expiration Warning */}
       {isExpiringSoon && (
@@ -478,55 +493,6 @@ export default function TenantDetail() {
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-lg border-b pb-1">
-                      Management & Status
-                    </h3>
-
-                    <div className="space-y-3 pt-2">
-                      <label className="label-text font-semibold">
-                        Status Flags
-                      </label>
-                      <div className="grid grid-cols-1 gap-2">
-                        <label className="label cursor-pointer justify-start gap-3">
-                          <input
-                            type="checkbox"
-                            name="isActive"
-                            checked={formData.isActive}
-                            onChange={handleChange}
-                            className="checkbox checkbox-info checkbox-sm"
-                          />
-                          <span className="label-text">Tenant is Active</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3">
-                          <input
-                            type="checkbox"
-                            name="isFlagged"
-                            checked={formData.isFlagged}
-                            onChange={handleChange}
-                            className="checkbox checkbox-warning checkbox-sm"
-                          />
-                          <span className="label-text">Flag Tenant</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {formData.isFlagged && (
-                      <div className="form-control animate-in slide-in-from-top-2">
-                        <label className="label">
-                          <span className="label-text text-warning font-semibold">
-                            Flag Reason
-                          </span>
-                        </label>
-                        <textarea
-                          name="flagReason"
-                          value={formData.flagReason}
-                          onChange={handleChange}
-                          className="textarea textarea-bordered h-24 w-full"
-                          placeholder="Specify reason for flagging..."
-                        />
-                      </div>
-                    )}
-
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text">Internal Notes</span>
@@ -846,6 +812,60 @@ export default function TenantDetail() {
           )}
         </div>
       </div>
+      {/* Flag Reason Modal */}
+      {showFlagModal && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Flag Tenant
+            </h3>
+            <p className="py-4 text-sm opacity-70">
+              Please provide a reason for flagging <strong>{tenant.firstName} {tenant.lastName}</strong>. 
+              This will be visible on their profile.
+            </p>
+            <div className="form-control">
+              <textarea
+                className="textarea textarea-bordered h-24 w-full"
+                placeholder="Reason for flagging (e.g. Repeated late payments, noise complaints...)"
+                value={tempFlagReason}
+                onChange={(e) => setTempFlagReason(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="modal-actions flex justify-end gap-2 mt-6">
+              <button 
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowFlagModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-warning btn-sm"
+                onClick={() => {
+                  if (!tempFlagReason.trim()) {
+                    alert("Reason is required.");
+                    return;
+                  }
+                  toggleStatusMutation.mutate({ 
+                    isFlagged: true, 
+                    flagReason: tempFlagReason 
+                  });
+                  setShowFlagModal(false);
+                }}
+                disabled={toggleStatusMutation.isPending}
+              >
+                {toggleStatusMutation.isPending ? (
+                  <span className="loading loading-spinner loading-xs"></span>
+                ) : "Flag Tenant"}
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowFlagModal(false)}>
+            <button className="cursor-default">close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

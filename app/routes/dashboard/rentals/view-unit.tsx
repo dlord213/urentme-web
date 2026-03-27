@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { formatFloor, parseFloorNumber } from "~/lib/format";
 import { PageHeader } from "~/components/PageHeader";
 import { StatsCard } from "~/components/StatsCard";
 import { DataTable } from "~/components/DataTable";
@@ -59,9 +60,6 @@ export default function UnitDetail() {
     monthlyRentAmount: "",
     description: "",
     status: "vacant",
-    isActive: true,
-    isUnderRepair: false,
-    isUnderRenovation: false,
     imageUrls: "",
   });
 
@@ -71,28 +69,23 @@ export default function UnitDetail() {
       setFormData({
         propertyId: unit.property.id,
         unitNumber: unit.unitNumber,
-        floor: unit.floor,
+        floor: parseFloorNumber(unit.floor),
         bedrooms: unit.bedrooms || 0,
         bathrooms: unit.bathrooms || 0,
         squareFeet: unit.squareFeet || "",
         monthlyRentAmount: unit.monthlyRentAmount,
         description: unit.description || "",
         status: unit.status,
-        isActive: unit.isActive,
-        isUnderRepair: unit.isUnderRepair,
-        isUnderRenovation: unit.isUnderRenovation,
         imageUrls: Array.isArray(unit.imageUrls) ? unit.imageUrls.join("\n") : "",
       });
     }
   }, [unit]);
 
   const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({ 
       ...prev, 
-      [name]: type === 'checkbox' ? checked : 
-              ["bedrooms", "bathrooms"].includes(name) ? parseInt(value) || 0 :
-              value 
+      [name]: ["bedrooms", "bathrooms"].includes(name) ? parseInt(value) || 0 : value 
     }));
   };
 
@@ -116,6 +109,41 @@ export default function UnitDetail() {
     }
   });
 
+  const toggleStatusMutation = useMutation({
+    mutationFn: (data: { isActive?: boolean; isUnderRepair?: boolean; isUnderRenovation?: boolean }) =>
+      apiFetch(`/units/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unit", id] });
+      queryClient.invalidateQueries({ queryKey: ["units"] });
+    },
+  });
+
+  const cancelReservationMutation = useMutation({
+    mutationFn: async () => {
+      const draftLease = unit.leases?.find((l: any) => l.status === "draft");
+      if (draftLease) {
+        // 1. Delete the draft lease
+        await apiFetch(`/leases/${draftLease.id}`, { method: "DELETE" });
+      }
+
+      // 2. Set the unit back to vacant
+      await apiFetch(`/units/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "vacant" }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unit", id] });
+      queryClient.invalidateQueries({ queryKey: ["units"] });
+    },
+    onError: (error: any) => {
+      alert(error.message || "Failed to cancel reservation.");
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => apiFetch(`/units/${id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -137,6 +165,7 @@ export default function UnitDetail() {
     e.preventDefault();
     const payload = {
       ...formData,
+      floor: formatFloor(formData.floor),
       monthlyRentAmount: parseFloat(formData.monthlyRentAmount.toString()) || 0,
       squareFeet: formData.squareFeet ? parseFloat(formData.squareFeet.toString()) : null,
       imageUrls: formData.imageUrls.split("\n").filter(line => line.trim() !== ""),
@@ -151,49 +180,97 @@ export default function UnitDetail() {
   const isCommercial = currentProperty?.type === "Commercial";
   const leases = unit.leases || [];
   const activeLease = leases.find((l: any) => l.status === "active");
+  const reservedLease = leases.find((l: any) => l.status === "draft");
 
   return (
     <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link to="/dashboard/units" className="btn btn-ghost btn-sm btn-square">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">Unit {unit.unitNumber}</h1>
+      <PageHeader
+        title={`Unit ${unit.unitNumber}`}
+        showBack
+        backTo="/dashboard/units"
+        titleSuffix={
+          <div className="flex items-center gap-4 flex-wrap ml-2">
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={unit.isActive}
+                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
+                className="checkbox checkbox-primary checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Active</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={unit.isUnderRepair}
+                onChange={(e) => toggleStatusMutation.mutate({ isUnderRepair: e.target.checked })}
+                className="checkbox checkbox-warning checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Repair</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
+              <input
+                type="checkbox"
+                checked={unit.isUnderRenovation}
+                onChange={(e) => toggleStatusMutation.mutate({ isUnderRenovation: e.target.checked })}
+                className="checkbox checkbox-info checkbox-sm rounded-lg"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Renovation</span>
+            </label>
+            {unit.status === "reserved" && (
+              <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors border border-info/30">
+                <input
+                  type="checkbox"
+                  checked={true}
+                  onChange={(e) => {
+                    if (!e.target.checked) {
+                      if (confirm("Are you sure you want to cancel this reservation?")) {
+                        cancelReservationMutation.mutate();
+                      }
+                    }
+                  }}
+                  className="checkbox checkbox-info checkbox-sm rounded-lg"
+                />
+                <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Reserved</span>
+              </label>
+            )}
+            <div className="flex items-center gap-2">
               <StatusBadge status={unit.status} />
               {unit.isActive === false && <StatusBadge status="inactive" />}
-              {unit.isUnderRepair && <StatusBadge status="Under Repair" />}
-              {unit.isUnderRenovation && <StatusBadge status="Under Renovation" />}
+              {unit.isUnderRepair && <StatusBadge status="under repair" label="Under Repair" />}
+              {unit.isUnderRenovation && <StatusBadge status="under renovation" label="Under Renovation" />}
             </div>
-            <p className="text-sm opacity-60 flex items-center gap-1">
-              <Building2 className="w-3 h-3" /> {currentProperty?.name} — {unit.floor || "No Floor Info"}
-            </p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isEditing ? (
-            <>
-              <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
-                <Edit2 className="w-4 h-4" /> Edit
+        }
+        description={
+          <p className="text-sm opacity-60 flex items-center gap-1">
+            <Building2 className="w-3 h-3" /> {currentProperty?.name} — {unit.floor || "No Floor Info"}
+          </p>
+        }
+        actionButton={
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <>
+                <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
+                  <Edit2 className="w-4 h-4" /> Edit
+                </button>
+                <button 
+                  onClick={handleDelete} 
+                  className="btn btn-ghost text-error btn-sm btn-square"
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setIsEditing(false)} className="btn btn-ghost btn-sm">
+                Cancel
               </button>
-              <button 
-                onClick={handleDelete} 
-                className="btn btn-ghost text-error btn-sm btn-square"
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setIsEditing(false)} className="btn btn-ghost btn-sm">
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        }
+      />
 
       {/* Stats Summary */}
       {!isEditing && (
@@ -244,7 +321,7 @@ export default function UnitDetail() {
                       </div>
                       <div className="form-control">
                         <label className="label"><span className="label-text">Floor</span></label>
-                        <input name="floor" value={formData.floor} onChange={handleChange} className="input input-bordered w-full" />
+                        <input type="number" min="0" name="floor" value={formData.floor} onChange={handleChange} className="input input-bordered w-full" />
                       </div>
                     </div>
                     
@@ -281,35 +358,8 @@ export default function UnitDetail() {
                     </div>
                     
                     <div className="form-control">
-                      <label className="label"><span className="label-text">Status</span></label>
-                      <select name="status" value={formData.status} onChange={handleChange} className="select select-bordered w-full">
-                        <option value="vacant">Vacant</option>
-                        <option value="occupied">Occupied</option>
-                        <option value="reserved">Reserved</option>
-                      </select>
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label"><span className="label-text font-semibold">Unit Image URLs (one per line)</span></label>
+                      <label className="label"><span className="label-text">Unit Image URLs (one per line)</span></label>
                       <textarea name="imageUrls" value={formData.imageUrls} onChange={handleChange} className="textarea textarea-bordered h-32 w-full font-mono text-sm" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg..." />
-                    </div>
-
-                    <div className="space-y-3 pt-2">
-                      <label className="label-text font-semibold">Status Flags</label>
-                      <div className="grid grid-cols-1 gap-2">
-                        <label className="label cursor-pointer justify-start gap-3">
-                          <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="checkbox checkbox-primary checkbox-sm" />
-                          <span className="label-text">Unit is Active</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3">
-                          <input type="checkbox" name="isUnderRepair" checked={formData.isUnderRepair} onChange={handleChange} className="checkbox checkbox-warning checkbox-sm" />
-                          <span className="label-text">Under Repair</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3">
-                          <input type="checkbox" name="isUnderRenovation" checked={formData.isUnderRenovation} onChange={handleChange} className="checkbox checkbox-info checkbox-sm" />
-                          <span className="label-text">Under Renovation</span>
-                        </label>
-                      </div>
                     </div>
                   </div>
                 </div>

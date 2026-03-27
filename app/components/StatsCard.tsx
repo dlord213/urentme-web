@@ -7,9 +7,11 @@ interface StatsCardProps {
   trend?: { value: string; positive?: boolean };
   color?: "primary" | "secondary" | "accent" | "success" | "warning" | "error" | "info";
   subtitle?: string;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
-export function StatsCard({ title, value, icon: Icon, trend, color = "primary", subtitle }: StatsCardProps) {
+export function StatsCard({ title, value, icon: Icon, trend, color = "primary", subtitle, className = "", style }: StatsCardProps) {
   const colorMap = {
     primary: "bg-primary/10 text-primary",
     secondary: "bg-secondary/10 text-secondary",
@@ -21,7 +23,10 @@ export function StatsCard({ title, value, icon: Icon, trend, color = "primary", 
   };
 
   return (
-    <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow duration-200">
+    <div 
+      className={`card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all duration-200 ${className}`}
+      style={style}
+    >
       <div className="card-body p-3 sm:p-5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
