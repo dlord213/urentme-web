@@ -28,7 +28,7 @@ export function Header() {
       <div className="flex-1 lg:hidden">
         <a className="btn btn-ghost normal-case text-xl text-primary font-bold">URentMe</a>
       </div>
-      
+
       <div className="hidden lg:flex flex-1">
         {/* <div className="form-control w-full max-w-md relative">
           <Search className="w-5 h-5 absolute left-3 top-3 opacity-50" />
@@ -37,12 +37,12 @@ export function Header() {
       </div>
 
       <div className="flex-none gap-4">
-        <button className="btn btn-ghost btn-circle">
+        {/* <button className="btn btn-ghost btn-circle">
           <div className="indicator">
             <Bell className="w-5 h-5" />
             <span className="badge badge-sm badge-primary indicator-item">1</span>
           </div>
-        </button>
+        </button> */}
         <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
             <div className="w-10 rounded-full bg-base-300 flex items-center justify-center flex-col">
@@ -51,10 +51,9 @@ export function Header() {
           </div>
           <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
             <li><Link to="/dashboard/profile">Profile</Link></li>
-            <li><a>Settings</a></li>
             <div className="divider my-1"></div>
-            <li><button 
-              onClick={() => logoutMutation.mutate()} 
+            <li><button
+              onClick={() => logoutMutation.mutate()}
               disabled={logoutMutation.isPending}
               className="text-error text-left w-full text-sm disabled:opacity-50"
             >

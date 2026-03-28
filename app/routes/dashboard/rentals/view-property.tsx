@@ -1,33 +1,33 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { 
-  ArrowLeft, 
-  Save, 
-  Edit2, 
-  Trash2, 
-  Building2, 
-  Home, 
-  MapPin, 
-  TrendingUp, 
-  Clock, 
+import {
+  ArrowLeft,
+  Save,
+  Edit2,
+  Trash2,
+  Building2,
+  Home,
+  MapPin,
+  TrendingUp,
+  Clock,
   Info,
   ChevronRight,
-  Eye
+  Eye,
+  AlignLeft,
+  Image as ImageIcon
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
-import { PageHeader } from "~/components/PageHeader";
-import { StatsCard } from "~/components/StatsCard";
-import { DataTable } from "~/components/DataTable";
 import { psgcApi } from "~/lib/psgc";
 import { StatusBadge } from "~/components/StatusBadge";
+import { DataTable } from "~/components/DataTable";
 
 export default function PropertyDetail() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   const isEditingInitial = searchParams.get("edit") === "true";
   const [isEditing, setIsEditing] = useState(isEditingInitial);
   const [activeTab, setActiveTab] = useState("details");
@@ -50,8 +50,8 @@ export default function PropertyDetail() {
     region: "",
     yearBuilt: "",
     description: "",
-    houseRules: "", // Store as newline-separated string for editing
-    imageUrls: "",  // Store as newline-separated string for editing
+    houseRules: "",
+    imageUrls: "",
   });
 
   // PSGC State
@@ -218,278 +218,413 @@ export default function PropertyDetail() {
   const occupancyRate = units.length > 0 ? Math.round((occupiedCount / units.length) * 100) : 0;
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6 max-w-6xl mx-auto pb-12">
-      {/* Header */}
-      <PageHeader
-        title={property.name}
-        showBack
-        backTo="/dashboard/properties"
-        titleSuffix={
-          <div className="flex items-center gap-4 flex-wrap ml-2">
-            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={property.isActive}
-                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
-                className="checkbox checkbox-primary checkbox-sm rounded-lg"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Active</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={property.isUnderRepair}
-                onChange={(e) => toggleStatusMutation.mutate({ isUnderRepair: e.target.checked })}
-                className="checkbox checkbox-warning checkbox-sm rounded-lg"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Repair</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={property.isUnderRenovation}
-                onChange={(e) => toggleStatusMutation.mutate({ isUnderRenovation: e.target.checked })}
-                className="checkbox checkbox-info checkbox-sm rounded-lg"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Renovation</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <StatusBadge status={property.type} label={property.type} />
-              {property.isActive === false && <StatusBadge status="inactive" />}
-              {property.isUnderRepair && <StatusBadge status="under repair" label="Under Repair" />}
-              {property.isUnderRenovation && <StatusBadge status="under renovation" label="Under Renovation" />}
-            </div>
-          </div>
-        }
-        description={
-          <p className="text-sm opacity-60 flex items-center gap-1">
-            <MapPin className="w-3 h-3" /> {property.street}, {property.barangay}, {property.city}
-          </p>
-        }
-        actionButton={
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-12">
+
+      {/* Premium Gradient Hero Cover */}
+      <div className="h-48 md:h-64 w-full rounded-b-3xl bg-gradient-to-r from-primary/90 to-secondary/90 shadow-lg relative overflow-hidden -mt-6 sm:-mt-8">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+
+        {/* Navigation & Actions Top Bar */}
+        <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
+          <Link
+            to="/dashboard/properties"
+            className="btn btn-circle btn-sm md:btn-md bg-base-100/20 hover:bg-base-100/40 border-none text-white backdrop-blur-md transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+
           <div className="flex items-center gap-2">
             {!isEditing ? (
               <>
-                <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
+                <button onClick={() => setIsEditing(true)} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content gap-2 shadow-xl hover:scale-105 transition-all">
                   <Edit2 className="w-4 h-4" /> Edit
                 </button>
-                <button 
-                  onClick={handleDelete} 
-                  className="btn btn-ghost text-error btn-sm btn-square"
+                <button
+                  onClick={handleDelete}
+                  className="btn btn-square btn-sm md:btn-md bg-error/90 hover:bg-error border-none text-white shadow-xl hover:scale-105 transition-all"
                   disabled={deleteMutation.isPending}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </>
             ) : (
-              <button onClick={() => setIsEditing(false)} className="btn btn-ghost btn-sm">
-                Cancel
+              <button onClick={() => setIsEditing(false)} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content shadow-xl hover:scale-105 transition-all">
+                Cancel Edit
               </button>
             )}
           </div>
-        }
-      />
-
-      {/* Stats Summary */}
-      {!isEditing && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard title="Total Units" value={units.length} icon={Home} color="primary" />
-          <StatsCard title="Occupancy" value={`${occupancyRate}%`} icon={TrendingUp} color="success" />
-          <StatsCard title="Vacant" value={units.length - occupiedCount} icon={MapPin} color="warning" />
-          <StatsCard title="Year Built" value={property.yearBuilt || "N/A"} icon={Clock} color="info" />
-        </div>
-      )}
-
-      {/* Main Content Tabs */}
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="tabs tabs-bordered px-6 pt-2">
-          <button 
-            className={`tab tab-lg gap-2 ${activeTab === 'details' ? 'tab-active font-bold' : ''}`}
-            onClick={() => setActiveTab('details')}
-          >
-            <Info className="w-4 h-4" /> Property Info
-          </button>
-          <button 
-            className={`tab tab-lg gap-2 ${activeTab === 'units' ? 'tab-active font-bold' : ''}`}
-            onClick={() => setActiveTab('units')}
-          >
-            <Home className="w-4 h-4" /> Units List
-          </button>
         </div>
 
-        <div className="card-body">
-          {activeTab === 'details' ? (
-            isEditing ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg border-b pb-1">Basic Information</h3>
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Property Name</span></label>
-                      <input name="name" value={formData.name} onChange={handleChange} required className="input input-bordered w-full" />
-                    </div>
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Property Type</span></label>
-                      <select name="type" value={formData.type} onChange={handleChange} className="select select-bordered w-full">
-                        <option value="Residential">Residential</option>
-                        <option value="Commercial">Commercial</option>
-                        <option value="Mixed">Mixed</option>
-                      </select>
-                    </div>
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Year Built</span></label>
-                      <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="input input-bordered w-full" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg border-b pb-1">Location Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Region</span></label>
-                        <select value={selectedRegionCode} onChange={handleRegionChange} className="select select-bordered w-full">
-                          <option value="">{formData.region || "Select Region"}</option>
-                          {regions.map((r: any) => <option key={r.code} value={r.code}>{r.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Province</span></label>
-                        <select value={selectedProvinceCode} onChange={handleProvinceChange} disabled={!selectedRegionCode} className="select select-bordered w-full">
-                          <option value="">{formData.province || (provinces.length > 0 ? "Select Province" : "N/A")}</option>
-                          {provinces.map((p: any) => <option key={p.code} value={p.code}>{p.name}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">City</span></label>
-                        <select value={selectedCityCode} onChange={handleCityChange} disabled={!selectedProvinceCode && !selectedRegionCode} className="select select-bordered w-full">
-                          <option value="">{formData.city || "Select City"}</option>
-                          {cities.map((c: any) => <option key={c.code} value={c.code}>{c.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Barangay</span></label>
-                        <select value={formData.barangay} onChange={handleBarangayChange} disabled={!selectedCityCode} className="select select-bordered w-full">
-                          <option value="">{formData.barangay || "Select Barangay"}</option>
-                          {barangays.map((b: any) => <option key={b.code} value={b.name}>{b.name}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Street Address</span></label>
-                      <input name="street" value={formData.street} onChange={handleChange} required className="input input-bordered w-full" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
-                  <div className="form-control">
-                    <label className="label"><span className="label-text font-semibold">House Rules (one per line)</span></label>
-                    <textarea name="houseRules" value={formData.houseRules} onChange={handleChange} className="textarea textarea-bordered h-32 w-full font-mono text-sm" placeholder="No smoking&#10;No pets..." />
-                  </div>
-                  <div className="form-control">
-                    <label className="label"><span className="label-text font-semibold">Property Image URLs (one per line)</span></label>
-                    <textarea name="imageUrls" value={formData.imageUrls} onChange={handleChange} className="textarea textarea-bordered h-32 w-full font-mono text-sm" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg..." />
-                  </div>
-                </div>
-
-                <div className="form-control mt-4">
-                  <label className="label"><span className="label-text font-semibold">Description</span></label>
-                  <textarea name="description" value={formData.description} onChange={handleChange} className="textarea textarea-bordered h-32 w-full" placeholder="Property description..." />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-6 border-t mt-6">
-                  <button type="submit" className="btn btn-primary px-8" disabled={updateMutation.isPending}>
-                    {updateMutation.isPending ? <span className="loading loading-spinner loading-xs"></span> : <Save className="w-4 h-4 mr-2" />}
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
-                {/* Image Gallery */}
-                {property.imageUrls && property.imageUrls.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {property.imageUrls.map((url: string, index: number) => (
-                      <div key={index} className="aspect-video rounded-xl overflow-hidden border border-base-200 shadow-sm group relative">
-                        <img src={url} alt={`${property.name} ${index + 1}`} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <div className="space-y-8">
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-3 flex items-center gap-2">
-                        <Info className="w-3 h-3" /> Detailed Description
-                      </h3>
-                      <p className="text-base leading-relaxed whitespace-pre-wrap">{property.description || "No description provided."}</p>
-                    </div>
-
-                    {property.houseRules && property.houseRules.length > 0 && (
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-3 flex items-center gap-2">
-                          <Building2 className="w-3 h-3" /> House Rules
-                        </h3>
-                        <ul className="space-y-2">
-                          {property.houseRules.map((rule: string, i: number) => (
-                            <li key={i} className="flex items-start gap-2 text-sm">
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-                              {rule}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-6 pt-4 border-t border-base-200">
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Property Type</h3>
-                        <p className="font-semibold">{property.type}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Year Built</h3>
-                        <p className="font-semibold">{property.yearBuilt || "N/A"}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-6 p-8 bg-base-200/30 rounded-3xl border border-base-200/50 h-fit">
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-primary">Full Address</h3>
-                      <p className="text-xl font-bold">{property.street}</p>
-                      <p className="opacity-80 italic">{property.barangay}, {property.city}</p>
-                      <p className="opacity-80">{property.province}, {property.region}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          ) : (
-            <div className="animate-in slide-in-from-bottom-4 duration-300">
-              <DataTable
-                columns={[
-                  { key: "unitNumber", label: "Unit #" },
-                  { key: "floor", label: "Floor" },
-                  { key: "monthlyRentAmount", label: "Monthly Rent", render: (v) => `₱${v.toLocaleString()}` },
-                  { key: "status", label: "Status", render: (s) => <StatusBadge status={s} /> },
-                ]}
-                data={units}
-                actions={[
-                  { 
-                    label: "View", 
-                    icon: <Eye className="w-3 h-3" />, 
-                    to: (u: any) => `/dashboard/units/${u.id}`,
-                    variant: "ghost" 
-                  }
-                ]}
-                emptyMessage="No units found in this property."
-              />
+        {/* Title & Badges Bottom Area */}
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="badge badge-sm uppercase font-bold tracking-widest bg-white/20 text-white border-none backdrop-blur-md">{property.type}</span>
+              {property.isActive === false && <span className="badge badge-sm badge-error border-none text-white shadow-sm">INACTIVE</span>}
+              {property.isUnderRepair && <span className="badge badge-sm badge-warning border-none text-white shadow-sm">UNDER REPAIR</span>}
+              {property.isUnderRenovation && <span className="badge badge-sm badge-info border-none text-white shadow-sm">RENOVATION</span>}
             </div>
-          )}
+            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md">{property.name}</h1>
+            <p className="text-white/80 mt-1 md:mt-2 font-medium flex items-center gap-1.5 text-sm md:text-base drop-shadow-sm">
+              <MapPin className="w-4 h-4" /> {property.street}, {property.barangay}, {property.city}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap bg-white/10 backdrop-blur-md p-1.5 rounded-2xl border border-white/20">
+            <label className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 px-3 py-1.5 rounded-xl transition-colors">
+              <input
+                type="checkbox"
+                checked={property.isActive}
+                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
+                className="checkbox checkbox-primary checkbox-sm rounded-lg bg-base-100/50 border-white/30"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider text-white">Active</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 px-3 py-1.5 rounded-xl transition-colors">
+              <input
+                type="checkbox"
+                checked={property.isUnderRepair}
+                onChange={(e) => toggleStatusMutation.mutate({ isUnderRepair: e.target.checked })}
+                className="checkbox checkbox-warning checkbox-sm rounded-lg bg-base-100/50 border-white/30"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider text-white">Repair</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 px-3 py-1.5 rounded-xl transition-colors">
+              <input
+                type="checkbox"
+                checked={property.isUnderRenovation}
+                onChange={(e) => toggleStatusMutation.mutate({ isUnderRenovation: e.target.checked })}
+                className="checkbox checkbox-info checkbox-sm rounded-lg bg-base-100/50 border-white/30"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider text-white">Renovating</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Container */}
+      <div className="mt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+
+        {/* Stats Summary - Premium Inline Cards */}
+        {!isEditing && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Home className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Total Units</p>
+                <p className="text-2xl font-black text-base-content">{units.length}</p>
+              </div>
+            </div>
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Occupancy</p>
+                <p className="text-2xl font-black text-base-content">{occupancyRate}%</p>
+              </div>
+            </div>
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
+                <MapPin className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Vacant</p>
+                <p className="text-2xl font-black text-base-content">{units.length - occupiedCount}</p>
+              </div>
+            </div>
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Year Built</p>
+                <p className="text-2xl font-black text-base-content">{property.yearBuilt || "N/A"}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Dynamic Content Tabs */}
+        <div>
+          <div className="flex gap-2 mb-6 border-b border-base-200/60 pb-4 overflow-x-auto scrollbar-hide">
+            <button
+              className={`btn btn-sm sm:btn-md rounded-full px-6 transition-all ${activeTab === 'details' ? 'bg-base-content text-base-100 shadow-md hover:bg-base-content/90 font-bold' : 'btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70'}`}
+              onClick={() => setActiveTab('details')}
+            >
+              <Info className="w-4 h-4" /> Property Info
+            </button>
+            <button
+              className={`btn btn-sm sm:btn-md rounded-full px-6 transition-all ${activeTab === 'units' ? 'bg-base-content text-base-100 shadow-md hover:bg-base-content/90 font-bold' : 'btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70'}`}
+              onClick={() => setActiveTab('units')}
+            >
+              <Home className="w-4 h-4" /> Units List
+            </button>
+          </div>
+
+          <div>
+            {activeTab === 'details' ? (
+              isEditing ? (
+                /* Edit Form */
+                <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+                    <div className="card-body p-6 sm:p-8 relative z-10">
+                      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                          <Building2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-base-content">Basic Information</h3>
+                          <p className="text-xs text-base-content/60">Core details about the property.</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-5">
+                        <div className="form-control">
+                          <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Property Name <span className="text-error">*</span></span></label>
+                          <input name="name" value={formData.name} onChange={handleChange} required className="input input-bordered w-full focus:input-primary transition-all" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                          <div className="form-control">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Property Type <span className="text-error">*</span></span></label>
+                            <select name="type" value={formData.type} onChange={handleChange} className="select select-bordered w-full focus:select-primary transition-all">
+                              <option value="Residential">Residential</option>
+                              <option value="Commercial">Commercial</option>
+                              <option value="Mixed">Mixed</option>
+                            </select>
+                          </div>
+                          <div className="form-control">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Year Built</span></label>
+                            <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="input input-bordered w-full focus:input-primary transition-all" />
+                          </div>
+                        </div>
+                        <div className="form-control flex flex-col pt-2">
+                          <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5"><AlignLeft className="w-3.5 h-3.5" /> Description</span></label>
+                          <textarea name="description" value={formData.description} onChange={handleChange} className="textarea textarea-bordered h-28 w-full focus:textarea-primary transition-all" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                    {/* Location Card */}
+                    <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                      <div className="card-body p-6 sm:p-8 relative z-10">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                          <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+                            <MapPin className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-base-content">Location Details</h3>
+                          </div>
+                        </div>
+
+                        <div className="space-y-5">
+                          <div className="form-control">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Street Address <span className="text-error">*</span></span></label>
+                            <input name="street" value={formData.street} onChange={handleChange} required className="input input-bordered w-full focus:input-primary transition-all" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Region <span className="text-error">*</span></span></label>
+                              <select value={selectedRegionCode} onChange={handleRegionChange} className="select select-bordered w-full focus:select-primary transition-all">
+                                <option value="">{formData.region || "Select Region"}</option>
+                                {regions.map((r: any) => <option key={r.code} value={r.code}>{r.name}</option>)}
+                              </select>
+                            </div>
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Province <span className="text-error">*</span></span></label>
+                              <select value={selectedProvinceCode} onChange={handleProvinceChange} disabled={!selectedRegionCode} className="select select-bordered w-full focus:select-primary transition-all">
+                                <option value="">{formData.province || (provinces.length > 0 ? "Select Province" : "N/A")}</option>
+                                {provinces.map((p: any) => <option key={p.code} value={p.code}>{p.name}</option>)}
+                              </select>
+                            </div>
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">City <span className="text-error">*</span></span></label>
+                              <select value={selectedCityCode} onChange={handleCityChange} disabled={!selectedProvinceCode && !selectedRegionCode} className="select select-bordered w-full focus:select-primary transition-all">
+                                <option value="">{formData.city || "Select City"}</option>
+                                {cities.map((c: any) => <option key={c.code} value={c.code}>{c.name}</option>)}
+                              </select>
+                            </div>
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Barangay <span className="text-error">*</span></span></label>
+                              <select value={formData.barangay} onChange={handleBarangayChange} disabled={!selectedCityCode} className="select select-bordered w-full focus:select-primary transition-all">
+                                <option value="">{formData.barangay || "Select Barangay"}</option>
+                                {barangays.map((b: any) => <option key={b.code} value={b.name}>{b.name}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Media & Settings Card */}
+                    <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                      <div className="card-body p-6 sm:p-8 relative z-10">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                          <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                            <ImageIcon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-base-content">Media & Settings</h3>
+                          </div>
+                        </div>
+
+                        <div className="space-y-5">
+                          <div className="form-control flex flex-col pt-2">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">Property Image URLs (one per line)</span></label>
+                            <textarea name="imageUrls" value={formData.imageUrls} onChange={handleChange} className="textarea textarea-bordered h-24 w-full focus:textarea-primary transition-all font-mono text-sm leading-relaxed" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg..." />
+                          </div>
+                          <div className="form-control flex flex-col pt-2">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">House Rules (one per line)</span></label>
+                            <textarea name="houseRules" value={formData.houseRules} onChange={handleChange} className="textarea textarea-bordered h-24 w-full focus:textarea-primary transition-all font-mono text-sm leading-relaxed" placeholder="No smoking&#10;No pets..." />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Area */}
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-base-200/60">
+                    <button type="button" onClick={() => setIsEditing(false)} className="btn btn-ghost font-semibold hover:bg-base-200">
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary px-8 shadow-lg shadow-primary/20 hover:scale-105 transition-transform" disabled={updateMutation.isPending}>
+                      {updateMutation.isPending ? <span className="loading loading-spinner loading-sm"></span> : <Save className="w-4 h-4 mr-2" />}
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* View Details Block */
+                <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+                  {/* Image Gallery */}
+                  {property.imageUrls && property.imageUrls.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {property.imageUrls.map((url: string, index: number) => (
+                        <div key={index} className="aspect-[4/3] rounded-3xl overflow-hidden shadow-sm group relative border border-base-200/50">
+                          <img src={url} alt={`${property.name} ${index + 1}`} className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                    {/* Left Col (Description + Rules) */}
+                    <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+                      <div className="card bg-base-100 shadow-sm border border-base-200 pb-2">
+                        <div className="card-body p-6 sm:p-8">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                            <AlignLeft className="w-4 h-4" /> Description
+                          </h3>
+                          <div className="prose prose-sm md:prose-base max-w-none text-base-content/80 leading-relaxed font-medium">
+                            {property.description ? (
+                              property.description.split('\n').map((paragraph: string, idx: number) => (
+                                <p key={idx} className="mb-4 last:mb-0">{paragraph}</p>
+                              ))
+                            ) : (
+                              <p className="italic opacity-60">No description provided for this property.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {property.houseRules && property.houseRules.length > 0 && (
+                        <div className="card bg-base-100 shadow-sm border border-base-200 pb-2">
+                          <div className="card-body p-6 sm:p-8">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-warning mb-4 flex items-center gap-2">
+                              <Building2 className="w-4 h-4" /> House Rules
+                            </h3>
+                            <div className="bg-base-200/30 rounded-2xl p-6 border border-base-300/50">
+                              <ul className="space-y-3">
+                                {property.houseRules.map((rule: string, i: number) => (
+                                  <li key={i} className="flex items-start gap-3 text-sm md:text-base font-medium text-base-content/80">
+                                    <div className="w-6 h-6 rounded-full bg-warning/20 text-warning flex items-center justify-center shrink-0 mt-0.5">
+                                      <span className="text-xs font-bold">{i + 1}</span>
+                                    </div>
+                                    <span className="pt-0.5">{rule}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Col (Sidebar) */}
+                    <div className="lg:col-span-4 space-y-6">
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-secondary mb-4 flex items-center gap-2">
+                            <MapPin className="w-4 h-4" /> Location Snapshot
+                          </h3>
+                          <div className="space-y-3">
+                            <div className="bg-base-200/50 p-4 rounded-2xl border border-base-300/50">
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1">Street</p>
+                              <p className="font-bold text-base-content truncate">{property.street}</p>
+                            </div>
+                            <div className="bg-base-200/50 p-4 rounded-2xl border border-base-300/50">
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1">Barangay</p>
+                              <p className="font-bold text-base-content truncate">{property.barangay}</p>
+                            </div>
+                            <div className="bg-base-200/50 p-4 rounded-2xl border border-base-300/50">
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1">City / Municipality</p>
+                              <p className="font-bold text-base-content truncate">{property.city}</p>
+                            </div>
+                            <div className="bg-base-200/50 p-4 rounded-2xl border border-base-300/50">
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1">Province</p>
+                              <p className="font-bold text-base-content truncate">{property.province}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {property.id != null && <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                            <Building2 className="w-4 h-4" /> Property ID
+                          </h3>
+                          <div className="bg-base-200/50 p-4 rounded-2xl border border-base-300/50 flex flex-col items-center justify-center text-center">
+                            <p className="font-mono text-xl font-bold text-base-content/70">{property.id.substring(0, 8).toUpperCase()}</p>
+                            <p className="text-xs font-bold uppercase tracking-wider text-base-content/40 mt-1">System Reference</p>
+                          </div>
+                        </div>
+                      </div>}
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : (
+              /* Units Tab Content */
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+                <DataTable
+                  columns={[
+                    { key: "unitNumber", label: "Unit Identifier" },
+                    { key: "floor", label: "Floor Level" },
+                    { key: "monthlyRentAmount", label: "Monthly Rent", render: (v) => <span className="font-bold text-success">₱{v.toLocaleString()}</span> },
+                    { key: "status", label: "Status", render: (s) => <StatusBadge status={s} /> },
+                  ]}
+                  data={units}
+                  actions={[
+                    {
+                      label: "View Detail",
+                      icon: <Eye className="w-4 h-4" />,
+                      to: (u: any) => `/dashboard/units/${u.id}`,
+                      variant: "ghost"
+                    }
+                  ]}
+                  emptyMessage="No units found in this property. Try adding one from the Units page."
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

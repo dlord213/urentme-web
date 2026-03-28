@@ -7,10 +7,10 @@ import {
   Plus,
   Mail,
   Pencil,
+  Search,
+  Filter,
 } from "lucide-react";
 import { DataTable, type PaginationMeta } from "~/components/DataTable";
-import { PageHeader } from "~/components/PageHeader";
-import { StatsCard } from "~/components/StatsCard";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
@@ -58,7 +58,7 @@ interface PaginatedResponse {
 const statusBadge = (s: string | string[]) => {
   const statuses = Array.isArray(s) ? s : [s];
   return (
-    <div className="flex gap-1 flex-wrap">
+    <div className="flex gap-1.5 flex-wrap">
       {statuses.map((status) => (
         <StatusBadge key={status} status={status} />
       ))}
@@ -165,7 +165,7 @@ export default function Tenants() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center min-h-[60vh]">
         <span className="loading loading-spinner text-primary loading-lg"></span>
       </div>
     );
@@ -173,104 +173,167 @@ export default function Tenants() {
 
   if (isError) {
     return (
-      <div className="alert alert-error">
-        <span>Failed to load tenants.</span>
+      <div className="alert alert-error shadow-sm rounded-xl">
+        <span>Failed to load tenants. Please try again.</span>
       </div>
     );
   }
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6">
-      <PageHeader
-        title="Tenants"
-        description="View and manage all current and past tenants."
-        actionButton={
-          <Link
-            to="/dashboard/tenants/add"
-            className="btn btn-primary shadow-sm shadow-primary/20 gap-2"
-          >
-            <Plus className="w-4 h-4" /> Add Tenant
-          </Link>
-        }
-      />
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Total Tenants" value={totalTenants} icon={Users} color="primary" />
-        <StatsCard title="Active Tenants" value={currentTenants} icon={Home} color="success" />
-        <StatsCard title="Past Tenants" value={pastTenants} icon={AlertTriangle} color="info" />
-        <StatsCard title="Flagged Tenants" value={flaggedTenants} icon={AlertTriangle} color="warning" />
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 lg:space-y-8 max-w-7xl mx-auto pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-base-content tracking-tight">Tenants</h1>
+          <p className="text-base-content/60 mt-1">View and manage all current and past tenants.</p>
+        </div>
+        <Link 
+          to="/dashboard/tenants/add" 
+          className="btn btn-primary shadow-lg shadow-primary/20 gap-2 w-full sm:w-auto hover:scale-105 transition-transform"
+        >
+          <Plus className="w-4 h-4" /> Add Tenant
+        </Link>
       </div>
 
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body">
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <input
-              type="text"
-              placeholder="Search tenants..."
-              className="input input-bordered input-sm flex-1 max-w-sm"
-              value={searchInput}
-              onChange={handleSearchChange}
-            />
-            <select
-              className="select select-bordered select-sm w-44"
-              value={statusFilter}
-              onChange={handleStatusChange}
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Total Tenants</p>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-base-content">{totalTenants}</h3>
           </div>
-          <DataTable
-            columns={[
-              { key: "id", label: "ID" },
-              { key: "name", label: "Tenant Name" },
-              { key: "unit", label: "Unit" },
-              { key: "email", label: "Email" },
-              { key: "celNum", label: "Mobile" },
-              {
-                key: "leaseEnd",
-                label: "Lease End",
-                render: (val, t) => (
-                  <span className={t.isExpiringSoon ? "text-warning font-bold" : ""}>
-                    {val}
-                  </span>
-                ),
-              },
-              {
-                key: "status",
-                label: "Status",
-                render: (s, t) => (
-                  <div className="flex flex-col gap-1">
-                    {statusBadge(s)}
-                    {t.isExpiringSoon && (
-                      <span className="badge badge-xs badge-warning font-bold animate-pulse py-2 border-none whitespace-nowrap">
-                        Expiring Soon
-                      </span>
-                    )}
-                  </div>
-                ),
-              },
-            ]}
-            data={tenants}
-            actions={[
-              {
-                label: "View",
-                icon: <Eye className="w-3 h-3" />,
-                to: (t: any) => `/dashboard/tenants/${t.id}`,
-                variant: "ghost",
-              },
-              {
-                label: "Edit",
-                icon: <Pencil className="w-3 h-3" />,
-                to: (t: any) => `/dashboard/tenants/${t.id}?edit=true`,
-                variant: "ghost",
-              },
-            ]}
-            emptyMessage="No tenants found."
-            pagination={pagination}
-            onPageChange={setPage}
-          />
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Active Tenants</p>
+              <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Home className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-success">{currentTenants}</h3>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Past Tenants</p>
+              <div className="w-10 h-10 rounded-xl bg-info/10 text-info flex items-center justify-center group-hover:scale-110 transition-transform">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-info">{pastTenants}</h3>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Flagged</p>
+              <div className="w-10 h-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center group-hover:scale-110 transition-transform">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-warning">{flaggedTenants}</h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+        <div className="card-body p-0">
+          <div className="p-4 sm:p-6 border-b border-base-200 bg-base-100/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
+              <input
+                type="text"
+                placeholder="Search tenants by name or email..."
+                className="input input-bordered w-full pl-9 focus:input-primary transition-colors bg-base-100"
+                value={searchInput}
+                onChange={handleSearchChange}
+              />
+            </div>
+            <div className="relative w-full sm:w-auto shrink-0 flex items-center">
+              <Filter className="w-4 h-4 absolute left-3 text-base-content/40 pointer-events-none" />
+              <select
+                className="select select-bordered pl-9 w-full sm:w-48 focus:select-primary transition-colors bg-base-100 font-medium"
+                value={statusFilter}
+                onChange={handleStatusChange}
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="px-1 pb-1">
+            <DataTable
+              columns={[
+                { key: "id", label: "ID" },
+                { 
+                  key: "name", 
+                  label: "Tenant Name",
+                  render: (val, t) => (
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/60">
+                        {t.firstName[0]}{t.lastName[0]}
+                      </div>
+                      <span className="font-semibold">{val}</span>
+                    </div>
+                  )
+                },
+                { key: "unit", label: "Unit" },
+                { key: "email", label: "Email" },
+                { key: "celNum", label: "Mobile" },
+                {
+                  key: "leaseEnd",
+                  label: "Lease End",
+                  render: (val, t) => (
+                    <span className={t.isExpiringSoon ? "text-warning font-black" : "font-medium text-base-content/70"}>
+                      {val}
+                    </span>
+                  ),
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (s, t) => (
+                    <div className="flex flex-col gap-1.5 items-start">
+                      {statusBadge(s)}
+                      {t.isExpiringSoon && (
+                        <span className="badge badge-xs badge-warning font-bold animate-pulse py-2 border-none">
+                          Expiring Soon
+                        </span>
+                      )}
+                    </div>
+                  ),
+                },
+              ]}
+              data={tenants}
+              actions={[
+                {
+                  label: "View",
+                  icon: <Eye className="w-4 h-4" />,
+                  to: (t: any) => `/dashboard/tenants/${t.id}`,
+                  variant: "ghost",
+                },
+                {
+                  label: "Edit",
+                  icon: <Pencil className="w-4 h-4" />,
+                  to: (t: any) => `/dashboard/tenants/${t.id}?edit=true`,
+                  variant: "ghost",
+                },
+              ]}
+              emptyMessage="No tenants found matching your criteria."
+              pagination={pagination}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
       </div>
     </div>

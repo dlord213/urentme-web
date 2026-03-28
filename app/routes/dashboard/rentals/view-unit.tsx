@@ -5,24 +5,24 @@ import {
   Save, 
   Edit2, 
   Trash2, 
+  Building2, 
   Home, 
   MapPin, 
-  TrendingUp, 
-  Clock, 
+  TrendingUp,
+  Tag,
+  Square,
+  Bed,
+  Bath, 
   Info,
-  Building2,
-  DollarSign,
-  Maximize,
-  Users,
-  Eye
+  Eye,
+  AlignLeft,
+  Image as ImageIcon,
+  UserCheck
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
-import { formatFloor, parseFloorNumber } from "~/lib/format";
-import { PageHeader } from "~/components/PageHeader";
-import { StatsCard } from "~/components/StatsCard";
-import { DataTable } from "~/components/DataTable";
 import { StatusBadge } from "~/components/StatusBadge";
+import { DataTable } from "~/components/DataTable";
 
 export default function UnitDetail() {
   const { id } = useParams();
@@ -41,25 +41,24 @@ export default function UnitDetail() {
     enabled: !!id,
   });
 
-  // Properties for the dropdown in edit mode
-  const { data: propertiesResponse } = useQuery({
+  // Properties list for editing
+  const { data: properties = [] } = useQuery({
     queryKey: ["properties"],
     queryFn: () => apiFetch("/properties"),
     enabled: isEditing,
   });
-  const properties = propertiesResponse?.data ?? [];
 
   // Form State
   const [formData, setFormData] = useState({
     propertyId: "",
     unitNumber: "",
     floor: "",
-    bedrooms: 0,
-    bathrooms: 0,
-    squareFeet: "",
     monthlyRentAmount: "",
-    description: "",
     status: "vacant",
+    bedrooms: "",
+    bathrooms: "",
+    sqm: "",
+    features: "",
     imageUrls: "",
   });
 
@@ -67,15 +66,15 @@ export default function UnitDetail() {
   useEffect(() => {
     if (unit) {
       setFormData({
-        propertyId: unit.property.id,
-        unitNumber: unit.unitNumber,
-        floor: parseFloorNumber(unit.floor),
-        bedrooms: unit.bedrooms || 0,
-        bathrooms: unit.bathrooms || 0,
-        squareFeet: unit.squareFeet || "",
-        monthlyRentAmount: unit.monthlyRentAmount,
-        description: unit.description || "",
-        status: unit.status,
+        propertyId: unit.propertyId || "",
+        unitNumber: unit.unitNumber || "",
+        floor: unit.floor || "",
+        monthlyRentAmount: unit.monthlyRentAmount ? unit.monthlyRentAmount.toString() : "",
+        status: unit.status || "vacant",
+        bedrooms: unit.bedrooms ? unit.bedrooms.toString() : "",
+        bathrooms: unit.bathrooms ? unit.bathrooms.toString() : "",
+        sqm: unit.sqm ? unit.sqm.toString() : "",
+        features: Array.isArray(unit.features) ? unit.features.join("\n") : "",
         imageUrls: Array.isArray(unit.imageUrls) ? unit.imageUrls.join("\n") : "",
       });
     }
@@ -83,10 +82,7 @@ export default function UnitDetail() {
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: ["bedrooms", "bathrooms"].includes(name) ? parseInt(value) || 0 : value 
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   // Mutations
@@ -98,10 +94,7 @@ export default function UnitDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unit", id] });
       queryClient.invalidateQueries({ queryKey: ["units"] });
-      // Also invalidate property if we know which one
-      if (unit?.propertyId) {
-        queryClient.invalidateQueries({ queryKey: ["property", unit.propertyId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
       setIsEditing(false);
     },
     onError: (error: any) => {
@@ -109,54 +102,35 @@ export default function UnitDetail() {
     }
   });
 
-  const toggleStatusMutation = useMutation({
-    mutationFn: (data: { isActive?: boolean; isUnderRepair?: boolean; isUnderRenovation?: boolean }) =>
-      apiFetch(`/units/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      }),
+  const updateStatusMutation = useMutation({
+    mutationFn: (newStatus: string) => apiFetch(`/units/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ status: newStatus }),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unit", id] });
       queryClient.invalidateQueries({ queryKey: ["units"] });
-    },
-  });
-
-  const cancelReservationMutation = useMutation({
-    mutationFn: async () => {
-      const draftLease = unit.leases?.find((l: any) => l.status === "draft");
-      if (draftLease) {
-        // 1. Delete the draft lease
-        await apiFetch(`/leases/${draftLease.id}`, { method: "DELETE" });
-      }
-
-      // 2. Set the unit back to vacant
-      await apiFetch(`/units/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ status: "vacant" }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["unit", id] });
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
     },
     onError: (error: any) => {
-      alert(error.message || "Failed to cancel reservation.");
-    },
+      alert(error.message || "Failed to update status.");
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => apiFetch(`/units/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["units"] });
-      if (unit?.propertyId) {
-        queryClient.invalidateQueries({ queryKey: ["property", unit.propertyId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
       navigate("/dashboard/units");
     },
+    onError: (error: any) => {
+      alert(error.message || "Failed to delete unit. It might be linked to active records.");
+    }
   });
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this unit? This will also affect associated leases.")) {
+    if (confirm("Are you sure you want to delete this unit?")) {
       deleteMutation.mutate();
     }
   };
@@ -165,9 +139,11 @@ export default function UnitDetail() {
     e.preventDefault();
     const payload = {
       ...formData,
-      floor: formatFloor(formData.floor),
-      monthlyRentAmount: parseFloat(formData.monthlyRentAmount.toString()) || 0,
-      squareFeet: formData.squareFeet ? parseFloat(formData.squareFeet.toString()) : null,
+      monthlyRentAmount: parseFloat(formData.monthlyRentAmount),
+      bedrooms: formData.bedrooms ? parseInt(formData.bedrooms.toString()) : null,
+      bathrooms: formData.bathrooms ? parseFloat(formData.bathrooms.toString()) : null,
+      sqm: formData.sqm ? parseFloat(formData.sqm.toString()) : null,
+      features: formData.features.split("\n").filter(line => line.trim() !== ""),
       imageUrls: formData.imageUrls.split("\n").filter(line => line.trim() !== ""),
     };
     updateMutation.mutate(payload);
@@ -176,302 +152,389 @@ export default function UnitDetail() {
   if (isLoading) return <div className="flex justify-center p-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
   if (isError || !unit) return <div className="alert alert-error">Unit not found.</div>;
 
-  const currentProperty = unit.property;
-  const isCommercial = currentProperty?.type === "Commercial";
-  const leases = unit.leases || [];
-  const activeLease = leases.find((l: any) => l.status === "active");
-  const reservedLease = leases.find((l: any) => l.status === "draft");
-
   return (
-    <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Header */}
-      <PageHeader
-        title={`Unit ${unit.unitNumber}`}
-        showBack
-        backTo="/dashboard/units"
-        titleSuffix={
-          <div className="flex items-center gap-4 flex-wrap ml-2">
-            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={unit.isActive}
-                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
-                className="checkbox checkbox-primary checkbox-sm rounded-lg"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Active</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={unit.isUnderRepair}
-                onChange={(e) => toggleStatusMutation.mutate({ isUnderRepair: e.target.checked })}
-                className="checkbox checkbox-warning checkbox-sm rounded-lg"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Repair</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={unit.isUnderRenovation}
-                onChange={(e) => toggleStatusMutation.mutate({ isUnderRenovation: e.target.checked })}
-                className="checkbox checkbox-info checkbox-sm rounded-lg"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Renovation</span>
-            </label>
-            {unit.status === "reserved" && (
-              <label className="flex items-center gap-2 cursor-pointer group bg-base-200/50 px-3 py-1.5 rounded-xl hover:bg-base-200 transition-colors border border-info/30">
-                <input
-                  type="checkbox"
-                  checked={true}
-                  onChange={(e) => {
-                    if (!e.target.checked) {
-                      if (confirm("Are you sure you want to cancel this reservation?")) {
-                        cancelReservationMutation.mutate();
-                      }
-                    }
-                  }}
-                  className="checkbox checkbox-info checkbox-sm rounded-lg"
-                />
-                <span className="text-xs font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">Reserved</span>
-              </label>
-            )}
-            <div className="flex items-center gap-2">
-              <StatusBadge status={unit.status} />
-              {unit.isActive === false && <StatusBadge status="inactive" />}
-              {unit.isUnderRepair && <StatusBadge status="under repair" label="Under Repair" />}
-              {unit.isUnderRenovation && <StatusBadge status="under renovation" label="Under Renovation" />}
-            </div>
-          </div>
-        }
-        description={
-          <p className="text-sm opacity-60 flex items-center gap-1">
-            <Building2 className="w-3 h-3" /> {currentProperty?.name} — {unit.floor || "No Floor Info"}
-          </p>
-        }
-        actionButton={
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-12">
+      
+      {/* Premium Gradient Hero Cover */}
+      <div className="h-48 md:h-64 w-full rounded-b-3xl bg-gradient-to-r from-success/90 to-primary/90 shadow-lg relative overflow-hidden -mt-6 sm:-mt-8">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+        
+        {/* Navigation & Actions Top Bar */}
+        <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
+          <Link
+            to="/dashboard/units"
+            className="btn btn-circle btn-sm md:btn-md bg-base-100/20 hover:bg-base-100/40 border-none text-white backdrop-blur-md transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          
           <div className="flex items-center gap-2">
             {!isEditing ? (
               <>
-                <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm gap-2">
+                <button onClick={() => setIsEditing(true)} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content gap-2 shadow-xl hover:scale-105 transition-all">
                   <Edit2 className="w-4 h-4" /> Edit
                 </button>
                 <button 
                   onClick={handleDelete} 
-                  className="btn btn-ghost text-error btn-sm btn-square"
+                  className="btn btn-square btn-sm md:btn-md bg-error/90 hover:bg-error border-none text-white shadow-xl hover:scale-105 transition-all"
                   disabled={deleteMutation.isPending}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </>
             ) : (
-              <button onClick={() => setIsEditing(false)} className="btn btn-ghost btn-sm">
-                Cancel
+              <button onClick={() => setIsEditing(false)} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content shadow-xl hover:scale-105 transition-all">
+                Cancel Edit
               </button>
             )}
           </div>
-        }
-      />
-
-      {/* Stats Summary */}
-      {!isEditing && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard title="Monthly Rent" value={`₱${unit.monthlyRentAmount.toLocaleString()}`} icon={DollarSign} color="primary" />
-          <StatsCard title="Area" value={unit.squareFeet ? `${unit.squareFeet} sqft` : "N/A"} icon={Maximize} color="success" />
-          <StatsCard title="Bedrooms" value={isCommercial ? "N/A" : unit.bedrooms} icon={Home} color="info" />
-          <StatsCard title="Leases" value={leases.length} icon={Users} color="warning" />
-        </div>
-      )}
-
-      {/* Main Content Tabs */}
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="tabs tabs-bordered px-6 pt-2">
-          <button 
-            className={`tab tab-lg gap-2 ${activeTab === 'details' ? 'tab-active font-bold' : ''}`}
-            onClick={() => setActiveTab('details')}
-          >
-            <Info className="w-4 h-4" /> Unit Details
-          </button>
-          <button 
-            className={`tab tab-lg gap-2 ${activeTab === 'history' ? 'tab-active font-bold' : ''}`}
-            onClick={() => setActiveTab('history')}
-          >
-            <Clock className="w-4 h-4" /> Lease History
-          </button>
         </div>
 
-        <div className="card-body">
-          {activeTab === 'details' ? (
-            isEditing ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg border-b pb-1">Basic Information</h3>
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Property <span className="text-error">*</span></span></label>
-                      <select name="propertyId" value={formData.propertyId} onChange={handleChange} required className="select select-bordered w-full">
-                        {properties.map((p: any) => (
-                          <option key={p.id} value={p.id}>{p.name} ({p.type})</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Unit Number <span className="text-error">*</span></span></label>
-                        <input name="unitNumber" value={formData.unitNumber} onChange={handleChange} required className="input input-bordered w-full" />
-                      </div>
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Floor</span></label>
-                        <input type="number" min="0" name="floor" value={formData.floor} onChange={handleChange} className="input input-bordered w-full" />
-                      </div>
-                    </div>
-                    
-                    {!isCommercial && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="form-control">
-                          <label className="label"><span className="label-text">Bedrooms</span></label>
-                          <input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleChange} min="0" className="input input-bordered w-full" />
-                        </div>
-                        <div className="form-control">
-                          <label className="label"><span className="label-text">Bathrooms</span></label>
-                          <input type="number" name="bathrooms" value={formData.bathrooms} onChange={handleChange} min="0" className="input input-bordered w-full" />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Description</span></label>
-                      <textarea name="description" value={formData.description} onChange={handleChange} className="textarea textarea-bordered h-24 w-full" placeholder="Unit description..." />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg border-b pb-1">Status & Financials</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Monthly Rent <span className="text-error">*</span></span></label>
-                        <input type="number" step="0.01" name="monthlyRentAmount" value={formData.monthlyRentAmount} onChange={handleChange} required className="input input-bordered w-full" />
-                      </div>
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Square Feet</span></label>
-                        <input type="number" step="0.1" name="squareFeet" value={formData.squareFeet} onChange={handleChange} className="input input-bordered w-full" />
-                      </div>
-                    </div>
-                    
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Unit Image URLs (one per line)</span></label>
-                      <textarea name="imageUrls" value={formData.imageUrls} onChange={handleChange} className="textarea textarea-bordered h-32 w-full font-mono text-sm" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg..." />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-6 border-t mt-6">
-                  <button type="submit" className="btn btn-primary px-8" disabled={updateMutation.isPending}>
-                    {updateMutation.isPending ? <span className="loading loading-spinner loading-xs"></span> : <Save className="w-4 h-4 mr-2" />}
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
-                {/* Image Gallery */}
-                {unit.imageUrls && unit.imageUrls.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {unit.imageUrls.map((url: string, index: number) => (
-                      <div key={index} className="aspect-video rounded-xl overflow-hidden border border-base-200 shadow-sm group relative">
-                        <img src={url} alt={`Unit ${unit.unitNumber} ${index + 1}`} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <div className="space-y-8">
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-3 flex items-center gap-2">
-                        <Info className="w-3 h-3" /> Detailed Description
-                      </h3>
-                      <p className="text-base leading-relaxed whitespace-pre-wrap">{unit.description || "No description provided."}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6 pt-4 border-t border-base-200">
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Floor</h3>
-                        <p className="font-semibold">{unit.floor || "N/A"}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Area</h3>
-                        <p className="font-semibold">{unit.squareFeet ? `${unit.squareFeet} sqft` : "N/A"}</p>
-                      </div>
-                      {!isCommercial && (
-                        <>
-                          <div>
-                            <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Bedrooms</h3>
-                            <p className="font-semibold">{unit.bedrooms}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">Bathrooms</h3>
-                            <p className="font-semibold">{unit.bathrooms}</p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div className="p-8 bg-base-200/30 rounded-3xl border border-base-200/50 h-fit">
-                      <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-primary">Property Information</h3>
-                      <p className="text-xl font-bold">{currentProperty?.name}</p>
-                      <p className="opacity-80">{currentProperty?.street}, {currentProperty?.city}</p>
-                      <Link to={`/dashboard/properties/${unit.propertyId}`} className="btn btn-link btn-xs p-0 h-auto mt-2">View Property details</Link>
-                    </div>
-
-                    {activeLease ? (
-                      <div className="p-8 bg-success/10 rounded-3xl border border-success/20 h-fit">
-                        <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-success">Active Lease</h3>
-                        <p className="text-lg font-bold">
-                          {activeLease.tenant?.firstName} {activeLease.tenant?.lastName}
-                        </p>
-                        <p className="text-sm opacity-80">
-                          Started: {new Date(activeLease.leaseStartDate).toLocaleDateString()}
-                        </p>
-                        <p className="text-sm opacity-80">
-                          Ends: {new Date(activeLease.leaseEndDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="p-8 bg-warning/10 rounded-3xl border border-warning/20 h-fit">
-                        <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-warning">Status</h3>
-                        <p className="text-lg font-bold capitalize">{unit.status}</p>
-                        <p className="text-sm opacity-80">No active lease found for this unit.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+        {/* Title & Badges Bottom Area */}
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="badge badge-sm uppercase font-bold tracking-widest bg-white/20 text-white border-none backdrop-blur-md">Unit {unit.unitNumber}</span>
+              <StatusBadge status={unit.status} />
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md">
+              {unit.property?.name ? `${unit.property.name} - ${unit.unitNumber}` : `Unit ${unit.unitNumber}`}
+            </h1>
+            <p className="text-white/80 mt-1 md:mt-2 font-medium flex items-center gap-1.5 text-sm md:text-base drop-shadow-sm">
+              <Building2 className="w-4 h-4" /> Property: {unit.property?.name || "Unknown"}
+            </p>
+          </div>
+          
+          {!isEditing && (
+            <div className="flex items-center gap-2 flex-wrap bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/20">
+              <div className="text-white text-right px-2">
+                <p className="text-xs uppercase font-bold opacity-80 tracking-wider">Monthly Rent</p>
+                <p className="text-xl md:text-2xl font-black">₱{(unit.monthlyRentAmount || 0).toLocaleString()}</p>
               </div>
-            )
-          ) : (
-            <div className="animate-in slide-in-from-bottom-4 duration-300">
-              <DataTable
-                columns={[
-                  { key: "tenant", label: "Tenant", render: (t) => t ? `${t.firstName} ${t.lastName}` : "Unknown" },
-                  { key: "status", label: "Status", render: (s) => <StatusBadge status={s} /> },
-                  { key: "leaseStartDate", label: "Start Date", render: (d) => new Date(d).toLocaleDateString() },
-                  { key: "leaseEndDate", label: "End Date", render: (d) => new Date(d).toLocaleDateString() },
-                ]}
-                data={leases}
-                actions={[
-                  { 
-                    label: "View Lease", 
-                    icon: <Eye className="w-3 h-3" />, 
-                    to: (l: any) => `/dashboard/leases/${l.id}`,
-                    variant: "ghost" 
-                  }
-                ]}
-                emptyMessage="No lease history for this unit."
-              />
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Main Content Container */}
+      <div className="mt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        
+        {/* Stats Summary - Premium Inline Cards */}
+        {!isEditing && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Square className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Floor Area</p>
+                <p className="text-2xl font-black text-base-content">{unit.sqm ? `${unit.sqm} sqm` : "N/A"}</p>
+              </div>
+            </div>
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
+                <Bed className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Bedrooms</p>
+                <p className="text-2xl font-black text-base-content">{unit.bedrooms || 0}</p>
+              </div>
+            </div>
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
+                <Bath className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Bathrooms</p>
+                <p className="text-2xl font-black text-base-content">{unit.bathrooms || 0}</p>
+              </div>
+            </div>
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
+                <Home className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Floor Level</p>
+                <p className="text-2xl font-black text-base-content">{unit.floor || "N/A"}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Dynamic Content Tabs */}
+        <div>
+          <div className="flex gap-2 mb-6 border-b border-base-200/60 pb-4 overflow-x-auto scrollbar-hide">
+            <button 
+              className={`btn btn-sm sm:btn-md rounded-full px-6 transition-all ${activeTab === 'details' ? 'bg-base-content text-base-100 shadow-md hover:bg-base-content/90 font-bold' : 'btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70'}`}
+              onClick={() => setActiveTab('details')}
+            >
+              <Info className="w-4 h-4" /> Unit Info
+            </button>
+            <button 
+              className={`btn btn-sm sm:btn-md rounded-full px-6 transition-all ${activeTab === 'leases' ? 'bg-base-content text-base-100 shadow-md hover:bg-base-content/90 font-bold' : 'btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70'}`}
+              onClick={() => setActiveTab('leases')}
+            >
+              <UserCheck className="w-4 h-4" /> Tenant & Leases
+            </button>
+          </div>
+
+          <div>
+            {activeTab === 'details' ? (
+              isEditing ? (
+                /* Edit Form */
+                <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-success/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+                    <div className="card-body p-6 sm:p-8 relative z-10">
+                      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                        <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center">
+                          <Home className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-base-content">Basic Configuration</h3>
+                          <p className="text-xs text-base-content/60">Core details and financial setting.</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        <div className="space-y-5">
+                          <div className="form-control">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Assign to Property <span className="text-error">*</span></span></label>
+                            <select name="propertyId" value={formData.propertyId} onChange={handleChange} required className="select select-bordered w-full focus:select-primary transition-all font-medium">
+                              <option value="" disabled>Select Property</option>
+                              {properties.map((p: any) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Unit Number <span className="text-error">*</span></span></label>
+                              <input name="unitNumber" value={formData.unitNumber} onChange={handleChange} required className="input input-bordered w-full focus:input-primary transition-all" />
+                            </div>
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Floor Level</span></label>
+                              <input name="floor" value={formData.floor} onChange={handleChange} className="input input-bordered w-full focus:input-primary transition-all" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-5">
+                          <div className="form-control">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Monthly Rent (₱) <span className="text-error">*</span></span></label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-base-content/50">₱</span>
+                              <input type="number" step="0.01" name="monthlyRentAmount" value={formData.monthlyRentAmount} onChange={handleChange} required className="input input-bordered w-full pl-10 focus:input-primary transition-all text-lg font-bold" />
+                            </div>
+                          </div>
+
+                          <div className="form-control">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Current Status <span className="text-error">*</span></span></label>
+                            <select name="status" value={formData.status} onChange={handleChange} required className="select select-bordered w-full focus:select-primary transition-all font-medium">
+                              <option value="vacant">Vacant</option>
+                              <option value="occupied">Occupied</option>
+                              <option value="maintenance">Under Maintenance</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                    {/* Structure details */}
+                    <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                      <div className="card-body p-6 sm:p-8 relative z-10">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                          <div className="w-10 h-10 rounded-xl bg-info/10 text-info flex items-center justify-center">
+                            <AlignLeft className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-base-content">Structure & Features</h3>
+                          </div>
+                        </div>
+
+                        <div className="space-y-5">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Beds</span></label>
+                              <input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleChange} className="input input-bordered w-full focus:input-primary transition-all text-center" />
+                            </div>
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Baths</span></label>
+                              <input type="number" step="0.5" name="bathrooms" value={formData.bathrooms} onChange={handleChange} className="input input-bordered w-full focus:input-primary transition-all text-center" />
+                            </div>
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">SQM</span></label>
+                              <input type="number" step="0.1" name="sqm" value={formData.sqm} onChange={handleChange} className="input input-bordered w-full focus:input-primary transition-all text-center" />
+                            </div>
+                          </div>
+
+                          <div className="form-control flex flex-col pt-2">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">Unit Features (one per line)</span></label>
+                            <textarea name="features" value={formData.features} onChange={handleChange} className="textarea textarea-bordered h-32 w-full focus:textarea-primary transition-all font-mono text-sm leading-relaxed" placeholder="Air conditioning&#10;Balcony&#10;Furnished..." />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Media */}
+                    <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                      <div className="card-body p-6 sm:p-8 relative z-10">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                          <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                            <ImageIcon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-base-content">Media URLs</h3>
+                          </div>
+                        </div>
+
+                        <div className="space-y-5">
+                          <div className="form-control flex flex-col h-full">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">Image URLs (one per line)</span></label>
+                            <textarea name="imageUrls" value={formData.imageUrls} onChange={handleChange} className="textarea textarea-bordered min-h-[160px] w-full focus:textarea-primary transition-all font-mono text-sm leading-relaxed" placeholder="https://example.com/unit-image1.jpg&#10;https://example.com/unit-image2.jpg..." />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Area */}
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-base-200/60">
+                    <button type="button" onClick={() => setIsEditing(false)} className="btn btn-ghost font-semibold hover:bg-base-200">
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary px-8 shadow-lg shadow-primary/20 hover:scale-105 transition-transform" disabled={updateMutation.isPending}>
+                      {updateMutation.isPending ? <span className="loading loading-spinner loading-sm"></span> : <Save className="w-4 h-4 mr-2" />}
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* View Details Block */
+                <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  
+                  {/* Image Gallery */}
+                  {unit.imageUrls && unit.imageUrls.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {unit.imageUrls.map((url: string, index: number) => (
+                        <div key={index} className="aspect-[4/3] rounded-3xl overflow-hidden shadow-sm group relative border border-base-200/50">
+                          <img src={url} alt={`Unit ${unit.unitNumber} - ${index + 1}`} className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                    {/* Left Col (Features + Notes) */}
+                    <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+                      {unit.features && unit.features.length > 0 ? (
+                        <div className="card bg-base-100 shadow-sm border border-base-200 pb-2">
+                          <div className="card-body p-6 sm:p-8">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                              <Tag className="w-4 h-4" /> Unit Features & Amenities
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {unit.features.map((feature: string, i: number) => (
+                                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-base-200/50 border border-base-300/50">
+                                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                    <Tag className="w-4 h-4" />
+                                  </div>
+                                  <span className="font-medium text-base-content/90 text-sm">{feature}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="card bg-base-100 shadow-sm border border-base-200 border-dashed">
+                          <div className="card-body p-8 flex items-center justify-center text-center">
+                            <Tag className="w-8 h-8 text-base-content/20 mb-3" />
+                            <h3 className="font-bold text-base-content/70">No Features Listed</h3>
+                            <p className="text-sm text-base-content/50">Edit this unit to add specific features and amenities.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Right Col (Sidebar) */}
+                    <div className="lg:col-span-4 space-y-6">
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-secondary mb-4 flex items-center gap-2">
+                            <Building2 className="w-4 h-4" /> Quick Actions
+                          </h3>
+                          <div className="space-y-3">
+                            <label className="form-control w-full">
+                              <div className="label pt-0"><span className="label-text-alt font-bold text-base-content/60 uppercase">Change Status</span></div>
+                              <select 
+                                className="select select-bordered select-sm w-full font-bold focus:select-primary"
+                                value={unit.status}
+                                onChange={(e) => updateStatusMutation.mutate(e.target.value)}
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                <option value="vacant">Vacant</option>
+                                <option value="occupied">Occupied</option>
+                                <option value="maintenance">Under Maintenance</option>
+                              </select>
+                            </label>
+                            
+                            <div className="divider my-1"></div>
+                            
+                            <div className="bg-base-200/50 p-4 rounded-xl border border-base-300/50 flex flex-col items-center justify-center text-center">
+                              <p className="font-mono text-sm font-bold text-base-content/70">{unit.id.substring(0, 8).toUpperCase()}</p>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-base-content/40 mt-1">System Reference ID</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : (
+              /* Leases Tab Content */
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+                <DataTable
+                  columns={[
+                    { key: "tenant.firstName", label: "Tenant Name", render: (_, lease) => (
+                      <div className="flex items-center gap-3">
+                        <div className="avatar placeholder">
+                          <div className="bg-primary/10 text-primary rounded-full w-8">
+                            <span className="text-xs font-bold">{lease.tenant?.firstName?.charAt(0) || "U"}</span>
+                          </div>
+                        </div>
+                        <span className="font-bold">{lease.tenant?.firstName} {lease.tenant?.lastName}</span>
+                      </div>
+                    )},
+                    { key: "startDate", label: "Start Date", render: (d) => new Date(d).toLocaleDateString() },
+                    { key: "endDate", label: "End Date", render: (d) => d ? new Date(d).toLocaleDateString() : "Ongoing" },
+                    { key: "status", label: "Status", render: (s) => <StatusBadge status={s} /> },
+                  ]}
+                  data={unit.leases || []}
+                  actions={[
+                    { 
+                      label: "View Lease", 
+                      icon: <Eye className="w-4 h-4" />, 
+                      to: (l: any) => `/dashboard/leases/${l.id}`,
+                      variant: "ghost" 
+                    }
+                  ]}
+                  emptyMessage="No lease records found for this unit."
+                />
+                
+                <div className="p-6 bg-base-200/30 border-t border-base-200 text-center">
+                  <Link to={`/dashboard/leases/new?unitId=${unit.id}`} className="btn btn-primary btn-sm shadow-md hover:scale-105 transition-transform">
+                    Create New Lease
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

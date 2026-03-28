@@ -6,10 +6,10 @@ import {
   Eye,
   Pencil,
   CalendarCheck,
+  Search,
+  Filter,
 } from "lucide-react";
 import { DataTable, type PaginationMeta } from "~/components/DataTable";
-import { PageHeader } from "~/components/PageHeader";
-import { StatsCard } from "~/components/StatsCard";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
@@ -54,7 +54,7 @@ const renderUnitStatus = (item: Unit) => {
   if (!item.isActive) flags.push("Inactive");
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1.5">
       <StatusBadge status={item.status} />
       {flags.map((flag) => (
         <StatusBadge key={flag} status={flag} size="xs" />
@@ -178,7 +178,7 @@ export default function UnitsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center min-h-[60vh]">
         <span className="loading loading-spinner text-primary loading-lg"></span>
       </div>
     );
@@ -186,146 +186,180 @@ export default function UnitsPage() {
 
   if (isError) {
     return (
-      <div className="alert alert-error">
-        <span>Failed to load units.</span>
+      <div className="alert alert-error shadow-sm rounded-xl">
+        <span>Failed to load units. Please try again.</span>
       </div>
     );
   }
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6">
-      <PageHeader
-        title="Units"
-        description="View and manage individual rental units across all properties."
-        actionButton={
-          <Link
-            to="/dashboard/units/add"
-            className="btn btn-primary shadow-sm shadow-primary/20 gap-2"
-          >
-            <Plus className="w-4 h-4" /> Add Unit
-          </Link>
-        }
-      />
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard 
-          title="Total Units" 
-          value={pagination?.total ?? units.length} 
-          icon={Home} 
-          color="primary" 
-          className="animate-fade-in-up" 
-          style={{ animationDelay: "50ms" }}
-        />
-        <StatsCard
-          title="Occupied"
-          value={occupiedCount}
-          icon={DoorOpen}
-          color="success"
-          trend={{ value: `${occupancyRate}% occupancy`, positive: true }}
-          className="animate-fade-in-up"
-          style={{ animationDelay: "100ms" }}
-        />
-        <StatsCard
-          title="Vacant"
-          value={units.filter((unit) => unit.status === "vacant").length}
-          icon={Home}
-          color="warning"
-          subtitle="Available to rent"
-          className="animate-fade-in-up"
-          style={{ animationDelay: "150ms" }}
-        />
-        <StatsCard
-          title="Avg. Rent"
-          value={new Intl.NumberFormat("en-PH", {
-            style: "currency",
-            currency: "PHP",
-          }).format(avgRent)}
-          icon={PhilippinePeso}
-          color="accent"
-          className="animate-fade-in-up"
-          style={{ animationDelay: "200ms" }}
-        />
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 lg:space-y-8 max-w-7xl mx-auto pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-base-content tracking-tight">Units</h1>
+          <p className="text-base-content/60 mt-1">View and manage individual rental units across all properties.</p>
+        </div>
+        <Link 
+          to="/dashboard/units/add" 
+          className="btn btn-primary shadow-lg shadow-primary/20 gap-2 w-full sm:w-auto hover:scale-105 transition-transform"
+        >
+          <Plus className="w-4 h-4" /> Add Unit
+        </Link>
       </div>
 
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body">
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <input
-              type="text"
-              placeholder="Search units..."
-              className="input input-bordered input-sm flex-1 max-w-sm"
-              value={searchInput}
-              onChange={handleSearchChange}
-            />
-            <select
-              className="select select-bordered select-sm w-36"
-              value={statusFilter}
-              onChange={handleStatusChange}
-            >
-              <option value="">All Statuses</option>
-              <option value="occupied">Occupied</option>
-              <option value="vacant">Vacant</option>
-              <option value="reserved">Reserved</option>
-            </select>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Total Units</p>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Home className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-base-content">{pagination?.total ?? units.length}</h3>
           </div>
-          <DataTable
-            columns={[
-              { key: "unit", label: "Unit #" },
-              { key: "propertyName", label: "Property" },
-              { key: "bedrooms", label: "Beds" },
-              { key: "rent", label: "Rent/Mo", render: (val) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(val) },
-              { key: "tenantName", label: "Current Tenant" },
-              { key: "id", label: "Status", render: (_, item) => renderUnitStatus(item) },
-            ]}
-            data={units}
-            actions={[
-              {
-                label: "View",
-                icon: <Eye className="w-3 h-3" />,
-                to: (item: any) => `/dashboard/units/${item.id}`,
-                variant: "ghost",
-              },
-              {
-                label: "Edit",
-                icon: <Pencil className="w-3 h-3" />,
-                to: (item: any) => `/dashboard/units/${item.id}?edit=true`,
-                variant: "ghost",
-              },
-              {
-                label: "Reserve",
-                icon: <CalendarCheck className="w-3 h-3" />,
-                onClick: (item: any) => openReserveModal(item),
-                variant: "primary",
-                show: (item: any) => item.status === "vacant",
-              },
-            ]}
-            emptyMessage="No units found."
-            pagination={pagination}
-            onPageChange={setPage}
-          />
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Occupied</p>
+              <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition-transform">
+                <DoorOpen className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="flex items-end gap-2">
+              <h3 className="text-3xl font-black text-success">{occupiedCount}</h3>
+              <span className="text-xs font-semibold text-success/70 mb-1">{occupancyRate}% occupancy</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Vacant Units</p>
+              <div className="w-10 h-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Home className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-warning">{units.filter((unit) => unit.status === "vacant").length}</h3>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Avg. Rent</p>
+              <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                <PhilippinePeso className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-accent">
+              ₱{avgRent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+        <div className="card-body p-0">
+          <div className="p-4 sm:p-6 border-b border-base-200 bg-base-100/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
+              <input
+                type="text"
+                placeholder="Search units..."
+                className="input input-bordered w-full pl-9 focus:input-primary transition-colors bg-base-100"
+                value={searchInput}
+                onChange={handleSearchChange}
+              />
+            </div>
+            <div className="relative w-full sm:w-auto shrink-0 flex items-center">
+              <Filter className="w-4 h-4 absolute left-3 text-base-content/40 pointer-events-none" />
+              <select
+                className="select select-bordered pl-9 w-full sm:w-48 focus:select-primary transition-colors bg-base-100 font-medium"
+                value={statusFilter}
+                onChange={handleStatusChange}
+              >
+                <option value="">All Statuses</option>
+                <option value="occupied">Occupied</option>
+                <option value="vacant">Vacant</option>
+                <option value="reserved">Reserved</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="px-1 pb-1">
+            <DataTable
+              columns={[
+                { key: "unit", label: "Unit #" },
+                { key: "propertyName", label: "Property" },
+                { key: "bedrooms", label: "Beds" },
+                { 
+                  key: "rent", 
+                  label: "Rent/Mo", 
+                  render: (val) => (
+                    <span className="font-semibold text-success">
+                      {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(val)}
+                    </span>
+                  ) 
+                },
+                { key: "tenantName", label: "Current Tenant" },
+                { key: "id", label: "Status", render: (_, item) => renderUnitStatus(item) },
+              ]}
+              data={units}
+              actions={[
+                {
+                  label: "View",
+                  icon: <Eye className="w-4 h-4" />,
+                  to: (item: any) => `/dashboard/units/${item.id}`,
+                  variant: "ghost",
+                },
+                {
+                  label: "Edit",
+                  icon: <Pencil className="w-4 h-4" />,
+                  to: (item: any) => `/dashboard/units/${item.id}?edit=true`,
+                  variant: "ghost",
+                },
+                {
+                  label: "Reserve",
+                  icon: <CalendarCheck className="w-4 h-4" />,
+                  onClick: (item: any) => openReserveModal(item),
+                  variant: "primary",
+                  show: (item: any) => item.status === "vacant",
+                },
+              ]}
+              emptyMessage="No units found matching your criteria."
+              pagination={pagination}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
       </div>
 
       {/* Reserve Modal */}
       <dialog className={`modal ${reserveModalOpen ? "modal-open" : ""}`}>
-        <div className="modal-box">
-          <h3 className="font-bold text-lg flex items-center gap-2">
-            <CalendarCheck className="w-5 h-5 text-primary" />
+        <div className="modal-box p-6 lg:p-8 rounded-3xl">
+          <h3 className="font-bold text-2xl flex items-center gap-3 text-base-content">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <CalendarCheck className="w-5 h-5" />
+            </div>
             Reserve Unit {reserveUnit?.unitNumber}
           </h3>
-          <p className="text-sm text-base-content/60 mt-1">
+          <p className="text-sm text-base-content/60 mt-2 font-medium">
             {reserveUnit?.property?.name} — Assign a tenant and set lease dates to reserve this unit.
           </p>
 
-          <div className="space-y-4 mt-6">
+          <div className="space-y-5 mt-8">
             <div className="form-control">
-              <label className="label"><span className="label-text font-medium">Tenant <span className="text-error">*</span></span></label>
+              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Tenant <span className="text-error">*</span></span></label>
               <select
-                className="select select-bordered w-full"
+                className="select select-bordered w-full focus:select-primary"
                 value={reserveTenantId}
                 onChange={(e) => setReserveTenantId(e.target.value)}
               >
-                <option value="" disabled>Select a tenant</option>
+                <option value="" disabled>Select a tenant...</option>
                 {tenants.map((t: any) => (
                   <option key={t.id} value={t.id}>
                     {t.firstName} {t.lastName} ({t.email})
@@ -334,21 +368,21 @@ export default function UnitsPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-5">
               <div className="form-control">
-                <label className="label"><span className="label-text font-medium">Lease Start <span className="text-error">*</span></span></label>
+                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Lease Start <span className="text-error">*</span></span></label>
                 <input
                   type="date"
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full focus:input-primary"
                   value={reserveStartDate}
                   onChange={(e) => setReserveStartDate(e.target.value)}
                 />
               </div>
               <div className="form-control">
-                <label className="label"><span className="label-text font-medium">Lease End <span className="text-error">*</span></span></label>
+                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Lease End <span className="text-error">*</span></span></label>
                 <input
                   type="date"
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full focus:input-primary"
                   value={reserveEndDate}
                   onChange={(e) => setReserveEndDate(e.target.value)}
                 />
@@ -356,18 +390,18 @@ export default function UnitsPage() {
             </div>
 
             {reserveMutation.isError && (
-              <div className="alert alert-error text-sm py-2">
+              <div className="alert alert-error text-sm py-3 rounded-xl">
                 {(reserveMutation.error as any)?.message || "Failed to reserve unit."}
               </div>
             )}
           </div>
 
-          <div className="modal-action">
+          <div className="modal-action mt-8">
             <button className="btn btn-ghost" onClick={closeReserveModal} disabled={reserveMutation.isPending}>
               Cancel
             </button>
             <button
-              className="btn btn-primary gap-2"
+              className="btn btn-primary shadow-lg shadow-primary/20 gap-2"
               onClick={handleReserveSubmit}
               disabled={reserveMutation.isPending || !reserveTenantId || !reserveStartDate || !reserveEndDate}
             >
@@ -376,13 +410,13 @@ export default function UnitsPage() {
               ) : (
                 <CalendarCheck className="w-4 h-4" />
               )}
-              Reserve Unit
+              Confirm Reservation
             </button>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={closeReserveModal}>close</button>
-        </form>
+        <div className="modal-backdrop bg-base-300/60 backdrop-blur-sm" onClick={closeReserveModal}>
+          <button className="cursor-default">close</button>
+        </div>
       </dialog>
     </div>
   );

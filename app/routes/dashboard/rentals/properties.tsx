@@ -6,10 +6,11 @@ import {
   TrendingUp,
   Eye,
   Pencil,
+  Search,
+  Filter,
 } from "lucide-react";
 import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { PageHeader } from "~/components/PageHeader";
-import { StatsCard } from "~/components/StatsCard";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
@@ -47,7 +48,7 @@ interface PaginatedResponse {
 
 const renderPropertyStatus = (item: Property) => {
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1.5">
       {item.isActive === false && (
         <StatusBadge status="inactive" />
       )}
@@ -65,7 +66,7 @@ const renderPropertyStatus = (item: Property) => {
 };
 
 const typeBadge = (type: string) => {
-  return <StatusBadge status={type} />
+  return <span className="badge badge-ghost font-medium px-3">{type}</span>;
 };
 
 const occupancyBar = (_: any, item: any) => {
@@ -78,9 +79,11 @@ const occupancyBar = (_: any, item: any) => {
         ? "progress-warning"
         : "progress-error";
   return (
-    <div className="flex items-center gap-2 min-w-[120px]">
-      <progress className={`progress ${color} w-20`} value={pct} max={100} />
-      <span className="text-xs font-semibold">{pct}%</span>
+    <div className="flex items-center gap-3 min-w-[140px]">
+      <div className="flex-1">
+        <progress className={`progress ${color} w-full h-2 bg-base-200`} value={pct} max={100} />
+      </div>
+      <span className="text-xs font-bold tabular-nums min-w-[32px]">{pct}%</span>
     </div>
   );
 };
@@ -143,7 +146,7 @@ export default function Properties() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center min-h-[60vh]">
         <span className="loading loading-spinner text-primary loading-lg"></span>
       </div>
     );
@@ -151,110 +154,139 @@ export default function Properties() {
 
   if (isError) {
     return (
-      <div className="alert alert-error">
-        <span>Failed to load properties.</span>
+      <div className="alert alert-error shadow-sm rounded-xl">
+        <span>Failed to load properties. Please try again.</span>
       </div>
     );
   }
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6">
-      <PageHeader
-        title="Properties"
-        description="Manage your portfolio of properties and buildings."
-        actionButton={
-          <Link to="/dashboard/properties/add" className="btn btn-primary shadow-sm shadow-primary/20 gap-2">
-            <Plus className="w-4 h-4" /> Add Property
-          </Link>
-        }
-      />
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total Properties"
-          value={pagination?.total ?? properties.length}
-          icon={Building2}
-          color="primary"
-          className="animate-fade-in-up"
-          style={{ animationDelay: "50ms" }}
-        />
-        <StatsCard
-          title="Total Units"
-          value={totalUnits}
-          icon={Home}
-          color="info"
-          className="animate-fade-in-up"
-          style={{ animationDelay: "100ms" }}
-        />
-        <StatsCard
-          title="Occupied Units"
-          value={totalOccupied}
-          icon={TrendingUp}
-          color="success"
-          trend={{ value: `${occupancyRate}% occupancy rate`, positive: true }}
-          className="animate-fade-in-up"
-          style={{ animationDelay: "150ms" }}
-        />
-        <StatsCard
-          title="Vacant Units"
-          value={totalUnits - totalOccupied}
-          icon={MapPin}
-          color="warning"
-          subtitle="Available to lease"
-          className="animate-fade-in-up"
-          style={{ animationDelay: "200ms" }}
-        />
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 lg:space-y-8 max-w-7xl mx-auto pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-base-content tracking-tight">Properties</h1>
+          <p className="text-base-content/60 mt-1">Manage your portfolio of properties and buildings.</p>
+        </div>
+        <Link 
+          to="/dashboard/properties/add" 
+          className="btn btn-primary shadow-lg shadow-primary/20 gap-2 w-full sm:w-auto hover:scale-105 transition-transform"
+        >
+          <Plus className="w-4 h-4" /> Add Property
+        </Link>
       </div>
 
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body">
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <input
-              type="text"
-              placeholder="Search properties..."
-              className="input input-bordered input-sm flex-1 max-w-sm"
-              value={searchInput}
-              onChange={handleSearchChange}
-            />
-            <select
-              className="select select-bordered select-sm w-40"
-              value={typeFilter}
-              onChange={handleTypeChange}
-            >
-              <option value="">All Types</option>
-              <option value="Residential">Residential</option>
-              <option value="Commercial">Commercial</option>
-              <option value="Mixed">Mixed</option>
-            </select>
+      {/* Hero Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Properties</p>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Building2 className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-base-content">{pagination?.total ?? properties.length}</h3>
           </div>
-          <DataTable
-            columns={[
-              { key: "name", label: "Property Name" },
-              { key: "address", label: "Address" },
-              { key: "type", label: "Type", render: typeBadge },
-              { key: "unitsCount", label: "Units" },
-              { key: "occupancy", label: "Occupancy", render: occupancyBar },
-              { key: "id", label: "Status", render: (_, item) => renderPropertyStatus(item) },
-            ]}
-            data={properties}
-            actions={[
-              {
-                label: "View",
-                icon: <Eye className="w-3 h-3" />,
-                to: (item: any) => `/dashboard/properties/${item.id}`,
-                variant: "ghost",
-              },
-              {
-                label: "Edit",
-                icon: <Pencil className="w-3 h-3" />,
-                to: (item: any) => `/dashboard/properties/${item.id}?edit=true`,
-                variant: "ghost",
-              },
-            ]}
-            emptyMessage="No properties found."
-            pagination={pagination}
-            onPageChange={setPage}
-          />
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Total Units</p>
+              <div className="w-10 h-10 rounded-xl bg-info/10 text-info flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Home className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-base-content">{totalUnits}</h3>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Occupied</p>
+              <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition-transform">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="flex items-end gap-2">
+              <h3 className="text-3xl font-black text-success">{totalOccupied}</h3>
+              <span className="text-xs font-semibold text-success/70 mb-1">{occupancyRate}% rate</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Vacant Units</p>
+              <div className="w-10 h-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center group-hover:scale-110 transition-transform">
+                <MapPin className="w-5 h-5" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-warning">{totalUnits - totalOccupied}</h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+        <div className="card-body p-0">
+          <div className="p-4 sm:p-6 border-b border-base-200 bg-base-100/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
+              <input
+                type="text"
+                placeholder="Search properties by name or address..."
+                className="input input-bordered w-full pl-9 focus:input-primary transition-colors bg-base-100"
+                value={searchInput}
+                onChange={handleSearchChange}
+              />
+            </div>
+            <div className="relative w-full sm:w-auto shrink-0 flex items-center">
+              <Filter className="w-4 h-4 absolute left-3 text-base-content/40 pointer-events-none" />
+              <select
+                className="select select-bordered pl-9 w-full sm:w-48 focus:select-primary transition-colors bg-base-100 font-medium"
+                value={typeFilter}
+                onChange={handleTypeChange}
+              >
+                <option value="">All Types</option>
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Mixed">Mixed</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="px-1 pb-1">
+            <DataTable
+              columns={[
+                { key: "name", label: "Property Name" },
+                { key: "address", label: "Address" },
+                { key: "type", label: "Type", render: typeBadge },
+                { key: "unitsCount", label: "Units" },
+                { key: "occupancy", label: "Occupancy", render: occupancyBar },
+                { key: "id", label: "Status", render: (_, item) => renderPropertyStatus(item) },
+              ]}
+              data={properties}
+              actions={[
+                {
+                  label: "View",
+                  icon: <Eye className="w-4 h-4" />,
+                  to: (item: any) => `/dashboard/properties/${item.id}`,
+                  variant: "ghost",
+                },
+                {
+                  label: "Edit",
+                  icon: <Pencil className="w-4 h-4" />,
+                  to: (item: any) => `/dashboard/properties/${item.id}?edit=true`,
+                  variant: "ghost",
+                },
+              ]}
+              emptyMessage="No properties found matching your criteria."
+              pagination={pagination}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
       </div>
     </div>

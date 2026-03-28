@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Building, MapPin, AlignLeft } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
@@ -142,49 +142,58 @@ export default function AddProperty() {
   };
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6 max-w-4xl mx-auto pb-12">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 max-w-5xl mx-auto pb-12">
       <div className="flex items-center gap-4">
         <Link
           to="/dashboard/properties"
-          className="btn btn-ghost btn-sm btn-square"
+          className="btn btn-ghost btn-circle bg-base-200 hover:bg-base-300 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <PageHeader title="Add New Property" description="" />
+        <div>
+          <h1 className="text-3xl font-black text-base-content tracking-tight">Add New Property</h1>
+          <p className="text-base-content/60 mt-1">Register a new property or building to your portfolio.</p>
+        </div>
       </div>
 
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Basic Info */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">
-                  Basic Info
-                </h3>
+      <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8 mt-8">
+        
+        {/* Basic Info Card */}
+        <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+          <div className="card-body p-6 sm:p-8 relative z-10">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <Building className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-base-content">Basic Information</h3>
+                <p className="text-xs text-base-content/60">Core details about the property.</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="form-control">
+                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Property Name <span className="text-error">*</span></span></label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="input input-bordered w-full focus:input-primary transition-all"
+                  placeholder="e.g. Riverside Apartments"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                 <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Property Name <span className="text-error">*</span></span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                    placeholder="e.g. Riverside Apartments"
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Property Type <span className="text-error">*</span></span>
-                  </label>
+                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Property Type <span className="text-error">*</span></span></label>
                   <select
                     name="type"
                     value={formData.type}
                     onChange={handleChange}
-                    className="select select-bordered w-full"
+                    className="select select-bordered w-full focus:select-primary transition-all font-medium"
                   >
                     <option value="Residential">Residential</option>
                     <option value="Commercial">Commercial</option>
@@ -192,153 +201,152 @@ export default function AddProperty() {
                   </select>
                 </div>
                 <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Year Built <span className="text-error">*</span></span>
-                  </label>
+                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Year Built <span className="text-error">*</span></span></label>
                   <input
                     type="number"
                     name="yearBuilt"
                     value={formData.yearBuilt}
                     onChange={handleChange}
-                    className="input input-bordered w-full"
+                    className="input input-bordered w-full focus:input-primary transition-all"
                     placeholder="e.g. 2020"
                   />
                 </div>
-                <div className="form-control flex flex-col">
-                  <label className="label">
-                    <span className="label-text">Description</span>
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="textarea textarea-bordered h-24 w-full"
-                    placeholder="Optional description of the property..."
-                  />
-                </div>
               </div>
 
-              {/* Location */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">
-                  Location
-                </h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Region <span className="text-error">*</span></span>
-                    </label>
-                    <select
-                      value={selectedRegionCode}
-                      onChange={handleRegionChange}
-                      required
-                      className="select select-bordered w-full"
-                    >
-                      <option value="" disabled>Select Region</option>
-                      {regions.map((r: any) => (
-                        <option key={r.code} value={r.code}>{r.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Province <span className="text-error">*</span></span>
-                    </label>
-                    <select
-                      value={selectedProvinceCode}
-                      onChange={handleProvinceChange}
-                      required={provinces.length > 0}
-                      disabled={!selectedRegionCode || (provinces.length === 0 && cities.length > 0)}
-                      className="select select-bordered w-full"
-                    >
-                      <option value="" disabled>{provinces.length > 0 ? "Select Province" : "N/A"}</option>
-                      {provinces.map((p: any) => (
-                        <option key={p.code} value={p.code}>{p.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">City/Municipality <span className="text-error">*</span></span>
-                    </label>
-                    <select
-                      value={selectedCityCode}
-                      onChange={handleCityChange}
-                      required
-                      disabled={cities.length === 0}
-                      className="select select-bordered w-full"
-                    >
-                      <option value="" disabled>Select City</option>
-                      {cities.map((c: any) => (
-                        <option key={c.code} value={c.code}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Barangay <span className="text-error">*</span></span>
-                    </label>
-                    <select
-                      value={formData.barangay}
-                      onChange={handleBarangayChange}
-                      required
-                      disabled={barangays.length === 0}
-                      className="select select-bordered w-full"
-                    >
-                      <option value="" disabled>Select Barangay</option>
-                      {barangays.map((b: any) => (
-                        <option key={b.code} value={b.name}>{b.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Street Address <span className="text-error">*</span></span>
-                  </label>
-                  <input
-                    type="text"
-                    name="street"
-                    required
-                    value={formData.street}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                    placeholder="123 Rizal St"
-                  />
-                </div>
+              <div className="form-control flex flex-col pt-2">
+                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5"><AlignLeft className="w-3.5 h-3.5" /> Description</span></label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="textarea textarea-bordered h-28 w-full focus:textarea-primary transition-all"
+                  placeholder="Optional description of the property, its amenities, highlights, etc."
+                />
               </div>
             </div>
-
-            <div className="card-actions justify-end mt-6 pt-4 border-t">
-              <Link
-                to="/dashboard/properties"
-                className="btn btn-ghost"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={mutation.isPending}
-              >
-                {mutation.isPending ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  <Save className="w-4 h-4 ml-2" />
-                )}
-                Save Property
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
-      </div>
+
+        {/* Location Card */}
+        <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+          <div className="card-body p-6 sm:p-8 relative z-10">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-base-content">Location Details</h3>
+                <p className="text-xs text-base-content/60">Where is this property located?</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="form-control">
+                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Street Address <span className="text-error">*</span></span></label>
+                <input
+                  type="text"
+                  name="street"
+                  required
+                  value={formData.street}
+                  onChange={handleChange}
+                  className="input input-bordered w-full focus:input-primary transition-all"
+                  placeholder="e.g. 123 Rizal St, Building B"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="form-control">
+                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Region <span className="text-error">*</span></span></label>
+                  <select
+                    value={selectedRegionCode}
+                    onChange={handleRegionChange}
+                    required
+                    className="select select-bordered w-full focus:select-primary transition-all"
+                  >
+                    <option value="" disabled>Select Region</option>
+                    {regions.map((r: any) => (
+                      <option key={r.code} value={r.code}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="form-control">
+                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Province <span className="text-error">*</span></span></label>
+                  <select
+                    value={selectedProvinceCode}
+                    onChange={handleProvinceChange}
+                    required={provinces.length > 0}
+                    disabled={!selectedRegionCode || (provinces.length === 0 && cities.length > 0)}
+                    className="select select-bordered w-full focus:select-primary transition-all"
+                  >
+                    <option value="" disabled>{provinces.length > 0 ? "Select Province" : "N/A"}</option>
+                    {provinces.map((p: any) => (
+                      <option key={p.code} value={p.code}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="form-control">
+                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">City/Municipality <span className="text-error">*</span></span></label>
+                  <select
+                    value={selectedCityCode}
+                    onChange={handleCityChange}
+                    required
+                    disabled={cities.length === 0}
+                    className="select select-bordered w-full focus:select-primary transition-all"
+                  >
+                    <option value="" disabled>Select City</option>
+                    {cities.map((c: any) => (
+                      <option key={c.code} value={c.code}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="form-control">
+                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Barangay <span className="text-error">*</span></span></label>
+                  <select
+                    value={formData.barangay}
+                    onChange={handleBarangayChange}
+                    required
+                    disabled={barangays.length === 0}
+                    className="select select-bordered w-full focus:select-primary transition-all"
+                  >
+                    <option value="" disabled>Select Barangay</option>
+                    {barangays.map((b: any) => (
+                      <option key={b.code} value={b.name}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-4">
+          <Link
+            to="/dashboard/properties"
+            className="btn btn-ghost font-semibold hover:bg-base-200"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            className="btn btn-primary px-8 shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            Save Property
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
