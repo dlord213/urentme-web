@@ -55,7 +55,7 @@ export function Header() {
             <li><button
               onClick={() => logoutMutation.mutate()}
               disabled={logoutMutation.isPending}
-              className="text-error text-left w-full text-sm disabled:opacity-50"
+              className="text-error text-left w-full text-xs disabled:opacity-50"
             >
               {logoutMutation.isPending ? "Logging out..." : "Logout"}
             </button></li>
