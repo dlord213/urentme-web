@@ -132,7 +132,7 @@ export default function Home() {
                 to="/signup"
                 className="btn btn-primary btn-lg shadow-xl shadow-primary/30 text-base px-8 gap-2"
               >
-                Start Free Trial <ArrowRight className="w-5 h-5" />
+                Get started <ArrowRight className="w-5 h-5" />
               </Link>
               {/* <Link
                 to="/login"
@@ -141,10 +141,6 @@ export default function Home() {
                 See a Demo
               </Link> */}
             </div>
-
-            <p className="text-sm text-base-content/45 mt-5">
-              No credit card required. 14-day free trial.
-            </p>
           </div>
 
           {/* Stats bar */}
