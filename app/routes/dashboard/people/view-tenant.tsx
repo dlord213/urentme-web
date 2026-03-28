@@ -16,6 +16,10 @@ import {
   ShieldAlert,
   FileText,
   Eye,
+  Send,
+  Link as LinkIcon,
+  Copy,
+  CheckCheck,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
@@ -96,6 +100,9 @@ export default function TenantDetail() {
   const [activeTab, setActiveTab] = useState("details");
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [tempFlagReason, setTempFlagReason] = useState("");
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [copied, setCopied] = useState(false);
 
   // Tenant Data
   const {
@@ -193,6 +200,25 @@ export default function TenantDetail() {
       navigate("/dashboard/tenants");
     },
   });
+
+  const inviteMutation = useMutation({
+    mutationFn: () =>
+      apiFetch(`/tenant-auth/invite/${id}`, { method: "POST" }),
+    onSuccess: (data: { inviteUrl: string }) => {
+      setInviteUrl(data.inviteUrl);
+      setShowInviteModal(true);
+      setCopied(false);
+    },
+    onError: (error: any) => {
+      alert(error.message || "Failed to generate invite link.");
+    },
+  });
+
+  const handleCopyInvite = () => {
+    navigator.clipboard.writeText(inviteUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  };
 
   const handleDelete = () => {
     if (
@@ -294,6 +320,19 @@ export default function TenantDetail() {
           <div className="flex items-center gap-2">
             {!isEditing ? (
               <>
+                <button
+                  onClick={() => inviteMutation.mutate()}
+                  className="btn btn-success btn-sm gap-2"
+                  disabled={inviteMutation.isPending}
+                  title="Send Portal Invite"
+                >
+                  {inviteMutation.isPending ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}
+                  <span className="hidden sm:inline">Send Portal Invite</span>
+                </button>
                 <button
                   onClick={() => setIsEditing(true)}
                   className="btn btn-outline btn-sm gap-2"
@@ -862,6 +901,46 @@ export default function TenantDetail() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setShowFlagModal(false)}>
+            <button className="cursor-default">close</button>
+          </div>
+        </div>
+      )}
+      {/* Invite URL Modal */}
+      {showInviteModal && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <LinkIcon className="w-5 h-5 text-success" />
+              Invite Link Generated
+            </h3>
+            <p className="py-3 text-sm opacity-70">
+              Share this link with <strong>{tenant.firstName} {tenant.lastName}</strong>. It expires in 24 hours.
+            </p>
+            <div className="bg-base-200 rounded-xl p-3 flex items-center gap-2 break-all">
+              <p className="text-xs font-mono flex-1 text-base-content/80">{inviteUrl}</p>
+              <button
+                onClick={handleCopyInvite}
+                className={`btn btn-sm shrink-0 gap-1.5 transition-all ${
+                  copied ? "btn-success" : "btn-ghost"
+                }`}
+              >
+                {copied ? (
+                  <><CheckCheck className="w-3.5 h-3.5" /> Copied!</>
+                ) : (
+                  <><Copy className="w-3.5 h-3.5" /> Copy</>
+                )}
+              </button>
+            </div>
+            <div className="modal-actions flex justify-end mt-5">
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setShowInviteModal(false)}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowInviteModal(false)}>
             <button className="cursor-default">close</button>
           </div>
         </div>

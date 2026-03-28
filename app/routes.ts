@@ -10,6 +10,7 @@ export default [
   route("login", "routes/login.tsx"),
   route("signup", "routes/signup.tsx"),
 
+  // Owner dashboard
   layout("routes/dashboard.tsx", [
     route("dashboard", "routes/dashboard/index.tsx"),
 
@@ -56,5 +57,12 @@ export default [
       "routes/dashboard/communication/add-announcement.tsx",
     ),
     route("dashboard/profile", "routes/dashboard/profile.tsx"),
+  ]),
+
+  // Tenant portal
+  route("tenant/login", "routes/tenant/login.tsx"),
+  route("tenant/accept-invite", "routes/tenant/accept-invite.tsx"),
+  layout("routes/tenant.tsx", [
+    route("tenant/portal", "routes/tenant/portal.tsx"),
   ]),
 ] satisfies RouteConfig;
