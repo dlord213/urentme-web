@@ -98,7 +98,7 @@ export default function DashboardOverview() {
 
       {/* Hero Stats Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        
+
         {/* Total Properties */}
         <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
           <div className="card-body p-5">
@@ -162,10 +162,10 @@ export default function DashboardOverview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        
+
         {/* Main Content Area (Left 8 cols) */}
         <div className="lg:col-span-8 space-y-6 lg:space-y-8">
-          
+
           {/* Recent Activity */}
           <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
             <div className="card-body p-0">
@@ -204,9 +204,9 @@ export default function DashboardOverview() {
                         key={item.id}
                         className="p-4 sm:p-5 flex items-start gap-4 hover:bg-base-200/30 transition-colors group"
                       >
-                        <StatusBadge 
-                          status={item.status} 
-                          label="" 
+                        <StatusBadge
+                          status={item.status}
+                          label=""
                           className="shrink-0 mt-0.5 p-0 flex items-center justify-center w-10 h-10 rounded-2xl shadow-sm"
                         >
                           <Icon className="w-5 h-5" />
@@ -238,7 +238,7 @@ export default function DashboardOverview() {
 
         {/* Sidebar (Right 4 cols) */}
         <div className="lg:col-span-4 space-y-6 lg:space-y-8">
-          
+
           {/* Occupancy Overview */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-6">
@@ -248,7 +248,7 @@ export default function DashboardOverview() {
                 </div>
                 <h2 className="text-lg font-bold text-base-content">Occupancy</h2>
               </div>
-              
+
               <div className="space-y-5">
                 {/* Occupied */}
                 <div>
@@ -263,7 +263,7 @@ export default function DashboardOverview() {
                   />
                   <p className="text-xs text-base-content/40 mt-1.5 font-medium">{occupancy.occupied} of {occupancy.total} units</p>
                 </div>
-                
+
                 {/* Available */}
                 <div>
                   <div className="flex justify-between items-end mb-2">
@@ -304,7 +304,7 @@ export default function DashboardOverview() {
                 </div>
                 <h2 className="text-lg font-bold text-base-content">Action Items</h2>
               </div>
-              
+
               <div className="space-y-3">
                 {alerts.overdueRents > 0 ? (
                   <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-error/10 border border-error/20 transition-all hover:bg-error/15">
@@ -329,21 +329,21 @@ export default function DashboardOverview() {
                     </div>
                   </div>
                 )}
-                
+
                 {alerts.leaseRenewalsDue > 0 && (
                   <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-warning/10 border border-warning/20 transition-all hover:bg-warning/15">
                     <div className="w-10 h-10 rounded-xl bg-warning/20 flex items-center justify-center text-warning-content shrink-0">
                       <Clock className="w-5 h-5 text-warning" />
                     </div>
                     <div>
-                      <span className="text-sm font-bold text-warning-content block">Lease Renewals</span>
-                      <span className="text-xs font-semibold w-11/12 text-warning-content/70">
+                      <span className="text-sm font-bold text-warning block">Lease Renewals</span>
+                      <span className="text-xs font-semibold w-11/12 text-warning/50">
                         {alerts.leaseRenewalsDue} lease{alerts.leaseRenewalsDue !== 1 ? "s" : ""} expiring within 30 days
                       </span>
                     </div>
                   </div>
                 )}
-                
+
                 {alerts.newApplications > 0 && (
                   <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-info/10 border border-info/20 transition-all hover:bg-info/15">
                     <div className="w-10 h-10 rounded-xl bg-info/20 flex items-center justify-center text-info shrink-0">
@@ -359,10 +359,10 @@ export default function DashboardOverview() {
                 )}
 
                 {alerts.overdueRents === 0 && alerts.leaseRenewalsDue === 0 && alerts.newApplications === 0 && (
-                   <div className="text-center py-6">
-                     <p className="text-sm font-bold text-base-content/50">You're all caught up!</p>
-                     <p className="text-xs font-medium text-base-content/40 mt-1">No pending action items right now.</p>
-                   </div>
+                  <div className="text-center py-6">
+                    <p className="text-sm font-bold text-base-content/50">You're all caught up!</p>
+                    <p className="text-xs font-medium text-base-content/40 mt-1">No pending action items right now.</p>
+                  </div>
                 )}
               </div>
             </div>

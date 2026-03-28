@@ -15,11 +15,10 @@ import {
   ShieldCheck,
   ShieldAlert,
   Eye,
+  CheckCircle2,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
-import { PageHeader } from "~/components/PageHeader";
-import { StatsCard } from "~/components/StatsCard";
 import { DataTable } from "~/components/DataTable";
 import { StatusBadge } from "~/components/StatusBadge";
 
@@ -33,7 +32,6 @@ export default function LeaseDetail() {
   const [isEditing, setIsEditing] = useState(isEditingInitial);
   const [activeTab, setActiveTab] = useState("details");
 
-  // Lease Data
   const {
     data: lease,
     isLoading,
@@ -44,7 +42,6 @@ export default function LeaseDetail() {
     enabled: !!id,
   });
 
-  // Form State
   const [formData, setFormData] = useState({
     unitId: "",
     status: "",
@@ -57,7 +54,6 @@ export default function LeaseDetail() {
     terminationReason: "",
   });
 
-  // Sync Form with Data
   useEffect(() => {
     if (lease) {
       setFormData({
@@ -87,7 +83,6 @@ export default function LeaseDetail() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Mutations
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
       await apiFetch(`/leases/${id}`, {
@@ -135,27 +130,16 @@ export default function LeaseDetail() {
     e.preventDefault();
     const payload = {
       ...formData,
-      leaseStartDate: formData.leaseStartDate
-        ? new Date(formData.leaseStartDate).toISOString()
-        : null,
-      leaseEndDate: formData.leaseEndDate
-        ? new Date(formData.leaseEndDate).toISOString()
-        : null,
+      leaseStartDate: formData.leaseStartDate ? new Date(formData.leaseStartDate).toISOString() : null,
+      leaseEndDate: formData.leaseEndDate ? new Date(formData.leaseEndDate).toISOString() : null,
       signedAt: formData.status === "active" ? new Date().toISOString() : formData.status === 'terminated' ? new Date(formData.signedAt).toISOString() : null,
-      terminatedAt:
-        formData.status === "terminated" ? new Date().toISOString() : null,
+      terminatedAt: formData.status === "terminated" ? new Date().toISOString() : null,
     };
     updateMutation.mutate(payload);
   };
 
-  if (isLoading)
-    return (
-      <div className="flex justify-center p-12">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
-  if (isError || !lease)
-    return <div className="alert alert-error">Lease not found.</div>;
+  if (isLoading) return <div className="flex justify-center p-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
+  if (isError || !lease) return <div className="alert alert-error">Lease not found.</div>;
 
   const unit = lease.unit;
   const property = unit?.property;
@@ -165,414 +149,377 @@ export default function LeaseDetail() {
   const now = new Date();
   const end = new Date(lease.leaseEndDate);
   const diffInDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-  const isExpiringSoon = lease.status === "active" && diffInDays <= 7 && diffInDays > 0;
+  const isExpiringSoon = lease.status === "active" && diffInDays <= 30 && diffInDays > 0;
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Header */}
-      <PageHeader
-        title={`Lease Agreement #${lease.id.slice(-6).toUpperCase()}`}
-        showBack
-        backTo="/dashboard/leases"
-        titleSuffix={
-          isExpiringSoon ? (
-            <StatusBadge status="warning" label="Expiring Soon" pulse />
-          ) : (
-            <StatusBadge status={lease.status} />
-          )
-        }
-        description={
-          <p className="text-sm opacity-60 flex items-center gap-2">
-            <Home className="w-3 h-3" /> {property?.name} — Unit {unit?.unitNumber}
-            <span className="opacity-40">|</span>
-            <User className="w-3 h-3" /> {tenant?.firstName} {tenant?.lastName}
-          </p>
-        }
-        actionButton={
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-12">
+      
+      {/* Premium Gradient Hero Cover */}
+      <div className={`h-48 md:h-64 w-full rounded-b-3xl bg-gradient-to-r ${lease.status === 'active' ? 'from-primary/90 to-accent/90' : lease.status === 'terminated' ? 'from-error/90 to-warning/90' : 'from-base-300 to-base-200'} shadow-lg relative overflow-hidden -mt-6 sm:-mt-8`}>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+        
+        {/* Navigation & Actions Top Bar */}
+        <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
+          <Link
+            to="/dashboard/leases"
+            className="btn btn-circle btn-sm md:btn-md bg-base-100/20 hover:bg-base-100/40 border-none text-white backdrop-blur-md transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          
           <div className="flex items-center gap-2">
             {!isEditing ? (
               <>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="btn btn-outline btn-sm gap-2"
-                >
+                <button onClick={() => setIsEditing(true)} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content gap-2 shadow-xl hover:scale-105 transition-all">
                   <Edit2 className="w-4 h-4" /> Edit
                 </button>
-                <button
-                  onClick={handleDelete}
-                  className="btn btn-ghost text-error btn-sm btn-square"
+                <button 
+                  onClick={handleDelete} 
+                  className="btn btn-square btn-sm md:btn-md bg-error/90 hover:bg-error border-none text-white shadow-xl hover:scale-105 transition-all"
                   disabled={deleteMutation.isPending}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => setIsEditing(false)}
-                className="btn btn-ghost btn-sm"
-              >
-                Cancel
+              <button onClick={() => setIsEditing(false)} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content shadow-xl hover:scale-105 transition-all">
+                Cancel Edit
               </button>
             )}
           </div>
-        }
-      />
+        </div>
 
-      {/* Expiration Warning */}
-      {isExpiringSoon && (
-        <div className="alert alert-warning shadow-sm border-warning/20 animate-pulse">
-          <ShieldAlert className="w-5 h-5" />
-          <div>
-            <h3 className="font-bold">Lease Expiring Soon!</h3>
-            <div className="text-sm">This lease agreement will expire in {Math.ceil(diffInDays)} day(s) on {new Date(lease.leaseEndDate).toLocaleDateString()}.</div>
+        {/* Title & Badges Bottom Area */}
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
+          <div className="flex items-center gap-4 lg:gap-6">
+            <div className={`w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-4 border-white/30 text-white shadow-xl`}>
+              <FileText className="w-8 h-8 md:w-12 md:h-12 opacity-80" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                {isExpiringSoon ? (
+                  <StatusBadge status="warning" label={`Expiring in ${Math.ceil(diffInDays)}d`} pulse />
+                ) : (
+                  <StatusBadge status={lease.status} />
+                )}
+              </div>
+              <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md">
+                Contract #{lease?.id.slice(-5).toUpperCase()}
+              </h1>
+              <p className="text-white/80 mt-1 font-medium flex items-center gap-3 text-sm md:text-base drop-shadow-sm">
+                <span className="flex items-center gap-1.5"><Home className="w-4 h-4" /> {property?.name} — U{unit?.unitNumber}</span>
+                <span className="hidden sm:flex items-center gap-1.5"><User className="w-4 h-4" /> {tenant?.firstName} {tenant?.lastName}</span>
+              </p>
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Stats Summary */}
-      {!isEditing && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard
-            title="Monthly Rent"
-            value={`₱${unit?.monthlyRentAmount?.toLocaleString() || 0}`}
-            icon={DollarSign}
-            color="primary"
-          />
-          <StatsCard
-            title="Start Date"
-            value={new Date(lease.leaseStartDate).toLocaleDateString()}
-            icon={Calendar}
-            color="info"
-          />
-          <StatsCard
-            title="End Date"
-            value={new Date(lease.leaseEndDate).toLocaleDateString()}
-            icon={Clock}
-            color="warning"
-          />
-          <StatsCard
-            title="Transactions"
-            value={transactions.length}
-            icon={FileText}
-            color="accent"
-          />
-        </div>
-      )}
+      <div className="mt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        
+        {isExpiringSoon && (
+          <div className="alert alert-warning shadow-sm border-warning/20 animate-pulse rounded-2xl">
+            <ShieldAlert className="w-5 h-5" />
+            <div>
+              <h3 className="font-bold text-sm">Lease Document Requires Attention</h3>
+              <div className="text-xs font-medium">This active lease agreement will expire on {new Date(lease.leaseEndDate).toLocaleDateString()}. Please initiate discussions for renewal or move-out.</div>
+            </div>
+          </div>
+        )}
 
-      {/* Main Content Tabs */}
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="tabs tabs-bordered px-6 pt-2">
-          <button
-            className={`tab tab-lg gap-2 ${activeTab === "details" ? "tab-active font-bold" : ""}`}
-            onClick={() => setActiveTab("details")}
-          >
-            <Info className="w-4 h-4" /> Lease Details
-          </button>
-          <button
-            className={`tab tab-lg gap-2 ${activeTab === "transactions" ? "tab-active font-bold" : ""}`}
-            onClick={() => setActiveTab("transactions")}
-          >
-            <DollarSign className="w-4 h-4" /> Transactions
-          </button>
-        </div>
+        {/* Stats Summary - Premium Inline Cards */}
+        {!isEditing && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <DollarSign className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Base Montly</p>
+                <p className="text-xl font-black text-base-content">₱{unit?.monthlyRentAmount?.toLocaleString() || 0}</p>
+              </div>
+            </div>
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Commenced</p>
+                <p className="text-lg font-black text-base-content">{new Date(lease.leaseStartDate).toLocaleDateString()}</p>
+              </div>
+            </div>
+            <div className={`bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow ${isExpiringSoon ? 'ring-2 ring-warning/50' : ''}`}>
+              <div className={`w-12 h-12 rounded-2xl ${isExpiringSoon ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'} flex items-center justify-center shrink-0`}>
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Matures</p>
+                <p className="text-lg font-black text-base-content">{lease.leaseEndDate ? new Date(lease.leaseEndDate).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Transactions</p>
+                <p className="text-2xl font-black text-base-content">{transactions.length}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div className="card-body">
-          {activeTab === "details" ? (
-            isEditing ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg border-b pb-1">
-                      Lease Periods
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">
-                            Start Date <span className="text-error">*</span>
-                          </span>
-                        </label>
-                        <input
-                          type="date"
-                          name="leaseStartDate"
-                          value={formData.leaseStartDate}
-                          onChange={handleChange}
-                          required
-                          className="input input-bordered w-full"
-                        />
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">
-                            End Date <span className="text-error">*</span>
-                          </span>
-                        </label>
-                        <input
-                          type="date"
-                          name="leaseEndDate"
-                          value={formData.leaseEndDate}
-                          onChange={handleChange}
-                          required
-                          className="input input-bordered w-full"
-                        />
-                      </div>
-                    </div>
+        <div>
+          <div className="flex gap-2 mb-6 border-b border-base-200/60 pb-4 overflow-x-auto scrollbar-hide">
+            <button 
+              className={`btn btn-sm sm:btn-md rounded-full px-6 transition-all ${activeTab === 'details' ? 'bg-base-content text-base-100 shadow-md hover:bg-base-content/90 font-bold' : 'btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70'}`}
+              onClick={() => setActiveTab('details')}
+            >
+              <Info className="w-4 h-4" /> Contract Snapshot
+            </button>
+            <button 
+              className={`btn btn-sm sm:btn-md rounded-full px-6 transition-all ${activeTab === 'transactions' ? 'bg-base-content text-base-100 shadow-md hover:bg-base-content/90 font-bold' : 'btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70'}`}
+              onClick={() => setActiveTab('transactions')}
+            >
+              <DollarSign className="w-4 h-4" /> Transaction Ledger
+            </button>
+          </div>
 
-                    <h3 className="font-semibold text-lg border-b pb-1 pt-4">
-                      Status Information
-                    </h3>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">Lease Status</span>
-                      </label>
-                      <select
-                        name="status"
-                        value={formData.status}
-                        onChange={handleChange}
-                        className="select select-bordered w-full"
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="active">Active</option>
-                        <option value="terminated">Terminated</option>
-                      </select>
-                    </div>
+          <div>
+            {activeTab === 'details' ? (
+              isEditing ? (
+                <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                    
+                    <div className="space-y-6 lg:space-y-8">
+                      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                        <div className="card-body p-6 sm:p-8">
+                          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                            <div className="w-10 h-10 rounded-xl bg-info/10 text-info flex items-center justify-center">
+                              <Calendar className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-base-content tracking-tight">Lease Periods</h3>
+                            </div>
+                          </div>
 
-                    {formData.status === "terminated" && (
-                      <>
-                        <div className="form-control">
-                          <label className="label">
-                            <span className="label-text">
-                              Termination Reason
-                            </span>
-                          </label>
-                          <textarea
-                            name="terminationReason"
-                            value={formData.terminationReason}
-                            onChange={handleChange}
-                            className="textarea textarea-bordered h-20 w-full"
-                            placeholder="Reason for termination..."
-                          />
+                          <div className="space-y-5">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="form-control">
+                                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Start Date <span className="text-error">*</span></span></label>
+                                <input type="date" name="leaseStartDate" value={formData.leaseStartDate} onChange={handleChange} required className="input input-bordered w-full focus:input-primary transition-all" />
+                              </div>
+                              <div className="form-control">
+                                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">End Date <span className="text-error">*</span></span></label>
+                                <input type="date" name="leaseEndDate" value={formData.leaseEndDate} onChange={handleChange} required className="input input-bordered w-full focus:input-primary transition-all" />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg border-b pb-1">
-                      Terms & Notes
-                    </h3>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">Lease Terms</span>
-                      </label>
-                      <textarea
-                        name="terms"
-                        value={formData.terms}
-                        onChange={handleChange}
-                        className="textarea textarea-bordered h-32 w-full"
-                        placeholder="Specify special terms..."
-                      />
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">Internal Notes</span>
-                      </label>
-                      <textarea
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleChange}
-                        className="textarea textarea-bordered h-32 w-full"
-                        placeholder="Internal notes about the lease..."
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-6 border-t mt-6">
-                  <button
-                    type="submit"
-                    className="btn btn-primary px-8"
-                    disabled={updateMutation.isPending}
-                  >
-                    {updateMutation.isPending ? (
-                      <span className="loading loading-spinner loading-xs"></span>
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <div className="space-y-8">
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-3 flex items-center gap-2">
-                        <FileText className="w-3 h-3" /> Lease Terms
-                      </h3>
-                      <p className="text-base leading-relaxed whitespace-pre-wrap">
-                        {lease.terms || "Standard lease terms apply."}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-3 flex items-center gap-2">
-                        <Info className="w-3 h-3" /> Internal Notes
-                      </h3>
-                      <p className="text-base leading-relaxed whitespace-pre-wrap">
-                        {lease.notes || "No internal notes provided."}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6 pt-4 border-t border-base-200">
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-40 mb-1">
-                          Signed Date
-                        </h3>
-                        <p className="font-semibold">
-                          {lease.signedAt
-                            ? new Date(lease.signedAt).toLocaleDateString()
-                            : "Not Signed"}
-                        </p>
                       </div>
-                      {lease.status === "terminated" && (
-                        <div>
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-error mb-1">
-                            Terminated Date
+
+                      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                        <div className="card-body p-6 sm:p-8">
+                          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                            <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center">
+                              <CheckCircle2 className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-base-content tracking-tight">Status & Activity</h3>
+                            </div>
+                          </div>
+
+                          <div className="space-y-5">
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Lifecycle Element</span></label>
+                              <select name="status" value={formData.status} onChange={handleChange} className="select select-bordered w-full focus:select-primary transition-all font-bold">
+                                <option value="draft">Draft Protocol</option>
+                                <option value="active">Active Designation</option>
+                                <option value="terminated">Terminated Order</option>
+                              </select>
+                            </div>
+
+                            {formData.status === "terminated" && (
+                              <div className="form-control animate-in fade-in top-0 pt-2 border-t border-base-200/60 mt-4">
+                                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs text-error">Termination Relevancy</span></label>
+                                <textarea name="terminationReason" value={formData.terminationReason} onChange={handleChange} className="textarea textarea-bordered h-24 w-full focus:textarea-error transition-all resize-none mt-1" placeholder="Provide clarity on context terminating the contract..." />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative h-full">
+                      <div className="card-body p-6 sm:p-8">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                          <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-base-content tracking-tight">Declarations & Details</h3>
+                          </div>
+                        </div>
+
+                        <div className="space-y-6 flex-1 flex flex-col">
+                          <div className="form-control flex-1">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5 text-primary">Custom Lease Dispositions</span></label>
+                            <textarea name="terms" value={formData.terms} onChange={handleChange} className="textarea textarea-bordered min-h-32 w-full flex-1 focus:textarea-primary transition-all text-sm leading-relaxed" placeholder="Detailed terms array here" />
+                          </div>
+                          <div className="form-control">
+                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">System Note Traces</span></label>
+                            <textarea name="notes" value={formData.notes} onChange={handleChange} className="textarea textarea-bordered min-h-24 w-full focus:textarea-primary transition-all font-mono text-sm leading-relaxed text-base-content/80" placeholder="System internal markers" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-base-200/60">
+                    <button type="button" onClick={() => setIsEditing(false)} className="btn btn-ghost font-semibold hover:bg-base-200">
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary px-8 shadow-lg shadow-primary/20 hover:scale-105 transition-transform" disabled={updateMutation.isPending}>
+                      {updateMutation.isPending ? <span className="loading loading-spinner loading-sm"></span> : <Save className="w-4 h-4 mr-2" />}
+                      Finalize Updates
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                    
+                    <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+                      <div className="card bg-base-100 shadow-sm border border-base-200 pb-2">
+                        <div className="card-body p-6 sm:p-8">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                            <FileText className="w-4 h-4" /> Binding Dispositions
                           </h3>
-                          <p className="font-semibold text-error">
-                            {new Date(lease.terminatedAt).toLocaleDateString()}
-                          </p>
+                          <div className="prose prose-sm md:prose-base max-w-none text-base-content/80 leading-relaxed font-medium">
+                            {lease.terms ? (
+                              lease.terms.split('\n').map((paragraph: string, idx: number) => (
+                                <p key={idx} className="mb-4 last:mb-0">{paragraph}</p>
+                              ))
+                            ) : (
+                              <p className="italic opacity-60">No custom bounds dictated; default template controls applied.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="card bg-base-100 shadow-sm border border-base-200 pb-2">
+                        <div className="card-body p-6 sm:p-8">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-accent mb-4 flex items-center gap-2">
+                            <Info className="w-4 h-4" /> Authorized Record Notes
+                          </h3>
+                          <div className="prose prose-sm md:prose-base max-w-none text-base-content/80 leading-relaxed font-mono">
+                            {lease.notes ? (
+                              lease.notes.split('\n').map((paragraph: string, idx: number) => (
+                                <p key={idx} className="mb-4 last:mb-0">{paragraph}</p>
+                              ))
+                            ) : (
+                              <p className="italic opacity-60">System tracing inactive. No remarks.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {lease.status === "terminated" && (
+                        <div className="alert alert-error shadow-sm border-error/30 bg-error/10 rounded-2xl p-6">
+                          <ShieldAlert className="w-8 h-8 shrink-0 text-error" />
+                          <div className="w-full">
+                            <h3 className="font-bold text-base uppercase tracking-wider text-error">Contract Dissolved</h3>
+                            <div className="text-sm font-medium mt-2 p-4 rounded-xl bg-white/50 border border-error/20 shadow-inner">
+                              <span className="opacity-60 text-xs font-bold uppercase tracking-wider mb-2 block border-b border-error/20 pb-2">Finalization Log on {new Date(lease.terminatedAt).toLocaleDateString()}</span>
+                              {lease.terminationReason || "Dissolution confirmed without contextual reference trace."}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    {/* Related Entities Cards */}
-                    <div className="p-8 bg-base-200/30 rounded-3xl border border-base-200/50 space-y-6 h-fit">
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider mb-3 text-primary">
-                          Unit Information
-                        </h3>
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                            <Home className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-lg font-bold">
-                              {property?.name}
-                            </p>
-                            <p className="text-sm opacity-60">
-                              Unit {unit?.unitNumber} —{" "}
-                              {unit?.floor || "No Floor Info"}
-                            </p>
-                            <Link
-                              to={`/dashboard/units/${unit?.id}`}
-                              className="btn btn-link btn-xs p-0 h-auto mt-1"
-                            >
-                              View unit details
+                    
+                    <div className="lg:col-span-4 space-y-6">
+                      
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2 border-b border-base-200/80 pb-3">
+                            <Home className="w-4 h-4" /> Property Origin
+                          </h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-base-200/70 border border-base-300 flex items-center justify-center shadow-sm">
+                                <span className="font-black text-xl text-primary">{property?.name?.charAt(0) || "P"}</span>
+                              </div>
+                              <div>
+                                <p className="font-bold text-lg text-base-content leading-tight tracking-tight">{property?.name}</p>
+                                <p className="text-xs font-bold uppercase opacity-60 mt-1 flex items-center gap-1.5"><ArrowLeft className="w-3 h-3 rotate-180"/> Matrix {unit?.unitNumber}</p>
+                              </div>
+                            </div>
+                            <Link to={`/dashboard/units/${unit?.id}`} className="btn btn-outline btn-sm w-full rounded-xl border-base-300 shadow-sm group">
+                              Inspect Asset <Eye className="w-3.5 h-3.5 ml-1 opacity-50 group-hover:opacity-100"/>
                             </Link>
                           </div>
                         </div>
                       </div>
 
-                      <div className="pt-6 border-t border-base-200">
-                        <h3 className="text-xs font-bold uppercase tracking-wider mb-3 text-primary">
-                          Tenant Information
-                        </h3>
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                            <User className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-lg font-bold">
-                              {tenant?.firstName} {tenant?.lastName}
-                            </p>
-                            <p className="text-sm opacity-60">
-                              {tenant?.email}
-                            </p>
-                            <Link
-                              to={`/dashboard/tenants/${tenant?.id}`}
-                              className="btn btn-link btn-xs p-0 h-auto mt-1"
-                            >
-                              View tenant details
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2 border-b border-base-200/80 pb-3">
+                            <User className="w-4 h-4" /> Delegated Lessee
+                          </h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-base-200/70 border border-base-300 flex items-center justify-center shadow-sm">
+                                <span className="font-black text-xl text-primary">{tenant?.firstName?.charAt(0) || "U"}</span>
+                              </div>
+                              <div className="truncate pr-2">
+                                <p className="font-bold text-lg text-base-content leading-tight tracking-tight truncate">{tenant?.firstName} {tenant?.lastName}</p>
+                                <p className="text-[10px] font-bold uppercase opacity-60 mt-1 truncate">{tenant?.email}</p>
+                              </div>
+                            </div>
+                            <Link to={`/dashboard/tenants/${tenant?.id}`} className="btn btn-outline btn-sm w-full rounded-xl border-base-300 shadow-sm group">
+                              Inspect Client <Eye className="w-3.5 h-3.5 ml-1 opacity-50 group-hover:opacity-100"/>
                             </Link>
                           </div>
                         </div>
                       </div>
+
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="p-6 bg-base-200/30 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-base-content/60 border-b border-base-200">
+                          <span>Signed Date</span>
+                          <span className="text-base-content font-black">{lease.signedAt ? new Date(lease.signedAt).toLocaleDateString() : "Unsigned Trace"}</span>
+                        </div>
+                        {lease.status === "active" && (
+                          <div className="p-6 bg-success/10 flex items-center justify-between border-t border-success/10">
+                            <span className="flex items-center gap-2 text-success font-bold"><ShieldCheck className="w-4 h-4" /> Protocol Alive</span>
+                          </div>
+                        )}
+                      </div>
+
                     </div>
-
-                    {lease.status === "active" ? (
-                      <div className="p-6 bg-success/10 rounded-3xl border border-success/20 flex items-center gap-4">
-                        <ShieldCheck className="w-6 h-6 text-success" />
-                        <div>
-                          <p className="font-bold text-success">
-                            Active Agreement
-                          </p>
-                          <p className="text-xs opacity-80 uppercase tracking-wider">
-                            In compliance
-                          </p>
-                        </div>
-                      </div>
-                    ) : lease.status === "terminated" ? (
-                      <div className="p-6 bg-error/10 rounded-3xl border border-error/20 flex items-center gap-4">
-                        <ShieldAlert className="w-6 h-6 text-error" />
-                        <div>
-                          <p className="font-bold text-error">
-                            Terminated Agreement
-                          </p>
-                          <p className="text-xs opacity-80">
-                            {lease.terminationReason || "Lease was closed."}
-                          </p>
-                        </div>
-                      </div>
-                    ) : null}
                   </div>
                 </div>
+              )
+            ) : (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <DataTable
+                  columns={[
+                    { key: "id", label: "Trace Root", render: (id) => <span className="font-mono text-[10px] tracking-wider font-bold opacity-60 bg-base-200 px-2 py-1 rounded-md">{id.substring(0,8).toUpperCase()}</span> },
+                    { key: "amount", label: "Value Array", render: (a) => <span className="font-bold text-success text-sm">₱{a.toLocaleString()}</span> },
+                    { key: "reference", label: "Ref Sync", render: (r) => <span className="uppercase text-xs font-bold">{r}</span> },
+                    { key: "transactionDate", label: "Timestamp", render: (d) => <span className="text-xs font-bold opacity-70 flex items-center gap-1.5"><Clock className="w-3 h-3"/> {new Date(d).toLocaleDateString()}</span> },
+                  ]}
+                  data={transactions}
+                  actions={[
+                    { label: "Receipt Trace", icon: <Eye className="w-3.5 h-3.5" />, to: (t: any) => `/dashboard/transactions/${t.id}`, variant: "ghost" },
+                  ]}
+                  emptyMessage="No financial ledger inputs detected on this lease instance."
+                />
               </div>
-            )
-          ) : (
-            <div className="animate-in slide-in-from-bottom-4 duration-300">
-              <DataTable
-                columns={[
-                  {
-                    key: "id",
-                    label: "ID",
-                    render: (id) => (
-                      <span className="font-mono text-xs">{id}</span>
-                    ),
-                  },
-                  {
-                    key: "amount",
-                    label: "Amount",
-                    render: (a) => `₱${a.toLocaleString()}`,
-                  },
-                  {
-                    key: "reference",
-                    label: "Reference",
-                    render: (r) => <span className="uppercase">{r}</span>,
-                  },
-                  {
-                    key: "transactionDate",
-                    label: "Date",
-                    render: (d) => new Date(d).toLocaleDateString(),
-                  },
-                ]}
-                data={transactions}
-                actions={[
-                  {
-                    label: "View Receipt",
-                    icon: <Eye className="w-3 h-3" />,
-                    to: (t: any) => `/dashboard/transactions/${t.id}`,
-                    variant: "ghost",
-                  },
-                ]}
-                emptyMessage="No transactions history for this lease."
-              />
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

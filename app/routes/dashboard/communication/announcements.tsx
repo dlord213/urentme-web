@@ -1,12 +1,21 @@
-import { Megaphone, Users, CheckCircle2, Clock, Eye, Send, Plus, Pencil } from "lucide-react";
-import { DataTable, type PaginationMeta } from "~/components/DataTable";
-import { PageHeader } from "~/components/PageHeader";
-import { StatsCard } from "~/components/StatsCard";
+import { useState } from "react";
+import { Link } from "react-router";
+import {
+  Megaphone,
+  Search,
+  CheckCircle2,
+  Clock,
+  Eye,
+  Pencil,
+  Plus,
+  Globe,
+  Send
+} from "lucide-react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
-import { Link } from "react-router";
-import { useState } from "react";
+import { PageHeader } from "~/components/PageHeader";
+import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { StatusBadge } from "~/components/StatusBadge";
 
 export interface Announcement {
@@ -27,12 +36,28 @@ interface PaginatedResponse {
   totalPages: number;
 }
 
-const statusBadge = (s: string[]) => {
+const AudienceBadge = ({ announcement: a }: { announcement: Announcement }) => {
+  if (a.propertyAnnouncements?.length) {
+    const names = a.propertyAnnouncements.map(pa => pa.property.name);
+    return (
+      <div className="flex flex-col items-start gap-1">
+        <span className="font-bold text-sm tracking-tight truncate max-w-[200px]">{names.join(", ")}</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider opacity-50 bg-base-200 px-2 py-0.5 rounded-md">Property Level</span>
+      </div>
+    );
+  } else if (a.unitAnnouncements?.length) {
+    const propertyNames = [...new Set(a.unitAnnouncements.map(ua => ua.unit.property.name))];
+    return (
+      <div className="flex flex-col items-start gap-1">
+        <span className="font-bold text-sm tracking-tight truncate max-w-[200px]">{propertyNames.join(", ")} &mdash; {a.unitAnnouncements.length} Units</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider opacity-50 bg-base-200 px-2 py-0.5 rounded-md">Unit Level</span>
+      </div>
+    );
+  }
   return (
-    <div className="flex gap-1 flex-wrap">
-      {s.map((status) => (
-        <StatusBadge key={status} status={status} />
-      ))}
+    <div className="flex flex-col items-start gap-1">
+      <span className="font-bold text-sm tracking-tight text-primary">Global Audience</span>
+      <span className="text-[10px] font-bold uppercase tracking-wider opacity-50 bg-base-200 px-2 py-0.5 rounded-md">All Users</span>
     </div>
   );
 };
@@ -60,127 +85,208 @@ export default function Announcements() {
     : undefined;
 
   const announcements = rawAnnouncements.map((a) => {
-    let audience = "All";
-    if (a.propertyAnnouncements?.length) {
-      audience = a.propertyAnnouncements.map(pa => pa.property.name).join(", ");
-    } else if (a.unitAnnouncements?.length) {
-      audience = a.unitAnnouncements.map(ua => ua.unit.property.name + " - Unit " +  ua.unit.unitNumber).join(", ");
-    }
-
-    const statusArray = [];
-    if (a.isActive) statusArray.push("Active");
-    else statusArray.push("Inactive");
-
-    if (a.publishedAt) statusArray.push("Sent");
-    else statusArray.push("Draft");
-
     return {
       ...a,
-      audienceDisplay: audience,
-      dateDisplay: a.publishedAt 
-        ? new Date(a.publishedAt).toISOString().split("T")[0] 
-        : new Date(a.createdAt).toISOString().split("T")[0],
-      status: statusArray
+      titleDisplay: (
+        <div className="flex flex-col gap-1 max-w-xs sm:max-w-sm">
+          <span className="font-bold text-base text-base-content truncate" title={a.title}>{a.title}</span>
+          <span className="text-xs opacity-60 truncate">{a.body}</span>
+        </div>
+      ),
+      dateDisplay: (
+        <div className="flex flex-col gap-1">
+          <span className="font-medium text-sm flex items-center gap-1.5 opacity-80">
+            <Clock className="w-3.5 h-3.5" />
+            {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString() : new Date(a.createdAt).toLocaleDateString()}
+          </span>
+          <span className="text-[10px] uppercase font-bold tracking-wider opacity-40">
+            {a.publishedAt ? 'Published' : 'Created'}
+          </span>
+        </div>
+      ),
+      statusDisplay: (
+        <div className="flex gap-1.5 flex-wrap">
+          <StatusBadge status={a.isActive ? 'active' : 'inactive'} label={a.isActive ? 'ACTIVE' : 'INACTIVE'} size="xs" />
+          <StatusBadge status={a.publishedAt ? 'success' : 'warning'} label={a.publishedAt ? 'SENT' : 'DRAFT'} size="xs" />
+        </div>
+      )
     };
   });
 
-  const sentCount = announcements.filter(a => a.publishedAt).length;
-  const draftCount = announcements.filter(a => !a.publishedAt).length;
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value);
-    setPage(1);
-  };
-
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStatusFilter(e.target.value);
-    setPage(1);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <span className="loading loading-spinner text-primary loading-lg"></span>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="alert alert-error">
-        <span>Failed to load announcements.</span>
-      </div>
-    );
-  }
+  const sentCount = rawAnnouncements.filter((a) => a.publishedAt).length;
+  const draftCount = rawAnnouncements.filter((a) => !a.publishedAt).length;
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6">
-      <PageHeader
-        title="Announcements"
-        description="Send announcements and notices to tenants across properties or units."
-        actionButton={
-          <Link
-            to="/dashboard/announcements/new"
-            className="btn btn-primary shadow-sm shadow-primary/20 gap-2"
-          >
-            <Plus className="w-4 h-4" /> New Announcement
-          </Link>
-        }
-      />
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto space-y-6 lg:space-y-8 pb-12">
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatsCard title="Total Announcements" value={pagination?.total ?? announcements.length} icon={Megaphone} color="primary" />
-        <StatsCard title="Sent" value={sentCount} icon={CheckCircle2} color="success" />
-        <StatsCard title="Drafts" value={draftCount} icon={Clock} color="warning" />
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-12">
+        <div>
+          <h1 className="text-3xl lg:text-4xl font-black text-base-content tracking-tight mb-2">Communications</h1>
+          <p className="text-base-content/60 font-medium text-sm lg:text-base max-w-xl">
+            Send announcements and notices to targeted tenants across properties or units.
+          </p>
+        </div>
+        <Link
+          to="/dashboard/announcements/new"
+          className="btn btn-primary shadow-lg shadow-primary/20 hover:scale-105 transition-all w-full md:w-auto font-bold px-6"
+        >
+          <Plus className="w-5 h-5 mr-1" />
+          New Dispatch
+        </Link>
       </div>
 
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body">
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <input
-              type="text"
-              placeholder="Search announcements..."
-              className="input input-bordered input-sm flex-1 max-w-sm"
-              value={searchInput}
-              onChange={handleSearchChange}
-            />
-            <select
-              className="select select-bordered select-sm w-36"
-              value={statusFilter}
-              onChange={handleStatusChange}
-            >
-              <option value="">All Statuses</option>
-              <option value="sent">Sent</option>
-              <option value="draft">Draft</option>
-            </select>
+      {/* Grid Layout Container */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+
+        {/* Main Content Area (9 cols on large screens) */}
+        <div className="lg:col-span-9 space-y-6">
+
+          {/* Controls Bar */}
+          <div className="bg-base-100 p-4 rounded-3xl border border-base-200/60 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+              <input
+                type="text"
+                placeholder="Search subjects or content..."
+                className="input input-bordered w-full pl-11 focus:input-primary transition-all rounded-2xl bg-base-200/50"
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <div className="w-full sm:w-auto flex items-center gap-3">
+              <select
+                className="select select-bordered focus:select-primary transition-all rounded-2xl bg-base-200/50 w-full sm:w-48 font-medium"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="">All Statuses</option>
+                <option value="sent">Dispatched</option>
+                <option value="draft">Pending Drafts</option>
+              </select>
+            </div>
           </div>
-          <DataTable
-            columns={[
-              { key: "id", label: "ID" },
-              { key: "title", label: "Title" },
-              { key: "audienceDisplay", label: "Audience" },
-              { key: "dateDisplay", label: "Date" },
-              { key: "status", label: "Status", render: statusBadge },
-            ]}
-            data={announcements}
-            actions={[
-              { 
-                label: "View", 
-                icon: <Eye className="w-3 h-3" />, 
-                to: (a: any) => `/dashboard/announcements/${a.id}`, 
-                variant: "ghost" 
-              },
-              { 
-                label: "Edit", 
-                icon: <Pencil className="w-3 h-3" />, 
-                to: (a: any) => `/dashboard/announcements/${a.id}?edit=true`, 
-                variant: "ghost" 
-              },
-            ]}
-            emptyMessage="No announcements found."
-            pagination={pagination}
-            onPageChange={setPage}
-          />
+
+          {/* Data Table Container */}
+          <div className="bg-base-100 rounded-3xl border border-base-200/60 shadow-sm overflow-hidden p-2">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+                <p className="text-base-content/50 font-medium">Loading network dispatches...</p>
+              </div>
+            ) : isError ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-3 text-center px-4">
+                <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center text-error mb-2">
+                  <Megaphone className="w-8 h-8" />
+                </div>
+                <h3 className="font-bold text-lg">Failed to load communications</h3>
+                <p className="text-base-content/60 max-w-md text-sm">There was a problem retrieving your announcements. Please try refreshing.</p>
+              </div>
+            ) : announcements.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-4 text-center px-4">
+                <div className="w-20 h-20 rounded-full bg-base-200 flex items-center justify-center text-base-content/30 mb-2">
+                  <Megaphone className="w-10 h-10" />
+                </div>
+                <h3 className="font-bold text-xl text-base-content">No Announcements Found</h3>
+                <p className="text-base-content/50 max-w-sm text-sm">
+                  {searchInput || statusFilter
+                    ? "Try adjusting your search criteria or clear your filters."
+                    : "You haven't dispatched any announcements yet. Keep your tenants informed by creating a new dispatch."}
+                </p>
+                {(searchInput || statusFilter) && (
+                  <button
+                    onClick={() => { setSearchInput(''); setStatusFilter(''); }}
+                    className="btn btn-outline btn-sm mt-2 rounded-xl"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <DataTable
+                columns={[
+                  { key: "titleDisplay", label: "Subject" },
+                  { key: "audience", label: "Target Audience", render: (_, a) => <AudienceBadge announcement={a as Announcement} /> },
+                  { key: "statusDisplay", label: "Status" },
+                  { key: "dateDisplay", label: "Timeline" },
+                ]}
+                data={announcements}
+                actions={[
+                  {
+                    label: "View",
+                    icon: <Eye className="w-4 h-4" />,
+                    to: (a: any) => `/dashboard/announcements/${a.id}`,
+                    variant: "ghost",
+                  },
+                  {
+                    label: "Edit",
+                    icon: <Pencil className="w-4 h-4" />,
+                    to: (a: any) => `/dashboard/announcements/${a.id}?edit=true`,
+                    variant: "ghost",
+                  },
+                ]}
+                pagination={pagination}
+                onPageChange={setPage}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar Space (3 cols on large screens) */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-primary/10 rounded-3xl p-6 border border-primary/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-primary shadow-sm backdrop-blur-md">
+                <Globe className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Total Announcements</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-primary leading-none tracking-tighter">{pagination?.total ?? 0}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">created</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-success/5 rounded-3xl p-6 border border-success/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-success/10 rounded-full blur-2xl group-hover:bg-success/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-success shadow-sm backdrop-blur-md">
+                <Send className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Successfully Dispatched</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-success leading-none tracking-tighter">{sentCount}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">online</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-base-100 rounded-3xl p-6 border border-base-200/60 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-base-200/50 rounded-full blur-2xl group-hover:bg-base-200 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-200 flex items-center justify-center text-base-content/60 shadow-sm">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider mb-1">Pending Drafts</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-warning leading-none tracking-tighter">{draftCount}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">unsent</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

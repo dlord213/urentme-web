@@ -207,133 +207,155 @@ export default function UnitsPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Total Units</p>
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Home className="w-5 h-5" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        
+        {/* Main Content Area (9 cols on large screens) */}
+        <div className="lg:col-span-9 space-y-6">
+          <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+            <div className="card-body p-0">
+              <div className="p-4 sm:p-6 border-b border-base-200 bg-base-100/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="relative w-full sm:max-w-md">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
+                  <input
+                    type="text"
+                    placeholder="Search units..."
+                    className="input input-bordered w-full pl-9 focus:input-primary transition-colors bg-base-100"
+                    value={searchInput}
+                    onChange={handleSearchChange}
+                  />
+                </div>
+                <div className="relative w-full sm:w-auto shrink-0 flex items-center">
+                  <Filter className="w-4 h-4 absolute left-3 text-base-content/40 pointer-events-none" />
+                  <select
+                    className="select select-bordered pl-9 w-full sm:w-48 focus:select-primary transition-colors bg-base-100 font-medium"
+                    value={statusFilter}
+                    onChange={handleStatusChange}
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="occupied">Occupied</option>
+                    <option value="vacant">Vacant</option>
+                    <option value="reserved">Reserved</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="px-1 pb-1">
+                <DataTable
+                  columns={[
+                    { key: "unit", label: "Unit #" },
+                    { key: "propertyName", label: "Property" },
+                    { key: "bedrooms", label: "Beds" },
+                    { 
+                      key: "rent", 
+                      label: "Rent/Mo", 
+                      render: (val) => (
+                        <span className="font-semibold text-success">
+                          {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(val)}
+                        </span>
+                      ) 
+                    },
+                    { key: "tenantName", label: "Current Tenant" },
+                    { key: "id", label: "Status", render: (_, item) => renderUnitStatus(item) },
+                  ]}
+                  data={units}
+                  actions={[
+                    {
+                      label: "View",
+                      icon: <Eye className="w-4 h-4" />,
+                      to: (item: any) => `/dashboard/units/${item.id}`,
+                      variant: "ghost",
+                    },
+                    {
+                      label: "Edit",
+                      icon: <Pencil className="w-4 h-4" />,
+                      to: (item: any) => `/dashboard/units/${item.id}?edit=true`,
+                      variant: "ghost",
+                    },
+                    {
+                      label: "Reserve",
+                      icon: <CalendarCheck className="w-4 h-4" />,
+                      onClick: (item: any) => openReserveModal(item),
+                      variant: "primary",
+                      show: (item: any) => item.status === "vacant",
+                    },
+                  ]}
+                  emptyMessage="No units found matching your criteria."
+                  pagination={pagination}
+                  onPageChange={setPage}
+                />
               </div>
             </div>
-            <h3 className="text-3xl font-black text-base-content">{pagination?.total ?? units.length}</h3>
           </div>
         </div>
 
-        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Occupied</p>
-              <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition-transform">
-                <DoorOpen className="w-5 h-5" />
+        {/* Sidebar Space (3 cols on large screens) */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-primary/10 rounded-3xl p-6 border border-primary/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-primary shadow-sm backdrop-blur-md">
+                <Home className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Total Units</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-primary leading-none tracking-tighter">{pagination?.total ?? units.length}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">total</span>
+                </div>
               </div>
             </div>
-            <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-black text-success">{occupiedCount}</h3>
-              <span className="text-xs font-semibold text-success/70 mb-1">{occupancyRate}% occupancy</span>
-            </div>
           </div>
-        </div>
 
-        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Vacant Units</p>
-              <div className="w-10 h-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Home className="w-5 h-5" />
+          <div className="bg-success/5 rounded-3xl p-6 border border-success/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-success/10 rounded-full blur-2xl group-hover:bg-success/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-success shadow-sm backdrop-blur-md">
+                <DoorOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Occupied</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-success leading-none tracking-tighter">{occupiedCount}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">units</span>
+                </div>
+                <div className="mt-2 text-xs font-bold text-success/80 flex items-center gap-1.5 pt-2 border-t border-success/20">
+                  {occupancyRate}% global occupancy rate
+                </div>
               </div>
             </div>
-            <h3 className="text-3xl font-black text-warning">{units.filter((unit) => unit.status === "vacant").length}</h3>
           </div>
-        </div>
 
-        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Avg. Rent</p>
-              <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center group-hover:scale-110 transition-transform">
-                <PhilippinePeso className="w-5 h-5" />
+          <div className="bg-warning/10 rounded-3xl p-6 border border-warning/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-warning/10 rounded-full blur-2xl group-hover:bg-warning/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-warning shadow-sm backdrop-blur-md">
+                <Home className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Vacant Units</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-warning leading-none tracking-tighter">{units.filter((unit) => unit.status === "vacant").length}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">available</span>
+                </div>
               </div>
             </div>
-            <h3 className="text-3xl font-black text-accent">
-              ₱{avgRent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
           </div>
-        </div>
-      </div>
 
-      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
-        <div className="card-body p-0">
-          <div className="p-4 sm:p-6 border-b border-base-200 bg-base-100/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full sm:max-w-md">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
-              <input
-                type="text"
-                placeholder="Search units..."
-                className="input input-bordered w-full pl-9 focus:input-primary transition-colors bg-base-100"
-                value={searchInput}
-                onChange={handleSearchChange}
-              />
+          <div className="bg-accent/10 rounded-3xl p-6 border border-accent/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-accent/10 rounded-full blur-2xl group-hover:bg-accent/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-accent shadow-sm backdrop-blur-md">
+                <PhilippinePeso className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Avg. Rent</p>
+                <div className="flex items-end gap-2 text-accent">
+                  <span className="text-2xl font-black leading-none tracking-tight">
+                    ₱{avgRent.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="relative w-full sm:w-auto shrink-0 flex items-center">
-              <Filter className="w-4 h-4 absolute left-3 text-base-content/40 pointer-events-none" />
-              <select
-                className="select select-bordered pl-9 w-full sm:w-48 focus:select-primary transition-colors bg-base-100 font-medium"
-                value={statusFilter}
-                onChange={handleStatusChange}
-              >
-                <option value="">All Statuses</option>
-                <option value="occupied">Occupied</option>
-                <option value="vacant">Vacant</option>
-                <option value="reserved">Reserved</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="px-1 pb-1">
-            <DataTable
-              columns={[
-                { key: "unit", label: "Unit #" },
-                { key: "propertyName", label: "Property" },
-                { key: "bedrooms", label: "Beds" },
-                { 
-                  key: "rent", 
-                  label: "Rent/Mo", 
-                  render: (val) => (
-                    <span className="font-semibold text-success">
-                      {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(val)}
-                    </span>
-                  ) 
-                },
-                { key: "tenantName", label: "Current Tenant" },
-                { key: "id", label: "Status", render: (_, item) => renderUnitStatus(item) },
-              ]}
-              data={units}
-              actions={[
-                {
-                  label: "View",
-                  icon: <Eye className="w-4 h-4" />,
-                  to: (item: any) => `/dashboard/units/${item.id}`,
-                  variant: "ghost",
-                },
-                {
-                  label: "Edit",
-                  icon: <Pencil className="w-4 h-4" />,
-                  to: (item: any) => `/dashboard/units/${item.id}?edit=true`,
-                  variant: "ghost",
-                },
-                {
-                  label: "Reserve",
-                  icon: <CalendarCheck className="w-4 h-4" />,
-                  onClick: (item: any) => openReserveModal(item),
-                  variant: "primary",
-                  show: (item: any) => item.status === "vacant",
-                },
-              ]}
-              emptyMessage="No units found matching your criteria."
-              pagination={pagination}
-              onPageChange={setPage}
-            />
           </div>
         </div>
       </div>

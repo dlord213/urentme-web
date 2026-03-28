@@ -194,146 +194,171 @@ export default function Tenants() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Total Tenants</p>
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Users className="w-5 h-5" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        
+        {/* Main Content Area (9 cols on large screens) */}
+        <div className="lg:col-span-9 space-y-6">
+          <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+            <div className="card-body p-0">
+              <div className="p-4 sm:p-6 border-b border-base-200 bg-base-100/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="relative w-full sm:max-w-md">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
+                  <input
+                    type="text"
+                    placeholder="Search tenants by name or email..."
+                    className="input input-bordered w-full pl-9 focus:input-primary transition-colors bg-base-100"
+                    value={searchInput}
+                    onChange={handleSearchChange}
+                  />
+                </div>
+                <div className="relative w-full sm:w-auto shrink-0 flex items-center">
+                  <Filter className="w-4 h-4 absolute left-3 text-base-content/40 pointer-events-none" />
+                  <select
+                    className="select select-bordered pl-9 w-full sm:w-48 focus:select-primary transition-colors bg-base-100 font-medium"
+                    value={statusFilter}
+                    onChange={handleStatusChange}
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
               </div>
-            </div>
-            <h3 className="text-3xl font-black text-base-content">{totalTenants}</h3>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Active Tenants</p>
-              <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Home className="w-5 h-5" />
-              </div>
-            </div>
-            <h3 className="text-3xl font-black text-success">{currentTenants}</h3>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Past Tenants</p>
-              <div className="w-10 h-10 rounded-xl bg-info/10 text-info flex items-center justify-center group-hover:scale-110 transition-transform">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-            </div>
-            <h3 className="text-3xl font-black text-info">{pastTenants}</h3>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow group">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest">Flagged</p>
-              <div className="w-10 h-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center group-hover:scale-110 transition-transform">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-            </div>
-            <h3 className="text-3xl font-black text-warning">{flaggedTenants}</h3>
-          </div>
-        </div>
-      </div>
-
-      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
-        <div className="card-body p-0">
-          <div className="p-4 sm:p-6 border-b border-base-200 bg-base-100/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full sm:max-w-md">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
-              <input
-                type="text"
-                placeholder="Search tenants by name or email..."
-                className="input input-bordered w-full pl-9 focus:input-primary transition-colors bg-base-100"
-                value={searchInput}
-                onChange={handleSearchChange}
-              />
-            </div>
-            <div className="relative w-full sm:w-auto shrink-0 flex items-center">
-              <Filter className="w-4 h-4 absolute left-3 text-base-content/40 pointer-events-none" />
-              <select
-                className="select select-bordered pl-9 w-full sm:w-48 focus:select-primary transition-colors bg-base-100 font-medium"
-                value={statusFilter}
-                onChange={handleStatusChange}
-              >
-                <option value="">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="px-1 pb-1">
-            <DataTable
-              columns={[
-                { key: "id", label: "ID" },
-                { 
-                  key: "name", 
-                  label: "Tenant Name",
-                  render: (val, t) => (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/60">
-                        {t.firstName[0]}{t.lastName[0]}
-                      </div>
-                      <span className="font-semibold">{val}</span>
-                    </div>
-                  )
-                },
-                { key: "unit", label: "Unit" },
-                { key: "email", label: "Email" },
-                { key: "celNum", label: "Mobile" },
-                {
-                  key: "leaseEnd",
-                  label: "Lease End",
-                  render: (val, t) => (
-                    <span className={t.isExpiringSoon ? "text-warning font-black" : "font-medium text-base-content/70"}>
-                      {val}
-                    </span>
-                  ),
-                },
-                {
-                  key: "status",
-                  label: "Status",
-                  render: (s, t) => (
-                    <div className="flex flex-col gap-1.5 items-start">
-                      {statusBadge(s)}
-                      {t.isExpiringSoon && (
-                        <span className="badge badge-xs badge-warning font-bold animate-pulse py-2 border-none">
-                          Expiring Soon
+              
+              <div className="px-1 pb-1">
+                <DataTable
+                  columns={[
+                    { key: "id", label: "ID" },
+                    { 
+                      key: "name", 
+                      label: "Tenant Name",
+                      render: (val, t) => (
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/60">
+                            {t.firstName[0]}{t.lastName[0]}
+                          </div>
+                          <span className="font-semibold">{val}</span>
+                        </div>
+                      )
+                    },
+                    { key: "unit", label: "Unit" },
+                    { key: "email", label: "Email" },
+                    { key: "celNum", label: "Mobile" },
+                    {
+                      key: "leaseEnd",
+                      label: "Lease End",
+                      render: (val, t) => (
+                        <span className={t.isExpiringSoon ? "text-warning font-black" : "font-medium text-base-content/70"}>
+                          {val}
                         </span>
-                      )}
-                    </div>
-                  ),
-                },
-              ]}
-              data={tenants}
-              actions={[
-                {
-                  label: "View",
-                  icon: <Eye className="w-4 h-4" />,
-                  to: (t: any) => `/dashboard/tenants/${t.id}`,
-                  variant: "ghost",
-                },
-                {
-                  label: "Edit",
-                  icon: <Pencil className="w-4 h-4" />,
-                  to: (t: any) => `/dashboard/tenants/${t.id}?edit=true`,
-                  variant: "ghost",
-                },
-              ]}
-              emptyMessage="No tenants found matching your criteria."
-              pagination={pagination}
-              onPageChange={setPage}
-            />
+                      ),
+                    },
+                    {
+                      key: "status",
+                      label: "Status",
+                      render: (s, t) => (
+                        <div className="flex flex-col gap-1.5 items-start">
+                          {statusBadge(s)}
+                          {t.isExpiringSoon && (
+                            <span className="badge badge-xs badge-warning font-bold animate-pulse py-2 border-none">
+                              Expiring Soon
+                            </span>
+                          )}
+                        </div>
+                      ),
+                    },
+                  ]}
+                  data={tenants}
+                  actions={[
+                    {
+                      label: "View",
+                      icon: <Eye className="w-4 h-4" />,
+                      to: (t: any) => `/dashboard/tenants/${t.id}`,
+                      variant: "ghost",
+                    },
+                    {
+                      label: "Edit",
+                      icon: <Pencil className="w-4 h-4" />,
+                      to: (t: any) => `/dashboard/tenants/${t.id}?edit=true`,
+                      variant: "ghost",
+                    },
+                  ]}
+                  emptyMessage="No tenants found matching your criteria."
+                  pagination={pagination}
+                  onPageChange={setPage}
+                />
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Sidebar Space (3 cols on large screens) */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-primary/10 rounded-3xl p-6 border border-primary/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-primary shadow-sm backdrop-blur-md">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Total Tenants</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-primary leading-none tracking-tighter">{totalTenants}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">recorded</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-success/5 rounded-3xl p-6 border border-success/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-success/10 rounded-full blur-2xl group-hover:bg-success/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-success shadow-sm backdrop-blur-md">
+                <Home className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Active</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-success leading-none tracking-tighter">{currentTenants}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">tenants</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-info/10 rounded-3xl p-6 border border-info/20 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-info/10 rounded-full blur-2xl group-hover:bg-info/20 transition-all duration-500"></div>
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-info shadow-sm backdrop-blur-md">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Past / Inactive</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-info leading-none tracking-tighter">{pastTenants}</span>
+                  <span className="text-sm font-medium opacity-60 mb-1">tenants</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {flaggedTenants > 0 && (
+            <div className="bg-warning/10 rounded-3xl p-6 border border-warning/20 shadow-sm relative overflow-hidden group">
+              <div className="absolute -right-6 -top-6 w-32 h-32 bg-warning/10 rounded-full blur-2xl group-hover:bg-warning/20 transition-all duration-500"></div>
+              <div className="relative z-10 flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-base-100/50 flex items-center justify-center text-warning shadow-sm backdrop-blur-md">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">Flagged</p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-4xl font-black text-warning leading-none tracking-tighter">{flaggedTenants}</span>
+                    <span className="text-sm font-medium opacity-60 mb-1">attention</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

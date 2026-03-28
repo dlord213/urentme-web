@@ -10,10 +10,12 @@ import {
   Info,
   Send,
   Save,
+  Pencil,
+  Eye,
+  CheckCircle2,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
-import { PageHeader } from "~/components/PageHeader";
 
 export default function NewAnnouncement() {
   const navigate = useNavigate();
@@ -55,18 +57,12 @@ export default function NewAnnouncement() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     const { name, value, type } = e.target;
-    const val =
-      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
+    const val = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: val,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: val }));
   };
 
   const toggleProperty = (id: string) => {
@@ -90,18 +86,10 @@ export default function NewAnnouncement() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const {
-      title,
-      body,
-      isPublished,
-      selectedProperties,
-      selectedUnits,
-    } = formData;
+    const { title, body, isPublished, selectedProperties, selectedUnits } = formData;
 
     if (selectedProperties.length === 0 && selectedUnits.length === 0) {
-      alert(
-        "Please select at least one property or unit as the target audience.",
-      );
+      alert("Please select at least one property or unit as the target audience.");
       return;
     }
 
@@ -121,258 +109,209 @@ export default function NewAnnouncement() {
     mutation.mutate(payload);
   };
 
-  if (propertiesLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <span className="loading loading-spinner text-primary loading-lg"></span>
-      </div>
-    );
-  }
-
   return (
-    <div className="animate-in fade-in duration-300 space-y-6 max-w-5xl mx-auto pb-12 text-sm">
-      <div className="flex items-center gap-4">
-        <Link
-          to="/dashboard/announcements"
-          className="btn btn-ghost btn-sm btn-square"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <PageHeader
-          title="New Announcement"
-          description="Send a message or notice to specific properties and units."
-        />
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto space-y-6 lg:space-y-8 pb-12">
+      
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-base-100 p-6 sm:p-8 rounded-3xl border border-base-200/60 shadow-sm relative overflow-hidden">
+        <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
+          <Link
+            to="/dashboard/announcements"
+            className="btn btn-circle btn-sm sm:btn-md bg-base-200 hover:bg-base-300 border-none transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-base-content/70" />
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-base-content flex items-center gap-3">
+              Communicate <span className="badge badge-primary badge-sm sm:badge-md">New Dispatch</span>
+            </h1>
+            <p className="text-sm font-medium opacity-60 mt-1">Send a message or notice to specific properties and units.</p>
+          </div>
+        </div>
       </div>
 
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Content Section */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2 border-b pb-2">
-                <FileText className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">Announcement Details</h3>
-              </div>
-
-              <div className="form-control">
-                <label className="label p-1">
-                  <span className="label-text font-medium">
-                    Title <span className="text-error">*</span>
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  required
-                  value={formData.title}
-                  onChange={handleChange}
-                  className="input input-bordered w-full h-10"
-                  placeholder="e.g. Scheduled Maintenance"
-                />
-              </div>
-
-              <div className="form-control">
-                <label className="label p-1">
-                  <span className="label-text font-medium">
-                    Message Body <span className="text-error">*</span>
-                  </span>
-                </label>
-                <textarea
-                  name="body"
-                  required
-                  value={formData.body}
-                  onChange={handleChange}
-                  className="textarea textarea-bordered h-40 w-full"
-                  placeholder="Write your announcement message here..."
-                ></textarea>
-              </div>
-            </section>
-
-            {/* Targeting Section */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-2 border-b pb-2">
-                <Globe className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-lg">Target Audience</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Properties Selection */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-semibold flex items-center gap-2">
-                      <Building className="w-4 h-4 opacity-70" /> Properties
-                    </label>
-                    <span className="text-xs opacity-50 px-2 py-0.5 rounded-full bg-base-200">
-                      {formData.selectedProperties.length} Selected
-                    </span>
+      <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          
+          {/* Main Form Left Column */}
+          <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+            
+            <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative transition-all hover:shadow-md">
+              <div className="card-body p-6 sm:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                  <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                    <Megaphone className="w-5 h-5" />
                   </div>
-                  <div className="max-h-60 overflow-y-auto pr-2 space-y-1.5 scrollbar-thin">
-                    {propertiesLoading ? (
-                      <div className="flex items-center gap-2 opacity-50">
-                        <span className="loading loading-spinner loading-xs"></span>{" "}
-                        Loading...
-                      </div>
-                    ) : (
-                      properties.map((p: any) => (
-                        <label
-                          key={p.id}
-                          className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer hover:bg-base-200/50 ${
-                            formData.selectedProperties.includes(p.id)
-                              ? "border-primary bg-primary/5 shadow-sm"
-                              : "border-base-200 opacity-70"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="checkbox checkbox-primary checkbox-xs"
-                            checked={formData.selectedProperties.includes(p.id)}
-                            onChange={() => toggleProperty(p.id)}
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-medium">{p.name}</span>
-                            <span className="text-[10px] opacity-50">
-                              {p.type} • {p.address}
-                            </span>
-                          </div>
-                        </label>
-                      ))
-                    )}
-                    {!propertiesLoading && properties.length === 0 && (
-                      <span className="text-xs opacity-50 italic">
-                        No properties found.
-                      </span>
-                    )}
+                  <div>
+                    <h3 className="text-lg font-bold text-base-content tracking-tight">Dispatch Subject</h3>
                   </div>
                 </div>
 
-                {/* Units Selection */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-semibold flex items-center gap-2">
-                      <Home className="w-4 h-4 opacity-70" /> Specific Units
-                    </label>
-                    <span className="text-xs opacity-50 px-2 py-0.5 rounded-full bg-base-200">
-                      {formData.selectedUnits.length} Selected
-                    </span>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto pr-2 space-y-1.5 scrollbar-thin">
-                    {unitsLoading ? (
-                      <div className="flex items-center gap-2 opacity-50">
-                        <span className="loading loading-spinner loading-xs"></span>{" "}
-                        Loading...
-                      </div>
-                    ) : (
-                      units.map((u: any) => (
-                        <label
-                          key={u.id}
-                          className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer hover:bg-base-200/50 ${
-                            formData.selectedUnits.includes(u.id)
-                              ? "border-primary bg-primary/5 shadow-sm"
-                              : "border-base-200 opacity-70"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="checkbox checkbox-primary checkbox-xs"
-                            checked={formData.selectedUnits.includes(u.id)}
-                            onChange={() => toggleUnit(u.id)}
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              Unit {u.unitNumber}
-                            </span>
-                            <span className="text-[10px] opacity-50">
-                              {u.property?.name} • {u.status}
-                            </span>
-                          </div>
-                        </label>
-                      ))
-                    )}
-                    {!unitsLoading && units.length === 0 && (
-                      <span className="text-xs opacity-50 italic">
-                        No units found.
+                <div className="space-y-6">
+                  <div className="form-control">
+                    <label className="label pb-1.5">
+                      <span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-2 text-base-content/70">
+                        Dispatch Title <span className="text-error">*</span>
                       </span>
-                    )}
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      required
+                      value={formData.title}
+                      onChange={handleChange}
+                      className="input input-bordered w-full focus:input-accent transition-all rounded-xl shadow-sm text-lg font-bold h-14"
+                      placeholder="e.g. Scheduled Maintenance Notice"
+                    />
+                  </div>
+                  
+                  <div className="form-control">
+                    <label className="label pb-1.5 flex justify-between">
+                      <span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-2 text-base-content/70">
+                        Transmission Content <span className="text-error">*</span>
+                      </span>
+                    </label>
+                    <textarea
+                      name="body"
+                      required
+                      value={formData.body}
+                      onChange={handleChange}
+                      className="textarea textarea-bordered min-h-64 w-full focus:textarea-accent transition-all rounded-2xl shadow-sm text-sm p-4 leading-relaxed"
+                      placeholder="Write your announcement message here in detail..."
+                    ></textarea>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="p-3 bg-base-200 rounded-lg flex items-start gap-3 text-xs border border-base-300/50">
-                <Info className="w-4 h-4 mt-0.5 text-info shrink-0" />
-                <p className="opacity-70 mt-0.5">
-                  This message will be sent to all active tenants in{" "}
-                  <strong>{formData.selectedProperties.length}</strong>{" "}
-                  properties and{" "}
-                  <strong>{formData.selectedUnits.length}</strong> individual
-                  units.
-                </p>
+          {/* Sidebar Area Right Column */}
+          <div className="lg:col-span-4 space-y-6 lg:space-y-8">
+            
+            {/* Target Audience Section */}
+            <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative transition-all hover:shadow-md">
+              <div className="card-body p-6 sm:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-base-content tracking-tight">Target Matrix</h3>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-base-content/80">
+                        <Building className="w-3.5 h-3.5" /> Properties Selector
+                      </label>
+                      <span className="text-[10px] font-black opacity-60 bg-base-200 px-2 py-0.5 rounded-full">{formData.selectedProperties.length} Linked</span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto pr-2 space-y-1.5 scrollbar-thin bg-base-200/30 p-2 rounded-xl border border-base-200/50">
+                      {propertiesLoading ? (
+                        <div className="flex items-center gap-2 text-xs font-bold p-2"><span className="loading loading-spinner loading-xs"></span> Syncing Nodes...</div>
+                      ) : (
+                        properties.map((p: any) => (
+                          <label key={p.id} className={`flex items-center gap-3 p-2 rounded-lg border-2 transition-all cursor-pointer ${formData.selectedProperties.includes(p.id) ? "border-primary bg-primary/5" : "border-transparent hover:bg-base-200/50"}`}>
+                            <input type="checkbox" className="checkbox checkbox-primary checkbox-sm rounded-md" checked={formData.selectedProperties.includes(p.id)} onChange={() => toggleProperty(p.id)} />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold tracking-tight">{p.name}</span>
+                            </div>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-base-content/80">
+                        <Home className="w-3.5 h-3.5" /> Granular Units
+                      </label>
+                      <span className="text-[10px] font-black opacity-60 bg-base-200 px-2 py-0.5 rounded-full">{formData.selectedUnits.length} Tagged</span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto pr-2 space-y-1.5 scrollbar-thin bg-base-200/30 p-2 rounded-xl border border-base-200/50">
+                      {unitsLoading ? (
+                        <div className="flex items-center gap-2 text-xs font-bold p-2"><span className="loading loading-spinner loading-xs"></span> Syncing Units...</div>
+                      ) : (
+                        units.map((u: any) => (
+                          <label key={u.id} className={`flex items-center gap-3 p-2 rounded-lg border-2 transition-all cursor-pointer ${formData.selectedUnits.includes(u.id) ? "border-primary bg-primary/5" : "border-transparent hover:bg-base-200/50"}`}>
+                            <input type="checkbox" className="checkbox checkbox-primary checkbox-sm rounded-md" checked={formData.selectedUnits.includes(u.id)} onChange={() => toggleUnit(u.id)} />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold tracking-tight">Unit {u.unitNumber}</span>
+                              <span className="text-[10px] font-bold opacity-50 uppercase">{u.property?.name}</span>
+                            </div>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-info/10 rounded-xl flex items-start gap-3 border border-info/20">
+                  <Info className="w-4 h-4 text-info mt-0.5" />
+                  <p className="text-xs font-medium text-info-content/90 leading-relaxed">
+                    Message routes to all tenants belonging to <strong>{formData.selectedProperties.length}</strong> groups and <strong>{formData.selectedUnits.length}</strong> specific nodes.
+                  </p>
+                </div>
               </div>
-            </section>
+            </div>
 
-            {/* Status Section */}
-            <section className="space-y-6 pt-4 border-t">
-              <div className="flex flex-col md:flex-row gap-8">
+            {/* Publishing Section */}
+            <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative transition-all hover:shadow-md">
+              <div className="card-body p-6 sm:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                  <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center">
+                    <Send className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-base-content tracking-tight">Output Stream</h3>
+                  </div>
+                </div>
+                
                 <div className="form-control">
-                  <label className="label cursor-pointer flex items-center justify-start gap-4 p-0">
+                  <label className="label cursor-pointer flex items-center justify-between gap-4 p-2 bg-base-200/50 rounded-xl border border-base-200 transition-all hover:bg-base-200">
+                    <div>
+                      <span className="font-bold block text-sm">Commit Directly</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">Send instead of draft</span>
+                    </div>
                     <input
                       type="checkbox"
                       name="isPublished"
                       checked={formData.isPublished}
                       onChange={handleChange}
-                      className="toggle toggle-info toggle-sm"
+                      className="toggle toggle-success toggle-md"
                     />
-                    <div>
-                      <span className="font-semibold block text-sm">
-                        Publish Immediately
-                      </span>
-                      <span className="text-[10px] opacity-60">
-                        Visible to tenants if active.
-                      </span>
-                    </div>
                   </label>
                 </div>
-
-                <div className="bg-base-200/50 p-3 rounded-xl flex items-center gap-3 text-xs border border-base-300/50 flex-1">
-                  <Info className="w-4 h-4 text-info shrink-0" />
-                  <p className="opacity-70">
-                    New announcements are set to <strong>Active</strong> by default.
-                    Drafts remain hidden until published.
-                  </p>
-                </div>
               </div>
-            </section>
-
-            <div className="card-actions justify-end mt-6 pt-6 border-t gap-3">
-              <Link
-                to="/dashboard/announcements"
-                className="btn btn-ghost btn-sm"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                className="btn btn-primary h-12 px-10 shadow-lg shadow-primary/20"
-                disabled={mutation.isPending}
-              >
-                {mutation.isPending ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  <>
-                    {formData.isPublished ? (
-                      <Send className="w-4 h-4 mr-2" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    {formData.isPublished
-                      ? "Send Announcement"
-                      : "Save as Draft"}
-                  </>
-                )}
-              </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+
+        {/* Global Action Bar */}
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-base-200/60">
+          <Link to="/dashboard/announcements" className="btn btn-ghost w-full sm:w-auto font-bold rounded-xl hover:bg-base-200">
+            Discard
+          </Link>
+          <button
+            type="submit"
+            className={`btn w-full sm:w-auto px-10 shadow-lg hover:scale-105 transition-all font-bold text-base rounded-xl h-12 ${formData.isPublished ? 'btn-primary shadow-primary/20' : 'btn-accent shadow-accent/20'}`}
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? (
+              <span className="loading loading-spinner loading-md"></span>
+            ) : (
+              <>
+                {formData.isPublished ? <Send className="w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+                {formData.isPublished ? "Initiate Transmission" : "Cache Draft"}
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

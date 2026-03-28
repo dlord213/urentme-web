@@ -15,6 +15,7 @@ import {
   Printer,
   ChevronRight,
   Info,
+  ShieldAlert,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
@@ -25,7 +26,6 @@ export default function TransactionDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Transaction Data
   const {
     data: transaction,
     isLoading,
@@ -36,7 +36,6 @@ export default function TransactionDetail() {
     enabled: !!id,
   });
 
-  // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: () => apiFetch(`/transactions/${id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -49,23 +48,13 @@ export default function TransactionDetail() {
   });
 
   const handleDelete = () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this transaction record? This action cannot be undone.",
-      )
-    ) {
+    if (confirm("Executing ledger block deletion? This drops tracking historically.")) {
       deleteMutation.mutate();
     }
   };
 
-  if (isLoading)
-    return (
-      <div className="flex justify-center p-12">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
-  if (isError || !transaction)
-    return <div className="alert alert-error">Transaction not found.</div>;
+  if (isLoading) return <div className="flex justify-center p-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
+  if (isError || !transaction) return <div className="alert alert-error">Ledger block resolution failed. Tracer lost.</div>;
 
   const lease = transaction.lease;
   const tenant = lease?.tenant;
@@ -79,226 +68,231 @@ export default function TransactionDetail() {
   }).format(transaction.amount);
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-8 max-w-4xl mx-auto pb-12 print:pb-0 print:max-w-none print:m-0">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-12 print:pb-0 print:max-w-none print:m-0">
       <style>
         {`
           @media print {
-            /* Hide the default browser headers and footers (URL, Date, Page No.) */
-            @page { 
-              size: auto;   /* auto is the initial value */
-              margin: 0mm;  /* this affects the margin in the printer settings */
-            }
-
-            /* Reset body/container padding/margins for printer */
-            html, body { 
-              margin: 0 !important; 
-              padding: 0 !important; 
-              background-color: white !important; 
-            }
-            
-            /* Hide theme-wide sidebars, navbars, or any other global layout elements */
+            @page { size: auto; margin: 0mm; }
+            html, body { margin: 0 !important; padding: 0 !important; background-color: white !important; }
             aside, nav, header, footer, .sidebar, .navbar { display: none !important; }
-            
             main { padding: 0 !important; margin: 0 !important; }
-            
-            /* Ensure the receipt is the only thing visible and takes up proper space */
             .print-receipt-container { 
               display: block !important;
               width: 100% !important;
               height: auto !important;
               margin: 0 !important;
-              padding: 20mm !important; /* Provide a safe margin around the receipt */
+              padding: 20mm !important;
             }
           }
         `}
       </style>
 
-      <PageHeader
-        title="Transaction Details"
-        showBack
-        backTo="/dashboard/transactions"
-        description={`ID: ${transaction.id.toUpperCase()}`}
-        actionButton={
-          <div className="flex items-center gap-2 print:hidden">
-            <button
-              onClick={() => window.print()}
-              className="btn btn-ghost btn-sm gap-2"
-            >
-              <Printer className="w-4 h-4" /> Print
+      {/* Premium Gradient Hero Cover - Hidden on Print */}
+      <div className={`h-48 md:h-56 w-full rounded-b-3xl bg-gradient-to-r from-success/90 to-primary-focus/90 shadow-lg relative overflow-hidden -mt-6 sm:-mt-8 print:hidden`}>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        
+        <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
+          <Link
+            to="/dashboard/transactions"
+            className="btn btn-circle btn-sm md:btn-md bg-base-100/20 hover:bg-base-100/40 border-none text-white backdrop-blur-md transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          
+          <div className="flex items-center gap-2">
+            <button onClick={() => window.print()} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content gap-2 shadow-xl hover:scale-105 transition-all">
+              <Printer className="w-4 h-4" /> Hardcopy Trace
             </button>
-            <button
-              onClick={handleDelete}
-              className="btn btn-ghost text-error btn-sm btn-square"
+            <button 
+              onClick={handleDelete} 
+              className="btn btn-square btn-sm md:btn-md bg-error/90 hover:bg-error border-none text-white shadow-xl hover:scale-105 transition-all"
               disabled={deleteMutation.isPending}
             >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
-        }
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start print:block print-receipt-container">
-        {/* Receipt Visual */}
-        <div className="lg:col-span-2 print:w-full print:max-w-2xl print:mx-auto">
-          <div className="card bg-base-100 shadow-xl border border-base-200 relative overflow-hidden print:shadow-none print:border-none">
-            {/* Design accents */}
-            <div className="absolute top-0 left-0 w-full h-2 bg-primary"></div>
-            <div className="absolute top-2 right-4 opacity-5">
-              <Receipt className="w-48 h-48 rotate-12" />
-            </div>
-
-            <div className="card-body p-8 sm:p-12 space-y-10">
-              {/* Receipt Header */}
-              <div className="flex justify-between items-start gap-4">
-                <div className="space-y-1">
-                  <div className="text-3xl font-black tracking-tighter text-primary">
-                    URENTME
-                  </div>
-                  <p className="text-xs uppercase tracking-widest opacity-50 font-bold">
-                    Official Payment Receipt
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold">
-                    {new Date(transaction.transactionDate).toLocaleDateString(
-                      undefined,
-                      { dateStyle: "long" },
-                    )}
-                  </p>
-                  <p className="text-xs opacity-60">
-                    {new Date(transaction.transactionDate).toLocaleTimeString(
-                      undefined,
-                      { timeStyle: "short" },
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              {/* Amount Focus */}
-              <div className="py-8 border-y-2 border-dashed border-base-200 flex flex-col items-center justify-center space-y-2">
-                <p className="text-sm uppercase tracking-widest opacity-40 font-bold">
-                  Amount Paid
-                </p>
-                <div className="text-5xl sm:text-6xl font-black tracking-tight text-base-content">
-                  {formattedAmount}
-                </div>
-                {transaction.reference && (
-                  <div className="badge badge-outline gap-2 mt-4 px-4 py-3 font-mono text-xs">
-                    REF: {transaction.reference}
-                  </div>
-                )}
-              </div>
-
-              {/* Transaction Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">
-                      Paid To
-                    </h3>
-                    <p className="font-bold text-sm">
-                      {owner?.firstName} {owner?.lastName}
-                    </p>
-                    <p className="text-xs opacity-60">{owner?.email}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">
-                      Payer (Tenant)
-                    </h3>
-                    <p className="font-bold text-sm">
-                      {tenant?.firstName} {tenant?.lastName}
-                    </p>
-                    <p className="text-xs opacity-60">{tenant?.email}</p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">
-                      For Unit
-                    </h3>
-                    <p className="font-bold text-sm">{property?.name}</p>
-                    <p className="text-xs opacity-60">
-                      Unit {unit?.unitNumber} — {unit?.floor || "No Floor Info"}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">
-                      Allocation
-                    </h3>
-                    <p className="font-bold text-sm capitalize">
-                      {transaction.notes || "Rent Payment"}
-                    </p>
-                    <p className="text-xs opacity-60">
-                      Lease: #{transaction.id.slice(-6).toUpperCase()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="pt-8 border-t border-base-200 text-center space-y-4">
-                <div className="flex justify-center">
-                  <div className="w-16 h-16 opacity-10">
-                    <ShieldCheck className="w-full h-full" />
-                  </div>
-                </div>
-                <p className="text-[10px] opacity-40 leading-relaxed max-w-xs mx-auto italic">
-                  This is a computer-generated receipt and does not require a
-                  physical signature. For any discrepancies, please contact
-                  management immediately.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Quick Actions / Side Info */}
-        <div className="space-y-4 print:hidden">
-          <div className="card bg-base-100 shadow-sm border border-base-200">
-            <div className="card-body p-6">
-              <h3 className="text-xs font-bold uppercase tracking-widest opacity-40 mb-4">
-                Related Records
-              </h3>
-              <div className="space-y-3">
-                <Link
-                  to={`/dashboard/leases/${transaction.lease.id}`}
-                  className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-4 h-4 opacity-50" />
-                    <span className="text-sm font-medium">Lease Agreement</span>
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
+          <div className="flex items-center gap-4 lg:gap-6">
+            <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-4 border-white/30 text-white shadow-xl`}>
+              <Receipt className="w-8 h-8 md:w-10 md:h-10 opacity-80" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="badge badge-success badge-sm font-bold tracking-wider drop-shadow-sm border-none uppercase text-[10px]">Verified Settled</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
+                Ledger T-{transaction?.id.slice(0,6).toUpperCase()}
+              </h1>
+            </div>
+          </div>
+          <div className="text-right">
+             <div className="text-sm font-bold tracking-widest text-white/50 uppercase mb-1">Cleared Value Point</div>
+             <div className="text-3xl lg:text-5xl font-black text-white drop-shadow-lg tracking-tighter tabular-nums">{formattedAmount}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start print:block print-receipt-container">
+          
+          {/* Main Receipt Content */}
+          <div className="lg:col-span-8 print:w-full print:max-w-3xl print:mx-auto">
+            <div className="card bg-base-100 shadow-xl border border-base-200 relative overflow-hidden print:shadow-none print:border-none print:rounded-none">
+              
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none print:opacity-5">
+                <ShieldCheck className="w-[300px] h-[300px]" />
+              </div>
+
+              <div className="absolute top-0 left-0 w-full h-2 bg-success print:hidden"></div>
+
+              <div className="card-body p-8 sm:p-12 relative z-10 flex flex-col min-h-[500px]">
+                
+                {/* Header Document Area */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b-2 border-dashed border-base-200/80 pb-8 mb-8">
+                  <div className="space-y-1">
+                    <div className="text-4xl font-black tracking-tighter text-base-content/90">
+                      URENTME
+                    </div>
+                    <p className="text-xs uppercase tracking-widest text-primary font-black mt-1">
+                      Certified Financial Clearing Ticket
+                    </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-                <Link
-                  to={`/dashboard/tenants/${tenant.id}`}
-                  className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <User className="w-4 h-4 opacity-50" />
-                    <span className="text-sm font-medium">Tenant Profile</span>
+                  <div className="text-left sm:text-right p-4 bg-base-200/50 rounded-xl border border-base-200">
+                     <p className="text-[10px] font-bold uppercase tracking-wider text-base-content/50 mb-1">Ledger Sync Time</p>
+                    <p className="text-sm font-black font-mono text-base-content whitespace-nowrap">
+                      {new Date(transaction.transactionDate).toUTCString()}
+                    </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-                <Link
-                  to={`/dashboard/units/${unit.id}`}
-                  className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <Home className="w-4 h-4 opacity-50" />
-                    <span className="text-sm font-medium">Unit Details</span>
+                </div>
+
+                {/* Primary Financial Data Area */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 flex-1">
+                   <div className="space-y-6">
+                      <div>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-1.5"><CreditCard className="w-3 h-3" /> Payer Entity Resolving Asset</h3>
+                        <div className="p-4 rounded-xl bg-base-200/30 border border-base-200 flex items-center gap-4">
+                           <div className="w-10 h-10 rounded-full bg-base-300 text-base-content/40 flex items-center justify-center font-black">{tenant?.firstName?.charAt(0)}</div>
+                           <div>
+                              <p className="font-bold text-base leading-tight">
+                                {tenant?.firstName} {tenant?.lastName}
+                              </p>
+                              <p className="text-xs font-mono font-bold opacity-60 mt-0.5">{tenant?.email}</p>
+                           </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-1.5"><Home className="w-3 h-3" /> Linked Asset Node Binding</h3>
+                        <div className="p-4 rounded-xl bg-base-200/30 border border-base-200 space-y-1">
+                            <p className="font-black text-lg text-primary">{property?.name}</p>
+                            <p className="text-sm font-bold text-base-content/70 flex items-center gap-2">
+                              Unit Module {unit?.unitNumber} <span className="opacity-40">&bull;</span> {unit?.floor || "Floor Unknown"}
+                            </p>
+                        </div>
+                      </div>
+                   </div>
+
+                   <div className="space-y-6">
+                      <div className="h-full rounded-2xl bg-base-200/50 border border-primary/10 p-6 flex flex-col justify-center gap-1 text-center sm:text-right relative overflow-hidden">
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-32 h-32 bg-primary/5 rounded-full blur-xl mix-blend-multiply"></div>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-1 relative z-10">Resolved Fiat Equivalent</h3>
+                        <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-base-content tracking-tighter tabular-nums drop-shadow-sm relative z-10">
+                          {formattedAmount}
+                        </div>
+                        
+                        <div className="mt-6 flex flex-col sm:items-end gap-2 relative z-10">
+                           <div className="bg-white/60 backdrop-blur border border-base-300 shadow-sm px-4 py-2 rounded-lg font-mono text-xs font-bold leading-none inline-flex flex-col items-center">
+                              <span className="text-[8px] tracking-widest text-base-content/40 mb-1 uppercase text-center block w-full">Tracer Id</span>
+                              {transaction.reference || "NO-REF"}
+                           </div>
+                        </div>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="mt-auto mb-8">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 pb-2 border-b border-base-200/60">Memo Logs & Data Annotations</h3>
+                  <div className="bg-base-200/30 p-4 rounded-xl font-medium text-sm leading-relaxed text-base-content/80 border border-base-200/60 min-h-20">
+                     {transaction.notes || <span className="italic opacity-50">Empty details provided in cache allocation. Context not retained inside system.</span>}
                   </div>
-                  <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
+                </div>
+
+                {/* Footer Disclaimers */}
+                <div className="pt-6 border-t font-mono border-base-200/80 text-center flex flex-col items-center justify-center space-y-4">
+                  <div className="w-10 h-10 bg-base-200 text-base-content/20 rounded-full flex justify-center items-center">
+                     <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <p className="text-[9px] font-bold text-base-content/40 leading-relaxed uppercase max-w-lg tracking-widest">
+                    Computer Generated Trace File • No Physical Signature Demand Required • End Node Receipt Log Ref: <span className="text-base-content/60">{transaction.id}</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="alert alert-info bg-info/10 border-info/20 text-xs">
-            <Info className="w-4 h-4" />
-            <span>
-              Payments are processed instantly and added to the tenant's ledger.
-            </span>
+          <div className="lg:col-span-4 space-y-6 print:hidden">
+            
+            <div className="card bg-base-100 shadow-sm border border-base-200">
+              <div className="card-body p-6">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2 border-b border-base-200/80 pb-3">
+                  <Info className="w-4 h-4" /> Graph References
+                </h3>
+                <div className="space-y-3">
+                  <Link
+                    to={`/dashboard/leases/${transaction.lease.id}`}
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50 hover:bg-base-200 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-accent opacity-80" />
+                      <div>
+                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Lease File Contract</span>
+                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">{transaction.lease.id.slice(0,6)}</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  </Link>
+
+                  <Link
+                    to={`/dashboard/tenants/${tenant.id}`}
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50 hover:bg-base-200 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <User className="w-5 h-5 text-primary opacity-80" />
+                      <div>
+                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Tenant Identity Base</span>
+                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">{tenant.email.slice(0,10)}...</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  </Link>
+
+                  <Link
+                    to={`/dashboard/units/${unit.id}`}
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50 hover:bg-base-200 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Home className="w-5 h-5 text-success opacity-80" />
+                      <div>
+                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Property Hardware Node</span>
+                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">Mod U{unit.unitNumber}</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="alert alert-info shadow-sm bg-info/10 border border-info/20 text-xs text-info-content/90 font-medium leading-relaxed rounded-2xl flex items-start gap-4">
+              <ShieldAlert className="w-5 h-5 mt-0.5 text-info" />
+              <span>
+                System integrity blocks this generated record. Funds reflect across metrics dashboards immediately and drop-ins sync successfully. Edit action strictly deactivated to uphold financial graph safety standards globally down routes.
+              </span>
+            </div>
+
           </div>
         </div>
       </div>
