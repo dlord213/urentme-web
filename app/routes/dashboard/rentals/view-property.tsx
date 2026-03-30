@@ -262,38 +262,16 @@ export default function PropertyDetail() {
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full backdrop-blur-md border border-white/10 text-[10px] font-black uppercase tracking-widest shadow-sm">
                 <Building2 className="w-3 h-3 text-white/70" />
-                {property.type} Protocol
+                {property.type}
               </div>
-              {property.isActive === false && <span className="badge badge-error badge-sm font-bold border-none text-white shadow-sm py-2">INACTIVE HUB</span>}
-              {property.isUnderRepair && <span className="badge badge-warning badge-sm font-bold border-none text-white shadow-sm py-2">REPAIR MODE</span>}
-              {property.isUnderRenovation && <span className="badge badge-info badge-sm font-bold border-none text-white shadow-sm py-2">RENOVATION</span>}
+              {property.isActive === false && <span className="badge badge-error badge-sm font-bold border-none text-white shadow-sm py-2">INACTIVE</span>}
+              {property.isUnderRepair && <span className="badge badge-warning badge-sm font-bold border-none text-white shadow-sm py-2">UNDER REPAIR</span>}
+              {property.isUnderRenovation && <span className="badge badge-info badge-sm font-bold border-none text-white shadow-sm py-2">UNDER RENOVATION</span>}
             </div>
 
             <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-4">
               {property.name}
             </h1>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
-                <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white/70 shrink-0 shadow-inner">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase opacity-60 leading-none mb-1 text-white/70">Location Reference</p>
-                  <p className="font-bold text-base text-white tracking-tight">{property.city}, {property.province}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 px-4 py-2 bg-success/20 text-success-content rounded-2xl backdrop-blur-md border border-white/20 shadow-xl group hover:bg-success/30 transition-all">
-                <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 shadow-inner group-hover:scale-110 transition-transform">
-                  <Home className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase opacity-60 leading-none mb-1">Estate Occupancy</p>
-                  <p className="font-bold text-base text-white tracking-tight">{occupancyRate}% Core Utilized</p>
-                </div>
-              </div>
-            </div>
           </div>
           
           {!isEditing && (
@@ -302,7 +280,7 @@ export default function PropertyDetail() {
               
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
-                  <span className="text-[10px] font-black uppercase text-white/70">Hub Active</span>
+                  <span className="text-[10px] font-black uppercase text-white/70">Active</span>
                   <input
                     type="checkbox"
                     checked={property.isActive}
@@ -312,7 +290,7 @@ export default function PropertyDetail() {
                 </label>
 
                 <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
-                  <span className="text-[10px] font-black uppercase text-white/70">Major Repair</span>
+                  <span className="text-[10px] font-black uppercase text-white/70">Repair</span>
                   <input
                     type="checkbox"
                     checked={property.isUnderRepair}
@@ -322,7 +300,7 @@ export default function PropertyDetail() {
                 </label>
 
                 <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
-                  <span className="text-[10px] font-black uppercase text-white/70">Renovating</span>
+                  <span className="text-[10px] font-black uppercase text-white/70">Renovate</span>
                   <input
                     type="checkbox"
                     checked={property.isUnderRenovation}

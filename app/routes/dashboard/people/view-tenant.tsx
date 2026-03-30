@@ -166,7 +166,7 @@ export default function TenantDetail() {
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: (data: { isActive?: boolean; isFlagged?: boolean; flagReason?: string }) =>
+    mutationFn: (data: { isActive?: boolean; isFlagged?: boolean; flagReason?: string; moveOutDate?: string | null; moveInDate?: string | null }) =>
       apiFetch(`/people/tenants/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
@@ -314,9 +314,9 @@ export default function TenantDetail() {
 
                 <div className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
                   <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white/70 shrink-0 shadow-inner">
-                    <Calendar className="w-4 h-4" />
+                    <Phone className="w-4 h-4" />
                   </div>
-                  <p className="font-bold text-sm text-white tracking-tight">Joined {tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString() : "N/A"}</p>
+                  <p className="font-bold text-sm text-white tracking-tight">{tenant.celNum ? tenant.celNum : "No Mobile"}</p>
                 </div>
               </div>
             </div>
@@ -328,17 +328,27 @@ export default function TenantDetail() {
               
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
-                  <span className="text-[10px] font-black uppercase text-white/70">Portal Active</span>
+                  <span className="text-[10px] font-black uppercase text-white/70">Active</span>
                   <input
                     type="checkbox"
                     checked={tenant.isActive}
-                    onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
+                    onChange={(e) => {
+                      const isActive = e.target.checked;
+                      const payload: any = { isActive };
+                      if (!isActive) {
+                        payload.moveOutDate = new Date().toISOString();
+                      } else {
+                        payload.moveOutDate = null;
+                        payload.moveInDate = new Date().toISOString();
+                      }
+                      toggleStatusMutation.mutate(payload);
+                    }}
                     className="toggle toggle-primary toggle-xs"
                   />
                 </label>
 
                 <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
-                  <span className="text-[10px] font-black uppercase text-white/70">Flag Profile</span>
+                  <span className="text-[10px] font-black uppercase text-white/70">Flag</span>
                   <input
                     type="checkbox"
                     checked={tenant.isFlagged}
@@ -382,7 +392,7 @@ export default function TenantDetail() {
         
         {/* Stats Summary - Premium Inline Cards */}
         {!isEditing && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className={`bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow`}>
               <div className={`w-12 h-12 rounded-2xl ${tenant.isActive ? 'bg-info/10 text-info' : 'bg-base-300 text-base-content/50'} flex items-center justify-center shrink-0`}>
                 <User className="w-6 h-6" />
@@ -408,15 +418,6 @@ export default function TenantDetail() {
               <div>
                 <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Flagged</p>
                 <p className="text-xl font-black text-base-content">{tenant.isFlagged ? "Flagged" : "Clear"}</p>
-              </div>
-            </div>
-            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-2xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Initial Move In</p>
-                <p className="text-lg font-black text-base-content">{tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString() : "N/A"}</p>
               </div>
             </div>
           </div>
@@ -542,6 +543,27 @@ export default function TenantDetail() {
                     
                     {/* Left Col */}
                     <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+                      {/* Personal & Account Info */}
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6 sm:p-8">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
+                            <User className="w-4 h-4" /> Personal & Account Details
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-base-200/30 p-4 rounded-2xl border border-base-200">
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Calendar className="w-3 h-3"/> Date of Birth</p>
+                              <p className="font-bold text-base-content">{tenant.dateOfBirth ? new Date(tenant.dateOfBirth).toLocaleDateString() : "Not Provided"}</p>
+                            </div>
+                            <div className={`p-4 rounded-2xl border ${tenant.portalEnabled ? 'bg-success/5 border-success/10' : 'bg-base-200/30 border-base-200/50'}`}>
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Info className="w-3 h-3"/> Tenant Portal Access</p>
+                              <p className={`font-bold ${tenant.portalEnabled ? 'text-success' : 'text-base-content/70'}`}>
+                                {tenant.portalEnabled ? "Enabled" : "Disabled"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Notes */}
                       <div className="card bg-base-100 shadow-sm border border-base-200 pb-2">
                         <div className="card-body p-6 sm:p-8">
@@ -561,12 +583,18 @@ export default function TenantDetail() {
                       </div>
 
                       {tenant.isFlagged && (
-                        <div className="alert alert-warning shadow-sm border-warning/30 bg-warning/10 rounded-2xl">
-                          <ShieldAlert className="w-6 h-6 shrink-0 text-warning" />
-                          <div className="w-full">
-                            <h3 className="font-bold text-sm uppercase tracking-wider text-warning">Flagged Alert</h3>
-                            <div className="text-sm font-medium mt-1 p-3 rounded-lg bg-white/50 border border-warning/20">
-                              {tenant.flagReason || "No recorded reason."}
+                        <div className="relative overflow-hidden rounded-3xl border border-warning/30 bg-warning/5 backdrop-blur-sm p-6 shadow-lg shadow-warning/5">
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-warning/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+                          <div className="relative z-10 flex flex-col sm:flex-row gap-5 items-start">
+                            <div className="w-12 h-12 rounded-2xl bg-warning/20 text-warning flex items-center justify-center shrink-0 border border-warning/30 shadow-inner">
+                              <ShieldAlert className="w-6 h-6" />
+                            </div>
+                            <div className="w-full">
+                              <h3 className="font-black text-lg text-warning tracking-tight mb-1">Administrative Flag</h3>
+                              <p className="text-xs font-bold uppercase tracking-widest text-warning/60 mb-4">Attention Required</p>
+                              <div className="bg-base-100/60 backdrop-blur-md border border-warning/20 rounded-xl p-4 text-sm font-medium text-base-content/90 shadow-sm">
+                                {tenant.flagReason || "No recorded reason provided for this flag."}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -631,6 +659,24 @@ export default function TenantDetail() {
                             <div className="bg-error/5 p-4 rounded-2xl border border-error/10">
                               <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Phone className="w-3 h-3"/> Phone Number</p>
                               <p className="font-bold text-base-content truncate">{tenant.emergencyPhone || "N/A"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                            <Calendar className="w-4 h-4" /> Occupancy Timeline
+                          </h3>
+                          <div className="space-y-3">
+                            <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Calendar className="w-3 h-3"/> Move In Date</p>
+                              <p className="font-bold text-base-content">{tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString() : "N/A"}</p>
+                            </div>
+                            <div className={`p-4 rounded-2xl border ${tenant.moveOutDate ? "bg-error/5 border-error/10" : "bg-base-200/30 border-base-200/50"}`}>
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Calendar className="w-3 h-3"/> Move Out Date</p>
+                              <p className="font-bold text-base-content">{tenant.moveOutDate ? new Date(tenant.moveOutDate).toLocaleDateString() : "N/A"}</p>
                             </div>
                           </div>
                         </div>

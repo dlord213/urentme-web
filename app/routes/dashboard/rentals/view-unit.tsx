@@ -207,6 +207,8 @@ export default function UnitDetail() {
               </div>
               <StatusBadge status={unit.status} />
               {unit.isActive === false && <span className="badge badge-error badge-sm font-bold border-none text-white shadow-sm py-2">INACTIVE</span>}
+              {unit.isUnderRepair && <span className="badge badge-warning badge-sm font-bold border-none text-white shadow-sm py-2">UNDER REPAIR</span>}
+              {unit.isUnderRenovation && <span className="badge badge-info badge-sm font-bold border-none text-white shadow-sm py-2">UNDER RENOVATION</span>}
             </div>
 
             <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-4">
@@ -244,7 +246,7 @@ export default function UnitDetail() {
               
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5">
-                  <span className="text-[10px] font-black uppercase text-white/70">Unit Active</span>
+                  <span className="text-[10px] font-black uppercase text-white/70">Active</span>
                   <input
                     type="checkbox"
                     checked={unit.isActive !== false}
@@ -254,7 +256,7 @@ export default function UnitDetail() {
                 </label>
 
                 <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5">
-                  <span className="text-[10px] font-black uppercase text-white/70">In Repair</span>
+                  <span className="text-[10px] font-black uppercase text-white/70">Repair</span>
                   <input
                     type="checkbox"
                     checked={unit.isUnderRepair}
@@ -264,7 +266,7 @@ export default function UnitDetail() {
                 </label>
 
                 <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5">
-                  <span className="text-[10px] font-black uppercase text-white/70">Renovating</span>
+                  <span className="text-[10px] font-black uppercase text-white/70">Renovate</span>
                   <input
                     type="checkbox"
                     checked={unit.isUnderRenovation}

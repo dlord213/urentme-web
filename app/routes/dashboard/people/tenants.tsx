@@ -233,12 +233,7 @@ export default function Tenants() {
                       key: "name", 
                       label: "Tenant Name",
                       render: (val, t) => (
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/60">
-                            {t.firstName[0]}{t.lastName[0]}
-                          </div>
-                          <span className="font-semibold">{val}</span>
-                        </div>
+                        <span className="font-semibold">{val}</span>
                       )
                     },
                     { key: "unit", label: "Unit" },

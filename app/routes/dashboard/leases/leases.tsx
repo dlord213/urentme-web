@@ -94,12 +94,7 @@ export default function Leases() {
       </div>
     ),
     tenantDisplay: (
-      <div className="flex items-center gap-2">
-        <div className="avatar placeholder hidden sm:flex">
-          <div className="bg-primary/10 text-primary rounded-full w-8">
-            <span className="text-xs font-bold">{l.tenant?.firstName?.charAt(0) || "U"}</span>
-          </div>
-        </div>
+      <div className="flex items-center">
         <span className="font-semibold">{l.tenant?.firstName} {l.tenant?.lastName}</span>
       </div>
     ),
