@@ -100,7 +100,7 @@ export default function Tenants() {
 
     if (t.isFlagged) statusArray.push("Flagged");
 
-    const activeLeases = t.leases.filter((l) => l.status === "active");
+    const activeLeases = t.leases.filter((l) => l.status === "active" || l.status === "expiring");
     const primaryLease =
       activeLeases.length > 0 ? activeLeases[0] : t.leases[0];
 

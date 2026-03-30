@@ -43,8 +43,10 @@ export default function AddProperty() {
   const { data: cities = [] } = useQuery({
     queryKey: ["cities", selectedRegionCode, selectedProvinceCode],
     queryFn: () => {
-      if (selectedProvinceCode) return psgcApi.getCitiesByProvince(selectedProvinceCode);
-      if (selectedRegionCode) return psgcApi.getCitiesByRegion(selectedRegionCode);
+      if (selectedProvinceCode)
+        return psgcApi.getCitiesByProvince(selectedProvinceCode);
+      if (selectedRegionCode)
+        return psgcApi.getCitiesByRegion(selectedRegionCode);
       return Promise.resolve([]);
     },
     enabled: !!selectedProvinceCode || !!selectedRegionCode,
@@ -123,7 +125,12 @@ export default function AddProperty() {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "yearBuilt" ? (value === "" ? "" : parseInt(value) || value) : value,
+      [name]:
+        name === "yearBuilt"
+          ? value === ""
+            ? ""
+            : parseInt(value) || value
+          : value,
     }));
   };
 
@@ -133,11 +140,13 @@ export default function AddProperty() {
       alert("You must be logged in to add a property.");
       return;
     }
-    
+
     // Copy formData and process yearBuilt
     const payload: any = { ...formData, ownerId: user.id };
-    payload.yearBuilt = payload.yearBuilt ? parseInt(payload.yearBuilt.toString(), 10) : null;
-    
+    payload.yearBuilt = payload.yearBuilt
+      ? parseInt(payload.yearBuilt.toString(), 10)
+      : null;
+
     mutation.mutate(payload);
   };
 
@@ -151,13 +160,16 @@ export default function AddProperty() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-black text-base-content tracking-tight">Add New Property</h1>
-          <p className="text-base-content/60 mt-1">Register a new property or building to your portfolio.</p>
+          <h1 className="text-3xl font-black text-base-content tracking-tight">
+            Add New Property
+          </h1>
+          <p className="text-base-content/60 mt-1">
+            Register a new property or building to your portfolio.
+          </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8 mt-8">
-        
         {/* Basic Info Card */}
         <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
@@ -167,14 +179,22 @@ export default function AddProperty() {
                 <Building className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-base-content">Basic Information</h3>
-                <p className="text-xs text-base-content/60">Core details about the property.</p>
+                <h3 className="text-lg font-bold text-base-content">
+                  Basic Information
+                </h3>
+                <p className="text-xs text-base-content/60">
+                  Core details about the property.
+                </p>
               </div>
             </div>
 
             <div className="space-y-5">
               <div className="form-control">
-                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Property Name <span className="text-error">*</span></span></label>
+                <label className="label pb-1.5">
+                  <span className="label-text font-bold uppercase tracking-wider text-xs">
+                    Property Name <span className="text-error">*</span>
+                  </span>
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -188,7 +208,11 @@ export default function AddProperty() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                 <div className="form-control">
-                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Property Type <span className="text-error">*</span></span></label>
+                  <label className="label pb-1.5">
+                    <span className="label-text font-bold uppercase tracking-wider text-xs">
+                      Property Type <span className="text-error">*</span>
+                    </span>
+                  </label>
                   <select
                     name="type"
                     value={formData.type}
@@ -201,7 +225,11 @@ export default function AddProperty() {
                   </select>
                 </div>
                 <div className="form-control">
-                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Year Built <span className="text-error">*</span></span></label>
+                  <label className="label pb-1.5">
+                    <span className="label-text font-bold uppercase tracking-wider text-xs">
+                      Year Built <span className="text-error">*</span>
+                    </span>
+                  </label>
                   <input
                     type="number"
                     name="yearBuilt"
@@ -214,7 +242,11 @@ export default function AddProperty() {
               </div>
 
               <div className="form-control flex flex-col pt-2">
-                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5"><AlignLeft className="w-3.5 h-3.5" /> Description</span></label>
+                <label className="label pb-1.5">
+                  <span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">
+                    <AlignLeft className="w-3.5 h-3.5" /> Description
+                  </span>
+                </label>
                 <textarea
                   name="description"
                   value={formData.description}
@@ -236,14 +268,22 @@ export default function AddProperty() {
                 <MapPin className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-base-content">Location Details</h3>
-                <p className="text-xs text-base-content/60">Where is this property located?</p>
+                <h3 className="text-lg font-bold text-base-content">
+                  Location Details
+                </h3>
+                <p className="text-xs text-base-content/60">
+                  Where is this property located?
+                </p>
               </div>
             </div>
 
             <div className="space-y-5">
               <div className="form-control">
-                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Street Address <span className="text-error">*</span></span></label>
+                <label className="label pb-1.5">
+                  <span className="label-text font-bold uppercase tracking-wider text-xs">
+                    Street Address <span className="text-error">*</span>
+                  </span>
+                </label>
                 <input
                   type="text"
                   name="street"
@@ -257,32 +297,51 @@ export default function AddProperty() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                 <div className="form-control">
-                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Region <span className="text-error">*</span></span></label>
+                  <label className="label pb-1.5">
+                    <span className="label-text font-bold uppercase tracking-wider text-xs">
+                      Region <span className="text-error">*</span>
+                    </span>
+                  </label>
                   <select
                     value={selectedRegionCode}
                     onChange={handleRegionChange}
                     required
                     className="select select-bordered w-full focus:select-primary transition-all"
                   >
-                    <option value="" disabled>Select Region</option>
+                    <option value="" disabled>
+                      Select Region
+                    </option>
                     {regions.map((r: any) => (
-                      <option key={r.code} value={r.code}>{r.name}</option>
+                      <option key={r.code} value={r.code}>
+                        {r.name}
+                      </option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="form-control">
-                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Province <span className="text-error">*</span></span></label>
+                  <label className="label pb-1.5">
+                    <span className="label-text font-bold uppercase tracking-wider text-xs">
+                      Province <span className="text-error">*</span>
+                    </span>
+                  </label>
                   <select
                     value={selectedProvinceCode}
                     onChange={handleProvinceChange}
                     required={provinces.length > 0}
-                    disabled={!selectedRegionCode || (provinces.length === 0 && cities.length > 0)}
+                    disabled={
+                      !selectedRegionCode ||
+                      (provinces.length === 0 && cities.length > 0)
+                    }
                     className="select select-bordered w-full focus:select-primary transition-all"
                   >
-                    <option value="" disabled>{provinces.length > 0 ? "Select Province" : "N/A"}</option>
+                    <option value="" disabled>
+                      {provinces.length > 0 ? "Select Province" : "N/A"}
+                    </option>
                     {provinces.map((p: any) => (
-                      <option key={p.code} value={p.code}>{p.name}</option>
+                      <option key={p.code} value={p.code}>
+                        {p.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -290,7 +349,11 @@ export default function AddProperty() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                 <div className="form-control">
-                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">City/Municipality <span className="text-error">*</span></span></label>
+                  <label className="label pb-1.5">
+                    <span className="label-text font-bold uppercase tracking-wider text-xs">
+                      City/Municipality <span className="text-error">*</span>
+                    </span>
+                  </label>
                   <select
                     value={selectedCityCode}
                     onChange={handleCityChange}
@@ -298,15 +361,23 @@ export default function AddProperty() {
                     disabled={cities.length === 0}
                     className="select select-bordered w-full focus:select-primary transition-all"
                   >
-                    <option value="" disabled>Select City</option>
+                    <option value="" disabled>
+                      Select City
+                    </option>
                     {cities.map((c: any) => (
-                      <option key={c.code} value={c.code}>{c.name}</option>
+                      <option key={c.code} value={c.code}>
+                        {c.name}
+                      </option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="form-control">
-                  <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Barangay <span className="text-error">*</span></span></label>
+                  <label className="label pb-1.5">
+                    <span className="label-text font-bold uppercase tracking-wider text-xs">
+                      Barangay <span className="text-error">*</span>
+                    </span>
+                  </label>
                   <select
                     value={formData.barangay}
                     onChange={handleBarangayChange}
@@ -314,9 +385,13 @@ export default function AddProperty() {
                     disabled={barangays.length === 0}
                     className="select select-bordered w-full focus:select-primary transition-all"
                   >
-                    <option value="" disabled>Select Barangay</option>
+                    <option value="" disabled>
+                      Select Barangay
+                    </option>
                     {barangays.map((b: any) => (
-                      <option key={b.code} value={b.name}>{b.name}</option>
+                      <option key={b.code} value={b.name}>
+                        {b.name}
+                      </option>
                     ))}
                   </select>
                 </div>

@@ -28,7 +28,7 @@ export default function CreateLease() {
 
   const { data: unitsResponse, isLoading: unitsLoading } = useQuery({
     queryKey: ["units"],
-    queryFn: () => apiFetch("/units"),
+    queryFn: () => apiFetch("/units?status=vacant&limit=1000"),
   });
   const units = unitsResponse?.data ?? [];
 
@@ -52,7 +52,7 @@ export default function CreateLease() {
 
       await apiFetch(`/units/${data.unitId}`, {
         method: "PUT",
-        body: JSON.stringify({ status: data.status === "active" ? "occupied" : "vacant" }),
+        body: JSON.stringify({ status: data.status === "active" || data.status === "expiring" ? "occupied" : "vacant" }),
       });
     },
     onSuccess: () => {

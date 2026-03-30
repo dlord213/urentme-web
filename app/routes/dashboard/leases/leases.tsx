@@ -51,7 +51,7 @@ const LeaseStatusBadge = ({ lease }: { lease: any }) => {
   const end = new Date(lease.leaseEndDate);
   const diffInDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
 
-  if (lease.status === "active" && diffInDays <= 30 && diffInDays > 0) {
+  if ((lease.status === "active" || lease.status === "expiring") && diffInDays <= 30 && diffInDays > 0) {
     return (
       <div className="flex flex-col gap-1.5 items-start">
         <StatusBadge status="active" />
@@ -117,7 +117,7 @@ export default function Leases() {
     ),
   }));
 
-  const activeCount = rawLeases.filter((l) => l.status === "active").length;
+  const activeCount = rawLeases.filter((l) => l.status === "active" || l.status === "expiring").length;
   const draftCount = rawLeases.filter((l) => l.status === "draft").length;
 
   return (

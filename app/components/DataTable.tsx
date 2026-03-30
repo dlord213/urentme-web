@@ -1,12 +1,17 @@
 import { Link } from "react-router";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 interface Action {
   label: string;
   onClick?: (item: any) => void;
   to?: (item: any) => string;
   icon?: React.ReactNode;
-  variant?: 'primary' | 'error' | 'ghost' | 'outline' | 'secondary';
+  variant?: "primary" | "error" | "ghost" | "outline" | "secondary";
   show?: (item: any) => boolean;
 }
 
@@ -35,7 +40,14 @@ interface DataTableProps {
   onPageChange?: (page: number) => void;
 }
 
-export function DataTable({ columns, data, actions, emptyMessage = "No items found.", pagination, onPageChange }: DataTableProps) {
+export function DataTable({
+  columns,
+  data,
+  actions,
+  emptyMessage = "No items found.",
+  pagination,
+  onPageChange,
+}: DataTableProps) {
   const currentPage = pagination?.page ?? 1;
   const totalPages = pagination?.totalPages ?? 1;
   const total = pagination?.total ?? data.length;
@@ -64,7 +76,12 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
   const visibleActions = (item: any) =>
     actions?.filter((act) => !act.show || act.show(item)) ?? [];
 
-  const renderActionButton = (act: Action, item: any, i: number, iconOnly = false) => {
+  const renderActionButton = (
+    act: Action,
+    item: any,
+    i: number,
+    iconOnly = false,
+  ) => {
     const cls = `btn btn-sm ${act.variant ? `btn-${act.variant}` : "btn-ghost"}`;
     if (act.to) {
       return (
@@ -88,12 +105,24 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
     return (
       <div className="bg-base-100 rounded-box border border-base-200 p-8 sm:p-12 flex flex-col items-center justify-center text-center shadow-sm">
         <div className="w-14 h-14 sm:w-16 sm:h-16 bg-base-200 rounded-full flex items-center justify-center mb-4">
-          <svg className="w-7 h-7 sm:w-8 sm:h-8 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          <svg
+            className="w-7 h-7 sm:w-8 sm:h-8 opacity-40"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            />
           </svg>
         </div>
         <h3 className="font-semibold text-base sm:text-lg">{emptyMessage}</h3>
-        <p className="text-base-content/60 mt-2 max-w-sm text-sm">There are no records to display matching your criteria at this time.</p>
+        <p className="text-base-content/60 mt-2 max-w-sm text-sm">
+          There are no records to display matching your criteria at this time.
+        </p>
       </div>
     );
   }
@@ -122,7 +151,10 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
         </button>
         {getPageNumbers().map((page, i) =>
           page === "..." ? (
-            <button key={`ellipsis-${i}`} className="join-item btn btn-xs sm:btn-sm btn-disabled">
+            <button
+              key={`ellipsis-${i}`}
+              className="join-item btn btn-xs sm:btn-sm btn-disabled"
+            >
               …
             </button>
           ) : (
@@ -133,7 +165,7 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
             >
               {page}
             </button>
-          )
+          ),
         )}
         <button
           className="join-item btn btn-xs sm:btn-sm"
@@ -163,17 +195,22 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
           <thead>
             <tr className="bg-base-200/50">
               {columns.map((c) => (
-                <th key={c.key} className="text-xs uppercase font-semibold text-base-content/70">
+                <th
+                  key={c.key}
+                  className="text-xs uppercase font-semibold text-base-content/70"
+                >
                   {c.label}
                 </th>
               ))}
-              {actions && actions.length > 0 && <th className="text-right">Actions</th>}
+              {actions && actions.length > 0 && (
+                <th className="text-right">Actions</th>
+              )}
             </tr>
           </thead>
           <tbody>
             {data.map((item, idx) => (
-              <tr 
-                key={item.id || idx} 
+              <tr
+                key={item.id || idx}
                 className="hover animate-fade-in-up"
                 style={{ animationDelay: `${idx * 50}ms` }}
               >
@@ -186,7 +223,9 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
                 {actions && actions.length > 0 && (
                   <td className="text-right">
                     <div className="flex justify-end gap-1.5">
-                      {visibleActions(item).map((act, i) => renderActionButton(act, item, i))}
+                      {visibleActions(item).map((act, i) =>
+                        renderActionButton(act, item, i),
+                      )}
                     </div>
                   </td>
                 )}
@@ -201,17 +240,22 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
         {data.map((item, idx) => {
           const itemActions = visibleActions(item);
           return (
-            <div 
-              key={item.id || idx} 
+            <div
+              key={item.id || idx}
               className="p-4 space-y-3 animate-fade-in-up"
               style={{ animationDelay: `${idx * 50}ms` }}
             >
               {/* Card rows for each column */}
               <div className="space-y-2">
                 {columns.map((c) => {
-                  const val = c.render ? c.render(item[c.key], item) : item[c.key];
+                  const val = c.render
+                    ? c.render(item[c.key], item)
+                    : item[c.key];
                   return (
-                    <div key={c.key} className="flex items-center justify-between gap-2">
+                    <div
+                      key={c.key}
+                      className="flex items-center justify-between gap-2"
+                    >
                       <span className="text-xs font-semibold text-base-content/50 uppercase tracking-wider shrink-0">
                         {c.label}
                       </span>
@@ -226,7 +270,9 @@ export function DataTable({ columns, data, actions, emptyMessage = "No items fou
               {/* Actions */}
               {itemActions.length > 0 && (
                 <div className="flex justify-end gap-1.5 pt-2 border-t border-base-200/50">
-                  {itemActions.map((act, i) => renderActionButton(act, item, i, true))}
+                  {itemActions.map((act, i) =>
+                    renderActionButton(act, item, i, true),
+                  )}
                 </div>
               )}
             </div>

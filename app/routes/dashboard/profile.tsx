@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
@@ -19,6 +19,7 @@ import {
   Clock,
 } from "lucide-react";
 import { apiFetch } from "~/lib/api";
+import { psgcApi } from "~/lib/psgc";
 import { useAuthStore } from "~/store/auth.store";
 import { PageHeader } from "~/components/PageHeader";
 
@@ -118,6 +119,104 @@ export default function ProfilePage() {
       setForm({});
     },
   });
+
+  const [selectedRegionCode, setSelectedRegionCode] = useState("");
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState("");
+  const [selectedCityCode, setSelectedCityCode] = useState("");
+
+  const { data: regions = [] } = useQuery({
+    queryKey: ["regions"],
+    queryFn: psgcApi.getRegions,
+    enabled: editing,
+  });
+
+  const { data: provinces = [] } = useQuery({
+    queryKey: ["provinces", selectedRegionCode],
+    queryFn: () => psgcApi.getProvincesByRegion(selectedRegionCode),
+    enabled: editing && !!selectedRegionCode,
+  });
+
+  const { data: cities = [] } = useQuery({
+    queryKey: ["cities", selectedRegionCode, selectedProvinceCode],
+    queryFn: () => {
+      if (selectedProvinceCode) return psgcApi.getCitiesByProvince(selectedProvinceCode);
+      if (selectedRegionCode) return psgcApi.getCitiesByRegion(selectedRegionCode);
+      return Promise.resolve([]);
+    },
+    enabled: editing && (!!selectedProvinceCode || !!selectedRegionCode),
+  });
+
+  const { data: barangays = [] } = useQuery({
+    queryKey: ["barangays", selectedCityCode],
+    queryFn: () => psgcApi.getBarangaysByCity(selectedCityCode),
+    enabled: editing && !!selectedCityCode,
+  });
+
+  // Synchronize PSGC codes with existing profile data
+  useEffect(() => {
+    if (editing && profile && regions.length > 0 && !selectedRegionCode) {
+      const match = regions.find((r: any) => r.name === profile.region);
+      if (match) setSelectedRegionCode(match.code);
+    }
+  }, [editing, regions, profile, selectedRegionCode]);
+
+  useEffect(() => {
+    if (editing && profile && provinces.length > 0 && !selectedProvinceCode && selectedRegionCode) {
+      const match = provinces.find((p: any) => p.name === profile.province);
+      if (match) setSelectedProvinceCode(match.code);
+    }
+  }, [editing, provinces, profile, selectedProvinceCode, selectedRegionCode]);
+
+  useEffect(() => {
+    if (editing && profile && cities.length > 0 && !selectedCityCode && (selectedProvinceCode || selectedRegionCode)) {
+      const match = cities.find((c: any) => c.name === profile.city);
+      if (match) setSelectedCityCode(match.code);
+    }
+  }, [editing, cities, profile, selectedCityCode, selectedProvinceCode, selectedRegionCode]);
+
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedRegionCode(code);
+    const region = regions.find((r: any) => r.code === code);
+    setForm((prev) => ({
+      ...prev,
+      region: region ? region.name : "",
+      province: "",
+      city: "",
+      barangay: "",
+    }));
+    setSelectedProvinceCode("");
+    setSelectedCityCode("");
+  };
+
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedProvinceCode(code);
+    const province = provinces.find((p: any) => p.code === code);
+    setForm((prev) => ({
+      ...prev,
+      province: province ? province.name : "",
+      city: "",
+      barangay: "",
+    }));
+    setSelectedCityCode("");
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedCityCode(code);
+    const city = cities.find((c: any) => c.code === code);
+    setForm((prev) => ({
+      ...prev,
+      city: city ? city.name : "",
+      barangay: "",
+    }));
+  };
+
+  const handleBarangayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const name = e.target.value;
+    setForm((prev) => ({ ...prev, barangay: name }));
+  };
 
   const handleEditStart = () => {
     if (!profile) return;
@@ -409,49 +508,135 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-5">
-                <InfoField
-                  label="Street / Building / House No."
-                  name="street"
-                  icon={Signpost}
-                  value={(currentData as any).street ?? ""}
-                  editing={editing}
-                  onChange={handleChange}
-                  placeholder="e.g. 123 Main St, Apt 4B"
-                />
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-                  <InfoField
-                    label="Barangay"
-                    name="barangay"
-                    value={(currentData as any).barangay ?? ""}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                  <InfoField
-                    label="City / Municipality"
-                    name="city"
-                    value={(currentData as any).city ?? ""}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                </div>
+                {editing ? (
+                  <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <InfoField
+                      label="Street / Building / House No."
+                      name="street"
+                      icon={Signpost}
+                      value={(currentData as any).street ?? ""}
+                      editing={editing}
+                      onChange={handleChange}
+                      placeholder="e.g. 123 Main St, Apt 4B"
+                    />
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                      <div className="form-control w-full">
+                        <label className="label pb-1.5 font-bold uppercase tracking-wider text-[10px] text-base-content/60 flex items-center gap-1.5">
+                          <Map className="w-3 h-3" /> Region
+                        </label>
+                        <select
+                          value={selectedRegionCode}
+                          onChange={handleRegionChange}
+                          className="select select-bordered w-full focus:select-primary transition-all shadow-sm rounded-xl bg-base-100"
+                        >
+                          <option value="" disabled>Select Region</option>
+                          {regions.map((r: any) => (
+                            <option key={r.code} value={r.code}>{r.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="form-control w-full">
+                        <label className="label pb-1.5 font-bold uppercase tracking-wider text-[10px] text-base-content/60 flex items-center gap-1.5">
+                          <MapPinned className="w-3 h-3" /> Province
+                        </label>
+                        <select
+                          value={selectedProvinceCode}
+                          onChange={handleProvinceChange}
+                          disabled={!selectedRegionCode || (provinces.length === 0 && cities.length > 0)}
+                          className="select select-bordered w-full focus:select-primary transition-all shadow-sm rounded-xl bg-base-100"
+                        >
+                          <option value="" disabled>{provinces.length > 0 ? "Select Province" : "N/A"}</option>
+                          {provinces.map((p: any) => (
+                            <option key={p.code} value={p.code}>{p.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-                  <InfoField
-                    label="Province"
-                    name="province"
-                    value={(currentData as any).province ?? ""}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                  <InfoField
-                    label="Region"
-                    name="region"
-                    value={(currentData as any).region ?? ""}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                      <div className="form-control w-full">
+                        <label className="label pb-1.5 font-bold uppercase tracking-wider text-[10px] text-base-content/60 flex items-center gap-1.5">
+                          <Building2 className="w-3 h-3" /> City / Municipality
+                        </label>
+                        <select
+                          value={selectedCityCode}
+                          onChange={handleCityChange}
+                          disabled={cities.length === 0}
+                          className="select select-bordered w-full focus:select-primary transition-all shadow-sm rounded-xl bg-base-100"
+                        >
+                          <option value="" disabled>Select City</option>
+                          {cities.map((c: any) => (
+                            <option key={c.code} value={c.code}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="form-control w-full">
+                        <label className="label pb-1.5 font-bold uppercase tracking-wider text-[10px] text-base-content/60 flex items-center gap-1.5">
+                          <Signpost className="w-3 h-3" /> Barangay
+                        </label>
+                        <select
+                          value={form.barangay}
+                          onChange={handleBarangayChange}
+                          disabled={barangays.length === 0}
+                          className="select select-bordered w-full focus:select-primary transition-all shadow-sm rounded-xl bg-base-100"
+                        >
+                          <option value="" disabled>Select Barangay</option>
+                          {barangays.map((b: any) => (
+                            <option key={b.code} value={b.name}>{b.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <InfoField
+                      label="Street / Building / House No."
+                      name="street"
+                      icon={Signpost}
+                      value={(currentData as any).street ?? ""}
+                      editing={false}
+                      onChange={handleChange}
+                    />
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                      <InfoField
+                        label="Barangay"
+                        name="barangay"
+                        value={(currentData as any).barangay ?? ""}
+                        editing={false}
+                        onChange={handleChange}
+                      />
+                      <InfoField
+                        label="City / Municipality"
+                        name="city"
+                        value={(currentData as any).city ?? ""}
+                        editing={false}
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                      <InfoField
+                        label="Province"
+                        name="province"
+                        value={(currentData as any).province ?? ""}
+                        editing={false}
+                        onChange={handleChange}
+                      />
+                      <InfoField
+                        label="Region"
+                        name="region"
+                        value={(currentData as any).region ?? ""}
+                        editing={false}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
