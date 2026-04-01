@@ -267,49 +267,67 @@ export default function PropertyDetail() {
         </div>
 
         {/* Title & Badges Bottom Area */}
-        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="badge badge-sm uppercase font-bold tracking-widest bg-white/20 text-white border-none backdrop-blur-md">{property.type}</span>
-              {property.isActive === false && <span className="badge badge-sm badge-error border-none text-white shadow-sm">INACTIVE</span>}
-              {property.isUnderRepair && <span className="badge badge-sm badge-warning border-none text-white shadow-sm">UNDER REPAIR</span>}
-              {property.isUnderRenovation && <span className="badge badge-sm badge-info border-none text-white shadow-sm">RENOVATION</span>}
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-6 z-10">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full backdrop-blur-md border border-white/10 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                <Building2 className="w-3 h-3 text-white/70" />
+                {property.type}
+              </div>
+              {property.isActive === false && <span className="badge badge-error badge-sm font-bold border-none text-white shadow-sm py-2">INACTIVE</span>}
+              {property.isUnderRepair && <span className="badge badge-warning badge-sm font-bold border-none text-white shadow-sm py-2">UNDER REPAIR</span>}
+              {property.isUnderRenovation && <span className="badge badge-info badge-sm font-bold border-none text-white shadow-sm py-2">UNDER RENOVATION</span>}
             </div>
-            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md">{property.name}</h1>
-            <p className="text-white/80 mt-1 md:mt-2 font-medium flex items-center gap-1.5 text-sm md:text-base drop-shadow-sm">
-              <MapPin className="w-4 h-4" /> {property.street}, {property.barangay}, {property.city}
-            </p>
-          </div>
 
-          <div className="flex items-center gap-2 flex-wrap bg-white/10 backdrop-blur-md p-1.5 rounded-2xl border border-white/20">
-            <label className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 px-3 py-1.5 rounded-xl transition-colors">
-              <input
-                type="checkbox"
-                checked={property.isActive}
-                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
-                className="checkbox checkbox-primary checkbox-sm rounded-lg bg-base-100/50 border-white/30"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider text-white">Active</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 px-3 py-1.5 rounded-xl transition-colors">
-              <input
-                type="checkbox"
-                checked={property.isUnderRepair}
-                onChange={(e) => toggleStatusMutation.mutate({ isUnderRepair: e.target.checked })}
-                className="checkbox checkbox-warning checkbox-sm rounded-lg bg-base-100/50 border-white/30"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider text-white">Repair</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 px-3 py-1.5 rounded-xl transition-colors">
-              <input
-                type="checkbox"
-                checked={property.isUnderRenovation}
-                onChange={(e) => toggleStatusMutation.mutate({ isUnderRenovation: e.target.checked })}
-                className="checkbox checkbox-info checkbox-sm rounded-lg bg-base-100/50 border-white/30"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider text-white">Renovating</span>
-            </label>
+            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-4">
+              {property.name}
+            </h1>
           </div>
+          
+          {!isEditing && (
+            <div className="bg-black/20 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl space-y-4 min-w-[240px]">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/50 px-1 border-b border-white/5 pb-2">Estate Control Dashboard</p>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-white/70">Active</span>
+                  <input
+                    type="checkbox"
+                    checked={property.isActive}
+                    onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
+                    className="toggle toggle-primary toggle-xs"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-white/70">Repair</span>
+                  <input
+                    type="checkbox"
+                    checked={property.isUnderRepair}
+                    onChange={(e) => toggleStatusMutation.mutate({ isUnderRepair: e.target.checked })}
+                    className="toggle toggle-warning toggle-xs"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-white/70">Renovate</span>
+                  <input
+                    type="checkbox"
+                    checked={property.isUnderRenovation}
+                    onChange={(e) => toggleStatusMutation.mutate({ isUnderRenovation: e.target.checked })}
+                    className="toggle toggle-info toggle-xs"
+                  />
+                </label>
+
+                <div className="flex items-center justify-center p-2 rounded-xl bg-white/5 border border-white/5 shadow-inner">
+                  <div className="text-center">
+                    <p className="text-[8px] font-black uppercase text-white/40 leading-none mb-1">Target Total</p>
+                    <p className="text-sm font-black text-white leading-none">{units.length} Units</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -20,6 +20,7 @@ import {
   Link as LinkIcon,
   Copy,
   CheckCheck,
+  Building2,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
@@ -175,7 +176,7 @@ export default function TenantDetail() {
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: (data: { isActive?: boolean; isFlagged?: boolean; flagReason?: string }) =>
+    mutationFn: (data: { isActive?: boolean; isFlagged?: boolean; flagReason?: string; moveOutDate?: string | null; moveInDate?: string | null }) =>
       apiFetch(`/people/tenants/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
@@ -237,7 +238,7 @@ export default function TenantDetail() {
   if (isError || !tenant) return <div className="alert alert-error">Tenant not found.</div>;
 
   const leases = tenant.leases || [];
-  const activeLeases = leases.filter((l: any) => l.status === "active");
+  const activeLeases = leases.filter((l: any) => l.status === "active" || l.status === "expiring");
 
   const isExpiringSoon = activeLeases.some((l: any) => {
     if (!l.leaseEndDate) return false;
@@ -296,53 +297,92 @@ export default function TenantDetail() {
         </div>
 
         {/* Title & Badges Bottom Area */}
-        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
-          <div className="flex items-center gap-4 lg:gap-6">
-            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-4 border-white/30 text-white shadow-xl">
-              <span className="text-2xl md:text-4xl font-black uppercase">{tenant.firstName?.charAt(0)}{tenant.lastName?.charAt(0)}</span>
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-6 z-10">
+          <div className="flex-1 flex flex-col md:flex-row md:items-center gap-6">
+            <div className="w-20 h-20 md:w-32 md:h-32 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center border-4 border-white/30 text-white shadow-2xl shrink-0 group hover:rotate-3 transition-transform duration-500">
+              <span className="text-3xl md:text-5xl font-black uppercase drop-shadow-lg">{tenant.firstName?.charAt(0)}{tenant.lastName?.charAt(0)}</span>
             </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
+            
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-3">
                 <StatusBadge status={tenant.isActive ? "active" : "inactive"} />
                 {tenant.isFlagged && <StatusBadge status="flagged" />}
+                {isExpiringSoon && <span className="badge badge-warning badge-sm font-bold border-none text-white shadow-sm py-2">EXPIRING SOON</span>}
               </div>
-              <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md">
+
+              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-4">
                 {tenant.firstName} {tenant.lastName}
               </h1>
-              <p className="text-white/80 mt-1 font-medium flex items-center gap-3 text-sm md:text-base drop-shadow-sm">
-                <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {tenant.email}</span>
-                <span className="hidden sm:flex items-center gap-1.5"><Phone className="w-4 h-4" /> {tenant.celNum}</span>
-              </p>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
+                  <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white/70 shrink-0 shadow-inner">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <p className="font-bold text-sm text-white tracking-tight">{tenant.email}</p>
+                </div>
+
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
+                  <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white/70 shrink-0 shadow-inner">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <p className="font-bold text-sm text-white tracking-tight">{tenant.celNum ? tenant.celNum : "No Mobile"}</p>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 flex-wrap bg-white/10 backdrop-blur-md p-1.5 rounded-2xl border border-white/20">
-            <label className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 px-3 py-1.5 rounded-xl transition-colors">
-              <input
-                type="checkbox"
-                checked={tenant.isActive}
-                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
-                className="checkbox checkbox-primary checkbox-sm rounded-lg bg-base-100/50 border-white/30"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider text-white">Active</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 px-3 py-1.5 rounded-xl transition-colors">
-              <input
-                type="checkbox"
-                checked={tenant.isFlagged}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setTempFlagReason("");
-                    setShowFlagModal(true);
-                  } else {
-                    toggleStatusMutation.mutate({ isFlagged: false, flagReason: "" });
-                  }
-                }}
-                className="checkbox checkbox-warning checkbox-sm rounded-lg bg-base-100/50 border-white/30"
-              />
-              <span className="text-xs font-bold uppercase tracking-wider text-white">Flagged</span>
-            </label>
-          </div>
+          {!isEditing && (
+            <div className="bg-black/20 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl space-y-4 min-w-[240px]">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/50 px-1 border-b border-white/5 pb-2">Tenant Control Dashboard</p>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-white/70">Active</span>
+                  <input
+                    type="checkbox"
+                    checked={tenant.isActive}
+                    onChange={(e) => {
+                      const isActive = e.target.checked;
+                      const payload: any = { isActive };
+                      if (!isActive) {
+                        payload.moveOutDate = new Date().toISOString();
+                      } else {
+                        payload.moveOutDate = null;
+                        payload.moveInDate = new Date().toISOString();
+                      }
+                      toggleStatusMutation.mutate(payload);
+                    }}
+                    className="toggle toggle-primary toggle-xs"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-white/70">Flag</span>
+                  <input
+                    type="checkbox"
+                    checked={tenant.isFlagged}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setTempFlagReason("");
+                        setShowFlagModal(true);
+                      } else {
+                        toggleStatusMutation.mutate({ isFlagged: false, flagReason: "" });
+                      }
+                    }}
+                    className="toggle toggle-warning toggle-xs"
+                  />
+                </label>
+
+                <div className="col-span-2 flex items-center justify-center p-2 rounded-xl bg-white/5 border border-white/5 shadow-inner">
+                  <div className="text-center">
+                    <p className="text-[8px] font-black uppercase text-white/40 leading-none mb-1">Contract Lifecycle</p>
+                    <p className="text-sm font-black text-white leading-none">{leases.length} Documents Linked</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -362,7 +402,7 @@ export default function TenantDetail() {
         
         {/* Stats Summary - Premium Inline Cards */}
         {!isEditing && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className={`bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow`}>
               <div className={`w-12 h-12 rounded-2xl ${tenant.isActive ? 'bg-info/10 text-info' : 'bg-base-300 text-base-content/50'} flex items-center justify-center shrink-0`}>
                 <User className="w-6 h-6" />
@@ -388,15 +428,6 @@ export default function TenantDetail() {
               <div>
                 <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Flagged</p>
                 <p className="text-xl font-black text-base-content">{tenant.isFlagged ? "Flagged" : "Clear"}</p>
-              </div>
-            </div>
-            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-2xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Initial Move In</p>
-                <p className="text-lg font-black text-base-content">{tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString() : "N/A"}</p>
               </div>
             </div>
           </div>
@@ -522,6 +553,27 @@ export default function TenantDetail() {
                     
                     {/* Left Col */}
                     <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+                      {/* Personal & Account Info */}
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6 sm:p-8">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
+                            <User className="w-4 h-4" /> Personal & Account Details
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-base-200/30 p-4 rounded-2xl border border-base-200">
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Calendar className="w-3 h-3"/> Date of Birth</p>
+                              <p className="font-bold text-base-content">{tenant.dateOfBirth ? new Date(tenant.dateOfBirth).toLocaleDateString() : "Not Provided"}</p>
+                            </div>
+                            <div className={`p-4 rounded-2xl border ${tenant.portalEnabled ? 'bg-success/5 border-success/10' : 'bg-base-200/30 border-base-200/50'}`}>
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Info className="w-3 h-3"/> Tenant Portal Access</p>
+                              <p className={`font-bold ${tenant.portalEnabled ? 'text-success' : 'text-base-content/70'}`}>
+                                {tenant.portalEnabled ? "Enabled" : "Disabled"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Notes */}
                       <div className="card bg-base-100 shadow-sm border border-base-200 pb-2">
                         <div className="card-body p-6 sm:p-8">
@@ -541,12 +593,18 @@ export default function TenantDetail() {
                       </div>
 
                       {tenant.isFlagged && (
-                        <div className="alert alert-warning shadow-sm border-warning/30 bg-warning/10 rounded-2xl">
-                          <ShieldAlert className="w-6 h-6 shrink-0 text-warning" />
-                          <div className="w-full">
-                            <h3 className="font-bold text-sm uppercase tracking-wider text-warning">Flagged Alert</h3>
-                            <div className="text-sm font-medium mt-1 p-3 rounded-lg bg-white/50 border border-warning/20">
-                              {tenant.flagReason || "No recorded reason."}
+                        <div className="relative overflow-hidden rounded-3xl border border-warning/30 bg-warning/5 backdrop-blur-sm p-6 shadow-lg shadow-warning/5">
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-warning/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+                          <div className="relative z-10 flex flex-col sm:flex-row gap-5 items-start">
+                            <div className="w-12 h-12 rounded-2xl bg-warning/20 text-warning flex items-center justify-center shrink-0 border border-warning/30 shadow-inner">
+                              <ShieldAlert className="w-6 h-6" />
+                            </div>
+                            <div className="w-full">
+                              <h3 className="font-black text-lg text-warning tracking-tight mb-1">Administrative Flag</h3>
+                              <p className="text-xs font-bold uppercase tracking-widest text-warning/60 mb-4">Attention Required</p>
+                              <div className="bg-base-100/60 backdrop-blur-md border border-warning/20 rounded-xl p-4 text-sm font-medium text-base-content/90 shadow-sm">
+                                {tenant.flagReason || "No recorded reason provided for this flag."}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -555,6 +613,49 @@ export default function TenantDetail() {
                     
                     {/* Right Col (Sidebar) */}
                     <div className="lg:col-span-4 space-y-6">
+                      {activeLeases.length > 0 && (
+                        <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative group transition-all hover:shadow-md">
+                          {/* Subtle Top Gradient Line */}
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-success/40 to-primary/40"></div>
+                          
+                          <div className="card-body p-6">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-base-content/40 mb-6 flex items-center justify-between">
+                              <span className="flex items-center gap-2 text-success">
+                                <Home className="w-4 h-4" /> Current Occupancy
+                              </span>
+                              <span className="badge badge-success badge-xs opacity-50">Active</span>
+                            </h3>
+                            
+                            <div className="space-y-4">
+                              {activeLeases.map((l: any) => (
+                                <Link 
+                                  key={l.id}
+                                  to={`/dashboard/rentals/${l.unit?.id}`}
+                                  className="flex items-center justify-between p-4 rounded-2xl bg-success/5 border border-success/10 hover:bg-success/10 transition-all group/item"
+                                >
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-success/10 text-success flex items-center justify-center shrink-0 shadow-inner group-hover/item:scale-110 transition-transform">
+                                      <Building2 className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                      <p className="font-black text-base-content leading-tight group-hover/item:text-primary transition-colors">{l.unit?.property?.name || "Property"}</p>
+                                      <p className="text-xs font-bold text-success mt-0.5">Unit {l.unit?.unitNumber}</p>
+                                      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase opacity-40 mt-2">
+                                        <Calendar className="w-3 h-3" />
+                                        <span>Since {new Date(l.leaseStartDate).toLocaleDateString()}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="w-8 h-8 rounded-full bg-base-100 flex items-center justify-center text-success shadow-sm border border-base-200/50 group-hover/item:translate-x-1 transition-transform">
+                                    <ArrowLeft className="w-4 h-4 rotate-180" />
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="card bg-base-100 shadow-sm border border-base-200">
                         <div className="card-body p-6">
                           <h3 className="text-xs font-bold uppercase tracking-widest text-error mb-4 flex items-center gap-2">
@@ -568,6 +669,24 @@ export default function TenantDetail() {
                             <div className="bg-error/5 p-4 rounded-2xl border border-error/10">
                               <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Phone className="w-3 h-3"/> Phone Number</p>
                               <p className="font-bold text-base-content truncate">{tenant.emergencyPhone || "N/A"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="card bg-base-100 shadow-sm border border-base-200">
+                        <div className="card-body p-6">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                            <Calendar className="w-4 h-4" /> Occupancy Timeline
+                          </h3>
+                          <div className="space-y-3">
+                            <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Calendar className="w-3 h-3"/> Move In Date</p>
+                              <p className="font-bold text-base-content">{tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString() : "N/A"}</p>
+                            </div>
+                            <div className={`p-4 rounded-2xl border ${tenant.moveOutDate ? "bg-error/5 border-error/10" : "bg-base-200/30 border-base-200/50"}`}>
+                              <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-1 flex items-center gap-1.5"><Calendar className="w-3 h-3"/> Move Out Date</p>
+                              <p className="font-bold text-base-content">{tenant.moveOutDate ? new Date(tenant.moveOutDate).toLocaleDateString() : "N/A"}</p>
                             </div>
                           </div>
                         </div>

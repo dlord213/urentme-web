@@ -17,7 +17,8 @@ import {
   Eye,
   AlignLeft,
   Image as ImageIcon,
-  UserCheck
+  UserCheck,
+  Calendar
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
@@ -52,11 +53,12 @@ export default function UnitDetail() {
   });
 
   // Properties list for editing
-  const { data: properties = [] } = useQuery({
+  const { data: propertyResponse } = useQuery({
     queryKey: ["properties"],
     queryFn: () => apiFetch("/properties"),
     enabled: isEditing,
   });
+  const properties = propertyResponse?.data || [];
 
   // Form State
   const [formData, setFormData] = useState({
@@ -64,7 +66,6 @@ export default function UnitDetail() {
     unitNumber: "",
     floor: "",
     monthlyRentAmount: "",
-    status: "vacant",
     bedrooms: "",
     bathrooms: "",
     sqm: "",
@@ -80,7 +81,6 @@ export default function UnitDetail() {
         unitNumber: unit.unitNumber || "",
         floor: unit.floor || "",
         monthlyRentAmount: unit.monthlyRentAmount ? unit.monthlyRentAmount.toString() : "",
-        status: unit.status || "vacant",
         bedrooms: unit.bedrooms ? unit.bedrooms.toString() : "",
         bathrooms: unit.bathrooms ? unit.bathrooms.toString() : "",
         sqm: unit.sqm ? unit.sqm.toString() : "",
@@ -113,9 +113,9 @@ export default function UnitDetail() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: (newStatus: string) => apiFetch(`/units/${id}`, {
+    mutationFn: (payload: any) => apiFetch(`/units/${id}`, {
       method: "PUT",
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify(payload),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unit", id] });
@@ -161,6 +161,12 @@ export default function UnitDetail() {
 
   if (isLoading) return <div className="flex justify-center p-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
   if (isError || !unit) return <div className="alert alert-error">Unit not found.</div>;
+  
+  // Find current tenant/occupant
+  const activeLease = unit.leases?.find((l: any) => l.status === "active" || l.status === "signed" || l.status === "expiring");
+  const reservedLease = unit.leases?.find((l: any) => l.status === "draft" && unit.status === "reserved");
+  const currentLease = activeLease || reservedLease;
+  const currentTenant = currentLease?.tenant;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-12">
@@ -202,25 +208,95 @@ export default function UnitDetail() {
         </div>
 
         {/* Title & Badges Bottom Area */}
-        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="badge badge-sm uppercase font-bold tracking-widest bg-white/20 text-white border-none backdrop-blur-md">Unit {unit.unitNumber}</span>
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-6 z-10">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full backdrop-blur-md border border-white/10 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                <MapPin className="w-3 h-3 text-white/70" />
+                {unit.property?.name || "Unknown Property"}
+              </div>
               <StatusBadge status={unit.status} />
+              {unit.isActive === false && <span className="badge badge-error badge-sm font-bold border-none text-white shadow-sm py-2">INACTIVE</span>}
+              {unit.isUnderRepair && <span className="badge badge-warning badge-sm font-bold border-none text-white shadow-sm py-2">UNDER REPAIR</span>}
+              {unit.isUnderRenovation && <span className="badge badge-info badge-sm font-bold border-none text-white shadow-sm py-2">UNDER RENOVATION</span>}
             </div>
-            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md">
-              {unit.property?.name ? `${unit.property.name} - ${unit.unitNumber}` : `Unit ${unit.unitNumber}`}
+
+            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-4">
+              Unit {unit.unitNumber}
             </h1>
-            <p className="text-white/80 mt-1 md:mt-2 font-medium flex items-center gap-1.5 text-sm md:text-base drop-shadow-sm">
-              <Building2 className="w-4 h-4" /> Property: {unit.property?.name || "Unknown"}
-            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {currentTenant && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-success/20 text-success-content rounded-2xl backdrop-blur-md border border-white/20 shadow-xl group hover:bg-success/30 transition-all">
+                  <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase opacity-60 leading-none mb-1">Current Resident</p>
+                    <p className="font-bold text-base text-white tracking-tight">{currentTenant.firstName} {currentTenant.lastName}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
+                <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white/70 shrink-0 shadow-inner">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase opacity-60 leading-none mb-1 text-white/70">Monthly Market Rent</p>
+                  <p className="font-bold text-base text-white tracking-tight">₱{(unit.monthlyRentAmount || 0).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
           </div>
           
           {!isEditing && (
-            <div className="flex items-center gap-2 flex-wrap bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/20">
-              <div className="text-white text-right px-2">
-                <p className="text-xs uppercase font-bold opacity-80 tracking-wider">Monthly Rent</p>
-                <p className="text-xl md:text-2xl font-black">₱{(unit.monthlyRentAmount || 0).toLocaleString()}</p>
+            <div className="bg-black/20 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl space-y-4 min-w-[240px]">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/50 px-1 border-b border-white/5 pb-2">Unit Control Dashboard</p>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5">
+                  <span className="text-[10px] font-black uppercase text-white/70">Active</span>
+                  <input
+                    type="checkbox"
+                    checked={unit.isActive !== false}
+                    onChange={(e) => updateStatusMutation.mutate({ isActive: e.target.checked })}
+                    className="toggle toggle-primary toggle-xs"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5">
+                  <span className="text-[10px] font-black uppercase text-white/70">Repair</span>
+                  <input
+                    type="checkbox"
+                    checked={unit.isUnderRepair}
+                    onChange={(e) => updateStatusMutation.mutate({ isUnderRepair: e.target.checked })}
+                    className="toggle toggle-warning toggle-xs"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5">
+                  <span className="text-[10px] font-black uppercase text-white/70">Renovate</span>
+                  <input
+                    type="checkbox"
+                    checked={unit.isUnderRenovation}
+                    onChange={(e) => updateStatusMutation.mutate({ isUnderRenovation: e.target.checked })}
+                    className="toggle toggle-info toggle-xs"
+                  />
+                </label>
+
+                {unit.status === "reserved" && (
+                  <button 
+                    onClick={() => {
+                      if (confirm("Cancel this reservation and mark unit as strictly vacant? The assigned tenant will be cleared from this draft.")) {
+                        updateStatusMutation.mutate({ status: "vacant" });
+                      }
+                    }}
+                    className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-warning/20 hover:bg-warning/30 text-warning text-[10px] font-black uppercase transition-all shadow-lg border border-warning/20 animate-pulse"
+                  >
+                    Cancel Reserved
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -292,68 +368,55 @@ export default function UnitDetail() {
           <div>
             {activeTab === 'details' ? (
               isEditing ? (
-                /* Edit Form */
                 <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-success/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
-                    <div className="card-body p-6 sm:p-8 relative z-10">
-                      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
-                        <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center">
-                          <Home className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-base-content">Basic Configuration</h3>
-                          <p className="text-xs text-base-content/60">Core details and financial setting.</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                        <div className="space-y-5">
-                          <div className="form-control">
-                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Assign to Property <span className="text-error">*</span></span></label>
-                            <select name="propertyId" value={formData.propertyId} onChange={handleChange} required className="select select-bordered w-full focus:select-primary transition-all font-medium">
-                              <option value="" disabled>Select Property</option>
-                              {properties.map((p: any) => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                              ))}
-                            </select>
+                    <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-success/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+                      <div className="card-body p-6 sm:p-8 relative z-10">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
+                          <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center">
+                            <Home className="w-5 h-5" />
                           </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="form-control">
-                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Unit Number <span className="text-error">*</span></span></label>
-                              <input name="unitNumber" value={formData.unitNumber} onChange={handleChange} required className="input input-bordered w-full focus:input-primary transition-all" />
-                            </div>
-                            <div className="form-control">
-                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Floor Level</span></label>
-                              <input name="floor" value={formData.floor} onChange={handleChange} className="input input-bordered w-full focus:input-primary transition-all" />
-                            </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-base-content">Basic Configuration</h3>
+                            <p className="text-xs text-base-content/60">Core details and financial setting.</p>
                           </div>
                         </div>
 
-                        <div className="space-y-5">
-                          <div className="form-control">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                          <div className="space-y-5">
+                            <div className="form-control">
+                              <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Assign to Property <span className="text-error">*</span></span></label>
+                              <select name="propertyId" value={formData.propertyId} onChange={handleChange} required className="select select-bordered w-full focus:select-primary transition-all font-medium">
+                                <option value="" disabled>Select Property</option>
+                                {properties.map((p: any) => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="form-control">
+                                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Unit Number <span className="text-error">*</span></span></label>
+                                <input name="unitNumber" value={formData.unitNumber} onChange={handleChange} required className="input input-bordered w-full focus:input-primary transition-all" />
+                              </div>
+                              <div className="form-control">
+                                <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Floor Level</span></label>
+                                <input name="floor" value={formData.floor} onChange={handleChange} className="input input-bordered w-full focus:input-primary transition-all" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-5">                          <div className="form-control">
                             <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Monthly Rent (₱) <span className="text-error">*</span></span></label>
                             <div className="relative">
                               <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-base-content/50">₱</span>
                               <input type="number" step="0.01" name="monthlyRentAmount" value={formData.monthlyRentAmount} onChange={handleChange} required className="input input-bordered w-full pl-10 focus:input-primary transition-all text-lg font-bold" />
                             </div>
                           </div>
-
-                          <div className="form-control">
-                            <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Current Status <span className="text-error">*</span></span></label>
-                            <select name="status" value={formData.status} onChange={handleChange} required className="select select-bordered w-full focus:select-primary transition-all font-medium">
-                              <option value="vacant">Vacant</option>
-                              <option value="occupied">Occupied</option>
-                              <option value="maintenance">Under Maintenance</option>
-                            </select>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                    </div><div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                     {/* Structure details */}
                     <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
                       <div className="card-body p-6 sm:p-8 relative z-10">
@@ -473,28 +536,51 @@ export default function UnitDetail() {
                     
                     {/* Right Col (Sidebar) */}
                     <div className="lg:col-span-4 space-y-6">
+                      {currentTenant && (
+                        <div className="card bg-success/5 shadow-sm border border-success/20 overflow-hidden relative group transition-all hover:bg-success/10">
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-success/10 rounded-full blur-2xl -mr-12 -mt-12 pointer-events-none"></div>
+                          <div className="card-body p-6">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-success mb-4 flex items-center gap-2">
+                              <UserCheck className="w-4 h-4" /> Current Resident
+                            </h3>
+                            <div className="flex items-center gap-4">
+                              <div className="avatar placeholder">
+                                <div className="bg-success/20 text-success rounded-2xl w-14 flex items-center justify-center border border-success/30">
+                                  <span className="text-xl font-black">{currentTenant.firstName.charAt(0)}{currentTenant.lastName.charAt(0)}</span>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="font-black text-lg text-base-content leading-tight">{currentTenant.firstName} {currentTenant.lastName}</h4>
+                                {currentLease && (
+                                  <div className="flex flex-col mt-1">
+                                    <span className="text-[10px] font-bold uppercase opacity-50">Active Since</span>
+                                    <span className="text-xs font-bold text-success flex items-center gap-1.5 mt-0.5">
+                                      <Calendar className="w-3 h-3" />
+                                      {new Date(currentLease.leaseStartDate).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="mt-6 pt-4 border-t border-success/20">
+                              <Link 
+                                to={`/dashboard/leases/${currentLease?.id}`}
+                                className="btn btn-sm btn-block bg-success/10 hover:bg-success/20 text-success border-none rounded-xl gap-2 font-bold"
+                              >
+                                <Eye className="w-4 h-4" /> View Full Lease
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="card bg-base-100 shadow-sm border border-base-200">
                         <div className="card-body p-6">
                           <h3 className="text-xs font-bold uppercase tracking-widest text-secondary mb-4 flex items-center gap-2">
-                            <Building2 className="w-4 h-4" /> Quick Actions
+                            <Info className="w-4 h-4" /> System Reference
                           </h3>
                           <div className="space-y-3">
-                            <label className="form-control w-full">
-                              <div className="label pt-0"><span className="label-text-alt font-bold text-base-content/60 uppercase">Change Status</span></div>
-                              <select 
-                                className="select select-bordered select-sm w-full font-bold focus:select-primary"
-                                value={unit.status}
-                                onChange={(e) => updateStatusMutation.mutate(e.target.value)}
-                                disabled={updateStatusMutation.isPending}
-                              >
-                                <option value="vacant">Vacant</option>
-                                <option value="occupied">Occupied</option>
-                                <option value="maintenance">Under Maintenance</option>
-                              </select>
-                            </label>
-                            
-                            <div className="divider my-1"></div>
-                            
                             <div className="bg-base-200/50 p-4 rounded-xl border border-base-300/50 flex flex-col items-center justify-center text-center">
                               <p className="font-mono text-sm font-bold text-base-content/70">{unit.id.substring(0, 8).toUpperCase()}</p>
                               <p className="text-[10px] font-bold uppercase tracking-wider text-base-content/40 mt-1">System Reference ID</p>
@@ -521,8 +607,8 @@ export default function UnitDetail() {
                         <span className="font-bold">{lease.tenant?.firstName} {lease.tenant?.lastName}</span>
                       </div>
                     )},
-                    { key: "startDate", label: "Start Date", render: (d) => new Date(d).toLocaleDateString() },
-                    { key: "endDate", label: "End Date", render: (d) => d ? new Date(d).toLocaleDateString() : "Ongoing" },
+                    { key: "leaseStartDate", label: "Start Date", render: (d) => d ? new Date(d).toLocaleDateString() : "N/A" },
+                    { key: "leaseEndDate", label: "End Date", render: (d) => d ? new Date(d).toLocaleDateString() : "Ongoing" },
                     { key: "status", label: "Status", render: (s) => <StatusBadge status={s} /> },
                   ]}
                   data={unit.leases || []}

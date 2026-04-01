@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate, type MetaFunction } from "react-router";
-import { ArrowLeft, Save, DoorOpen, LayoutDashboard, Wallet, AlignLeft, Info } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+import { formatFloor } from "~/lib/format";
+import { ArrowLeft, DoorOpen, Wallet, AlignLeft, LayoutDashboard, Info, Save } from "lucide-react";
+import { type MetaFunction, useNavigate, Link } from "react-router";
 
 export const meta: MetaFunction = () => {
   return [
@@ -13,8 +14,6 @@ export const meta: MetaFunction = () => {
     },
   ];
 };
-import { PageHeader } from "~/components/PageHeader";
-import { formatFloor } from "~/lib/format";
 
 export default function AddUnit() {
   const navigate = useNavigate();
@@ -37,7 +36,9 @@ export default function AddUnit() {
   });
   const properties = propertiesResponse?.data ?? [];
 
-  const selectedProperty = properties.find((p: any) => p.id === formData.propertyId);
+  const selectedProperty = properties.find(
+    (p: any) => p.id === formData.propertyId,
+  );
 
   const mutation = useMutation({
     mutationFn: (data: any) =>
@@ -60,7 +61,7 @@ export default function AddUnit() {
     >,
   ) => {
     const { name, value } = e.target;
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: ["bedrooms", "bathrooms"].includes(name)
@@ -88,7 +89,8 @@ export default function AddUnit() {
       isUnderRenovation: false,
       // Reset residential fields if commercial
       bedrooms: selectedProperty?.type === "Commercial" ? 0 : formData.bedrooms,
-      bathrooms: selectedProperty?.type === "Commercial" ? 0 : formData.bathrooms,
+      bathrooms:
+        selectedProperty?.type === "Commercial" ? 0 : formData.bathrooms,
     };
 
     mutation.mutate(payload);
@@ -104,17 +106,19 @@ export default function AddUnit() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-black text-base-content tracking-tight">Add New Unit</h1>
-          <p className="text-base-content/60 mt-1">Create a new rentable space within a property.</p>
+          <h1 className="text-3xl font-black text-base-content tracking-tight">
+            Add New Unit
+          </h1>
+          <p className="text-base-content/60 mt-1">
+            Create a new rentable space within a property.
+          </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8 mt-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
-          
           {/* Main Left Column */}
           <div className="md:col-span-8 space-y-6 lg:space-y-8">
-            
             {/* Identity Card */}
             <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
               <div className="card-body p-6 sm:p-8 relative z-10">
@@ -123,14 +127,22 @@ export default function AddUnit() {
                     <DoorOpen className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-base-content">Unit Identifier</h3>
-                    <p className="text-xs text-base-content/60">Which property does this belong to?</p>
+                    <h3 className="text-lg font-bold text-base-content">
+                      Unit Identifier
+                    </h3>
+                    <p className="text-xs text-base-content/60">
+                      Which property does this belong to?
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-5">
                   <div className="form-control">
-                    <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Select Property <span className="text-error">*</span></span></label>
+                    <label className="label pb-1.5">
+                      <span className="label-text font-bold uppercase tracking-wider text-xs">
+                        Select Property <span className="text-error">*</span>
+                      </span>
+                    </label>
                     <select
                       name="propertyId"
                       value={formData.propertyId}
@@ -140,7 +152,9 @@ export default function AddUnit() {
                       disabled={propertiesLoading}
                     >
                       <option value="" disabled>
-                        {propertiesLoading ? "Loading properties..." : "Choose a property..."}
+                        {propertiesLoading
+                          ? "Loading properties..."
+                          : "Choose a property..."}
                       </option>
                       {properties.map((p: any) => (
                         <option key={p.id} value={p.id}>
@@ -152,7 +166,12 @@ export default function AddUnit() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                     <div className="form-control">
-                      <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Unit Number / Name <span className="text-error">*</span></span></label>
+                      <label className="label pb-1.5">
+                        <span className="label-text font-bold uppercase tracking-wider text-xs">
+                          Unit Number / Name{" "}
+                          <span className="text-error">*</span>
+                        </span>
+                      </label>
                       <input
                         type="text"
                         name="unitNumber"
@@ -164,7 +183,11 @@ export default function AddUnit() {
                       />
                     </div>
                     <div className="form-control">
-                      <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Floor Level <span className="text-error">*</span></span></label>
+                      <label className="label pb-1.5">
+                        <span className="label-text font-bold uppercase tracking-wider text-xs">
+                          Floor Level <span className="text-error">*</span>
+                        </span>
+                      </label>
                       <input
                         type="number"
                         name="floor"
@@ -189,16 +212,26 @@ export default function AddUnit() {
                     <Wallet className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-base-content">Financials & Details</h3>
-                    <p className="text-xs text-base-content/60">Rent and unit description.</p>
+                    <h3 className="text-lg font-bold text-base-content">
+                      Financials & Details
+                    </h3>
+                    <p className="text-xs text-base-content/60">
+                      Rent and unit description.
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-5">
                   <div className="form-control">
-                    <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Monthly Rent (PHP) <span className="text-error">*</span></span></label>
+                    <label className="label pb-1.5">
+                      <span className="label-text font-bold uppercase tracking-wider text-xs">
+                        Monthly Rent (PHP) <span className="text-error">*</span>
+                      </span>
+                    </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50 font-bold">₱</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/50 font-bold">
+                        ₱
+                      </span>
                       <input
                         type="number"
                         name="monthlyRentAmount"
@@ -214,7 +247,11 @@ export default function AddUnit() {
                   </div>
 
                   <div className="form-control flex flex-col pt-2">
-                    <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5"><AlignLeft className="w-3.5 h-3.5" /> Description</span></label>
+                    <label className="label pb-1.5">
+                      <span className="label-text font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">
+                        <AlignLeft className="w-3.5 h-3.5" /> Description
+                      </span>
+                    </label>
                     <textarea
                       name="description"
                       value={formData.description}
@@ -226,14 +263,14 @@ export default function AddUnit() {
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* Right Column / Sidebar */}
           <div className="md:col-span-4 space-y-6 lg:space-y-8">
-            
             {/* Layout Card */}
-            <div className={`card bg-base-100 shadow-sm border border-base-200 transition-opacity ${selectedProperty?.type === "Commercial" ? "opacity-50 pointer-events-none" : ""}`}>
+            <div
+              className={`card bg-base-100 shadow-sm border border-base-200 transition-opacity ${selectedProperty?.type === "Commercial" ? "opacity-50 pointer-events-none" : ""}`}
+            >
               <div className="card-body p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-5 border-b border-base-200/60 pb-3">
                   <div className="w-8 h-8 rounded-lg bg-info/10 text-info flex items-center justify-center">
@@ -244,7 +281,11 @@ export default function AddUnit() {
 
                 <div className="space-y-4">
                   <div className="form-control">
-                    <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Square Area (sqm/sqft)</span></label>
+                    <label className="label pb-1.5">
+                      <span className="label-text font-bold uppercase tracking-wider text-xs">
+                        Square Area (sqm/sqft)
+                      </span>
+                    </label>
                     <input
                       type="number"
                       name="squareFeet"
@@ -260,7 +301,11 @@ export default function AddUnit() {
                   {selectedProperty?.type !== "Commercial" ? (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="form-control">
-                        <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Bedrooms <span className="text-error">*</span></span></label>
+                        <label className="label pb-1.5">
+                          <span className="label-text font-bold uppercase tracking-wider text-xs">
+                            Bedrooms <span className="text-error">*</span>
+                          </span>
+                        </label>
                         <input
                           type="number"
                           name="bedrooms"
@@ -272,7 +317,11 @@ export default function AddUnit() {
                         />
                       </div>
                       <div className="form-control">
-                        <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Bathrooms <span className="text-error">*</span></span></label>
+                        <label className="label pb-1.5">
+                          <span className="label-text font-bold uppercase tracking-wider text-xs">
+                            Bathrooms <span className="text-error">*</span>
+                          </span>
+                        </label>
                         <input
                           type="number"
                           name="bathrooms"
@@ -287,7 +336,9 @@ export default function AddUnit() {
                   ) : (
                     <div className="alert alert-info bg-info/10 text-info text-xs mt-2 border-none">
                       <Info className="w-4 h-4 shrink-0" />
-                      <span>Commercial units do not require bedrooms and bathrooms.</span>
+                      <span>
+                        Commercial units do not require bedrooms and bathrooms.
+                      </span>
                     </div>
                   )}
                 </div>
@@ -298,13 +349,16 @@ export default function AddUnit() {
             <div className="bg-base-200/50 p-5 rounded-2xl border border-base-300/50 flex gap-3 items-start">
               <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-bold text-base-content mb-1">Status Default</h4>
+                <h4 className="text-sm font-bold text-base-content mb-1">
+                  Status Default
+                </h4>
                 <p className="text-xs text-base-content/70 leading-relaxed">
-                  New units are automatically created as <strong>Vacant</strong> and <strong>Active</strong>. You can update this status from the Unit Details page after creation.
+                  New units are automatically created as <strong>Vacant</strong>{" "}
+                  and <strong>Active</strong>. You can update this status from
+                  the Unit Details page after creation.
                 </p>
               </div>
             </div>
-
           </div>
         </div>
 

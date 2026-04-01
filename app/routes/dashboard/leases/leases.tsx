@@ -61,7 +61,7 @@ const LeaseStatusBadge = ({ lease }: { lease: any }) => {
   const end = new Date(lease.leaseEndDate);
   const diffInDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
 
-  if (lease.status === "active" && diffInDays <= 30 && diffInDays > 0) {
+  if ((lease.status === "active" || lease.status === "expiring") && diffInDays <= 30 && diffInDays > 0) {
     return (
       <div className="flex flex-col gap-1.5 items-start">
         <StatusBadge status="active" />
@@ -104,12 +104,7 @@ export default function Leases() {
       </div>
     ),
     tenantDisplay: (
-      <div className="flex items-center gap-2">
-        <div className="avatar placeholder hidden sm:flex">
-          <div className="bg-primary/10 text-primary rounded-full w-8">
-            <span className="text-xs font-bold">{l.tenant?.firstName?.charAt(0) || "U"}</span>
-          </div>
-        </div>
+      <div className="flex items-center">
         <span className="font-semibold">{l.tenant?.firstName} {l.tenant?.lastName}</span>
       </div>
     ),
@@ -127,7 +122,7 @@ export default function Leases() {
     ),
   }));
 
-  const activeCount = rawLeases.filter((l) => l.status === "active").length;
+  const activeCount = rawLeases.filter((l) => l.status === "active" || l.status === "expiring").length;
   const draftCount = rawLeases.filter((l) => l.status === "draft").length;
 
   return (

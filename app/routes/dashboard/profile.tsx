@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { type MetaFunction } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
@@ -20,6 +19,7 @@ import {
   Clock,
 } from "lucide-react";
 import { apiFetch } from "~/lib/api";
+import { psgcApi } from "~/lib/psgc";
 import { useAuthStore } from "~/store/auth.store";
 import { PageHeader } from "~/components/PageHeader";
 
@@ -129,6 +129,104 @@ export default function ProfilePage() {
       setForm({});
     },
   });
+
+  const [selectedRegionCode, setSelectedRegionCode] = useState("");
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState("");
+  const [selectedCityCode, setSelectedCityCode] = useState("");
+
+  const { data: regions = [] } = useQuery({
+    queryKey: ["regions"],
+    queryFn: psgcApi.getRegions,
+    enabled: editing,
+  });
+
+  const { data: provinces = [] } = useQuery({
+    queryKey: ["provinces", selectedRegionCode],
+    queryFn: () => psgcApi.getProvincesByRegion(selectedRegionCode),
+    enabled: editing && !!selectedRegionCode,
+  });
+
+  const { data: cities = [] } = useQuery({
+    queryKey: ["cities", selectedRegionCode, selectedProvinceCode],
+    queryFn: () => {
+      if (selectedProvinceCode) return psgcApi.getCitiesByProvince(selectedProvinceCode);
+      if (selectedRegionCode) return psgcApi.getCitiesByRegion(selectedRegionCode);
+      return Promise.resolve([]);
+    },
+    enabled: editing && (!!selectedProvinceCode || !!selectedRegionCode),
+  });
+
+  const { data: barangays = [] } = useQuery({
+    queryKey: ["barangays", selectedCityCode],
+    queryFn: () => psgcApi.getBarangaysByCity(selectedCityCode),
+    enabled: editing && !!selectedCityCode,
+  });
+
+  // Synchronize PSGC codes with existing profile data
+  useEffect(() => {
+    if (editing && profile && regions.length > 0 && !selectedRegionCode) {
+      const match = regions.find((r: any) => r.name === profile.region);
+      if (match) setSelectedRegionCode(match.code);
+    }
+  }, [editing, regions, profile, selectedRegionCode]);
+
+  useEffect(() => {
+    if (editing && profile && provinces.length > 0 && !selectedProvinceCode && selectedRegionCode) {
+      const match = provinces.find((p: any) => p.name === profile.province);
+      if (match) setSelectedProvinceCode(match.code);
+    }
+  }, [editing, provinces, profile, selectedProvinceCode, selectedRegionCode]);
+
+  useEffect(() => {
+    if (editing && profile && cities.length > 0 && !selectedCityCode && (selectedProvinceCode || selectedRegionCode)) {
+      const match = cities.find((c: any) => c.name === profile.city);
+      if (match) setSelectedCityCode(match.code);
+    }
+  }, [editing, cities, profile, selectedCityCode, selectedProvinceCode, selectedRegionCode]);
+
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedRegionCode(code);
+    const region = regions.find((r: any) => r.code === code);
+    setForm((prev) => ({
+      ...prev,
+      region: region ? region.name : "",
+      province: "",
+      city: "",
+      barangay: "",
+    }));
+    setSelectedProvinceCode("");
+    setSelectedCityCode("");
+  };
+
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedProvinceCode(code);
+    const province = provinces.find((p: any) => p.code === code);
+    setForm((prev) => ({
+      ...prev,
+      province: province ? province.name : "",
+      city: "",
+      barangay: "",
+    }));
+    setSelectedCityCode("");
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedCityCode(code);
+    const city = cities.find((c: any) => c.code === code);
+    setForm((prev) => ({
+      ...prev,
+      city: city ? city.name : "",
+      barangay: "",
+    }));
+  };
+
+  const handleBarangayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const name = e.target.value;
+    setForm((prev) => ({ ...prev, barangay: name }));
+  };
 
   const handleEditStart = () => {
     if (!profile) return;
@@ -429,7 +527,7 @@ export default function ProfilePage() {
                   onChange={handleChange}
                   placeholder="e.g. 123 Main St, Apt 4B"
                 />
-
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                   <InfoField
                     label="Barangay"
@@ -447,22 +545,24 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-                  <InfoField
-                    label="Province"
-                    name="province"
-                    value={(currentData as any).province ?? ""}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                  <InfoField
-                    label="Region"
-                    name="region"
-                    value={(currentData as any).region ?? ""}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                      <InfoField
+                        label="Province"
+                        name="province"
+                        value={(currentData as any).province ?? ""}
+                        editing={false}
+                        onChange={handleChange}
+                      />
+                      <InfoField
+                        label="Region"
+                        name="region"
+                        value={(currentData as any).region ?? ""}
+                        editing={false}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

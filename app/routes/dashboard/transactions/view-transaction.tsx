@@ -58,13 +58,13 @@ export default function TransactionDetail() {
   });
 
   const handleDelete = () => {
-    if (confirm("Executing ledger block deletion? This drops tracking historically.")) {
+    if (confirm("Are you sure you want to delete this transaction record? This action cannot be undone.")) {
       deleteMutation.mutate();
     }
   };
 
   if (isLoading) return <div className="flex justify-center p-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
-  if (isError || !transaction) return <div className="alert alert-error">Ledger block resolution failed. Tracer lost.</div>;
+  if (isError || !transaction) return <div className="alert alert-error">Failed to load transaction details.</div>;
 
   const lease = transaction.lease;
   const tenant = lease?.tenant;
@@ -83,15 +83,32 @@ export default function TransactionDetail() {
         {`
           @media print {
             @page { size: auto; margin: 0mm; }
-            html, body { margin: 0 !important; padding: 0 !important; background-color: white !important; }
+            html, body { 
+              margin: 0 !important; 
+              padding: 0 !important; 
+              background-color: #191e24 !important; 
+              color: #a6adbb !important;
+              -webkit-print-color-adjust: exact !important; 
+              print-color-adjust: exact !important; 
+              height: 100% !important;
+            }
             aside, nav, header, footer, .sidebar, .navbar { display: none !important; }
             main { padding: 0 !important; margin: 0 !important; }
             .print-receipt-container { 
-              display: block !important;
+              display: flex !important;
               width: 100% !important;
-              height: auto !important;
+              height: 100vh !important;
+              max-width: 100% !important;
               margin: 0 !important;
-              padding: 20mm !important;
+              padding: 10mm !important;
+              box-sizing: border-box !important;
+              page-break-inside: avoid;
+            }
+            .print-receipt-container > .card {
+              flex: 1 !important;
+              width: 100% !important;
+              height: 100% !important;
+              margin: 0 !important;
             }
           }
         `}
@@ -112,7 +129,7 @@ export default function TransactionDetail() {
           
           <div className="flex items-center gap-2">
             <button onClick={() => window.print()} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content gap-2 shadow-xl hover:scale-105 transition-all">
-              <Printer className="w-4 h-4" /> Hardcopy Trace
+              <Printer className="w-4 h-4" /> Print Receipt
             </button>
             <button 
               onClick={handleDelete} 
@@ -131,34 +148,34 @@ export default function TransactionDetail() {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="badge badge-success badge-sm font-bold tracking-wider drop-shadow-sm border-none uppercase text-[10px]">Verified Settled</span>
+                <span className="badge badge-success badge-sm font-bold tracking-wider drop-shadow-sm border-none uppercase text-[10px]">Payment Confirmed</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
-                Ledger T-{transaction?.id.slice(0,6).toUpperCase()}
+                Receipt #{transaction?.id.slice(0,8).toUpperCase()}
               </h1>
             </div>
           </div>
           <div className="text-right">
-             <div className="text-sm font-bold tracking-widest text-white/50 uppercase mb-1">Cleared Value Point</div>
+             <div className="text-sm font-bold tracking-widest text-white/50 uppercase mb-1">Total Amount</div>
              <div className="text-3xl lg:text-5xl font-black text-white drop-shadow-lg tracking-tighter tabular-nums">{formattedAmount}</div>
           </div>
         </div>
       </div>
 
-      <div className="mt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start print:block print-receipt-container">
+      <div className="mt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 print:mt-0 print:px-0 print:space-y-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start print:flex print:w-full print-receipt-container">
           
           {/* Main Receipt Content */}
           <div className="lg:col-span-8 print:w-full print:max-w-3xl print:mx-auto">
             <div className="card bg-base-100 shadow-xl border border-base-200 relative overflow-hidden print:shadow-none print:border-none print:rounded-none">
               
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none print:opacity-5">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
                 <ShieldCheck className="w-[300px] h-[300px]" />
               </div>
 
-              <div className="absolute top-0 left-0 w-full h-2 bg-success print:hidden"></div>
+              <div className="absolute top-0 left-0 w-full h-2 bg-success"></div>
 
-              <div className="card-body p-8 sm:p-12 relative z-10 flex flex-col min-h-[500px]">
+              <div className="card-body p-8 sm:p-12 relative z-10 flex flex-col min-h-[500px] print:h-full">
                 
                 {/* Header Document Area */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b-2 border-dashed border-base-200/80 pb-8 mb-8">
@@ -167,11 +184,11 @@ export default function TransactionDetail() {
                       URENTME
                     </div>
                     <p className="text-xs uppercase tracking-widest text-primary font-black mt-1">
-                      Certified Financial Clearing Ticket
+                      Official Payment Receipt
                     </p>
                   </div>
                   <div className="text-left sm:text-right p-4 bg-base-200/50 rounded-xl border border-base-200">
-                     <p className="text-[10px] font-bold uppercase tracking-wider text-base-content/50 mb-1">Ledger Sync Time</p>
+                     <p className="text-[10px] font-bold uppercase tracking-wider text-base-content/50 mb-1">Transaction Date</p>
                     <p className="text-sm font-black font-mono text-base-content whitespace-nowrap">
                       {new Date(transaction.transactionDate).toUTCString()}
                     </p>
@@ -182,7 +199,7 @@ export default function TransactionDetail() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 flex-1">
                    <div className="space-y-6">
                       <div>
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-1.5"><CreditCard className="w-3 h-3" /> Payer Entity Resolving Asset</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-1.5"><CreditCard className="w-3 h-3" /> Tenant Details</h3>
                         <div className="p-4 rounded-xl bg-base-200/30 border border-base-200 flex items-center gap-4">
                            <div className="w-10 h-10 rounded-full bg-base-300 text-base-content/40 flex items-center justify-center font-black">{tenant?.firstName?.charAt(0)}</div>
                            <div>
@@ -195,11 +212,11 @@ export default function TransactionDetail() {
                       </div>
 
                       <div>
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-1.5"><Home className="w-3 h-3" /> Linked Asset Node Binding</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-1.5"><Home className="w-3 h-3" /> Property & Unit Details</h3>
                         <div className="p-4 rounded-xl bg-base-200/30 border border-base-200 space-y-1">
                             <p className="font-black text-lg text-primary">{property?.name}</p>
                             <p className="text-sm font-bold text-base-content/70 flex items-center gap-2">
-                              Unit Module {unit?.unitNumber} <span className="opacity-40">&bull;</span> {unit?.floor || "Floor Unknown"}
+                              Unit {unit?.unitNumber} <span className="opacity-40">&bull;</span> {unit?.floor || "Floor Unknown"}
                             </p>
                         </div>
                       </div>
@@ -208,15 +225,15 @@ export default function TransactionDetail() {
                    <div className="space-y-6">
                       <div className="h-full rounded-2xl bg-base-200/50 border border-primary/10 p-6 flex flex-col justify-center gap-1 text-center sm:text-right relative overflow-hidden">
                         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-32 h-32 bg-primary/5 rounded-full blur-xl mix-blend-multiply"></div>
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-1 relative z-10">Resolved Fiat Equivalent</h3>
-                        <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-base-content tracking-tighter tabular-nums drop-shadow-sm relative z-10">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-1 relative text-center z-10">Total Amount Paid</h3>
+                        <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-base-content tracking-tighter tabular-nums drop-shadow-sm relative z-10 text-center text-success">
                           {formattedAmount}
                         </div>
                         
-                        <div className="mt-6 flex flex-col sm:items-end gap-2 relative z-10">
-                           <div className="bg-white/60 backdrop-blur border border-base-300 shadow-sm px-4 py-2 rounded-lg font-mono text-xs font-bold leading-none inline-flex flex-col items-center">
-                              <span className="text-[8px] tracking-widest text-base-content/40 mb-1 uppercase text-center block w-full">Tracer Id</span>
-                              {transaction.reference || "NO-REF"}
+                        <div className="mt-6 flex flex-col sm:items-center gap-2 relative z-10">
+                           <div className="bg-base-200 border border-base-300 shadow-sm px-4 py-2 rounded-lg font-mono text-[10px] font-bold leading-none inline-flex flex-col items-center">
+                              <span className="text-[8px] tracking-widest text-base-content/50 mb-1 uppercase text-center block w-full">Reference ID</span>
+                              <span className="text-base-content">{transaction.reference || "NO-REFERENCE"}</span>
                            </div>
                         </div>
                       </div>
@@ -224,9 +241,9 @@ export default function TransactionDetail() {
                 </div>
 
                 <div className="mt-auto mb-8">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 pb-2 border-b border-base-200/60">Memo Logs & Data Annotations</h3>
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-base-content/40 mb-2 pb-2 border-b border-base-200/60">Additional Notes</h3>
                   <div className="bg-base-200/30 p-4 rounded-xl font-medium text-sm leading-relaxed text-base-content/80 border border-base-200/60 min-h-20">
-                     {transaction.notes || <span className="italic opacity-50">Empty details provided in cache allocation. Context not retained inside system.</span>}
+                     {transaction.notes || <span className="italic opacity-50">No additional notes or remarks provided for this transaction record.</span>}
                   </div>
                 </div>
 
@@ -236,7 +253,7 @@ export default function TransactionDetail() {
                      <ShieldCheck className="w-5 h-5" />
                   </div>
                   <p className="text-[9px] font-bold text-base-content/40 leading-relaxed uppercase max-w-lg tracking-widest">
-                    Computer Generated Trace File • No Physical Signature Demand Required • End Node Receipt Log Ref: <span className="text-base-content/60">{transaction.id}</span>
+                    This is a computer-generated receipt. No physical signature is required. Transaction Ref: <span className="text-base-content/60">{transaction.id}</span>
                   </p>
                 </div>
               </div>
@@ -248,7 +265,7 @@ export default function TransactionDetail() {
             <div className="card bg-base-100 shadow-sm border border-base-200">
               <div className="card-body p-6">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-2 border-b border-base-200/80 pb-3">
-                  <Info className="w-4 h-4" /> Graph References
+                  <Info className="w-4 h-4" /> Related Information
                 </h3>
                 <div className="space-y-3">
                   <Link
@@ -258,8 +275,8 @@ export default function TransactionDetail() {
                     <div className="flex items-center gap-3">
                       <FileText className="w-5 h-5 text-accent opacity-80" />
                       <div>
-                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Lease File Contract</span>
-                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">{transaction.lease.id.slice(0,6)}</span>
+                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Lease Details</span>
+                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">File #{transaction.lease.id.slice(0,8).toUpperCase()}</span>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -272,8 +289,8 @@ export default function TransactionDetail() {
                     <div className="flex items-center gap-3">
                       <User className="w-5 h-5 text-primary opacity-80" />
                       <div>
-                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Tenant Identity Base</span>
-                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">{tenant.email.slice(0,10)}...</span>
+                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Tenant Profile</span>
+                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">{tenant.email}</span>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -286,8 +303,8 @@ export default function TransactionDetail() {
                     <div className="flex items-center gap-3">
                       <Home className="w-5 h-5 text-success opacity-80" />
                       <div>
-                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Property Hardware Node</span>
-                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">Mod U{unit.unitNumber}</span>
+                        <span className="text-sm font-bold block mb-0.5 tracking-tight">Unit Details</span>
+                        <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">Unit {unit.unitNumber}</span>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -299,7 +316,7 @@ export default function TransactionDetail() {
             <div className="alert alert-info shadow-sm bg-info/10 border border-info/20 text-xs text-info-content/90 font-medium leading-relaxed rounded-2xl flex items-start gap-4">
               <ShieldAlert className="w-5 h-5 mt-0.5 text-info" />
               <span>
-                System integrity blocks this generated record. Funds reflect across metrics dashboards immediately and drop-ins sync successfully. Edit action strictly deactivated to uphold financial graph safety standards globally down routes.
+                Transaction integrity is strictly maintained. To ensure financial record safety, transactions cannot be edited once verified. If a correction is needed, please delete and re-create the record.
               </span>
             </div>
 

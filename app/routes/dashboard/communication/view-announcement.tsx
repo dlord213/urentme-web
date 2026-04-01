@@ -224,55 +224,88 @@ export default function ViewAnnouncement() {
         </div>
 
         {/* Title & Badges Bottom Area */}
-        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
-          <div className="flex items-center gap-4 lg:gap-6">
-            <div className={`w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-4 border-white/30 text-white shadow-xl`}>
-              <Megaphone className="w-8 h-8 md:w-12 md:h-12 opacity-80" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <StatusBadge status={announcement.isActive ? 'active' : 'inactive'} label={announcement.isActive ? 'ACTIVE LINK' : 'OFFLINE'} />
-                <StatusBadge status={announcement.publishedAt ? 'success' : 'warning'} label={announcement.publishedAt ? 'SENT' : 'DRAFT'} />
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-col md:flex-row md:items-end justify-between gap-6 z-10">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full backdrop-blur-md border border-white/10 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                <Megaphone className="w-3 h-3 text-white/70" />
+                Communication Protocol
               </div>
-              <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight drop-shadow-md truncate max-w-2xl">
-                {announcement.title}
-              </h1>
-              <p className="text-white/80 mt-1 font-medium flex items-center gap-3 text-sm md:text-base drop-shadow-sm">
-                <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> Authored {new Date(announcement.createdAt).toLocaleDateString()}</span>
-                {announcement.publishedAt && (
-                   <span className="hidden sm:flex items-center gap-1.5"><Send className="w-4 h-4" /> Broadcast {new Date(announcement.publishedAt).toLocaleDateString()}</span>
-                )}
-              </p>
+              <StatusBadge status={announcement.isActive ? 'active' : 'inactive'} label={announcement.isActive ? 'ROUTE ACTIVE' : 'OFFLINE'} />
+              <StatusBadge status={announcement.publishedAt ? 'success' : 'warning'} label={announcement.publishedAt ? 'DISPATCHED' : 'DRAFT'} />
+            </div>
+
+            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg mb-4 truncate max-w-2xl">
+              {announcement.title}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
+                <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white/70 shrink-0 shadow-inner">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase opacity-60 leading-none mb-1 text-white/70">Authored Trace</p>
+                  <p className="font-bold text-sm text-white tracking-tight">{new Date(announcement.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {announcement.publishedAt && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-success/20 text-success-content rounded-2xl backdrop-blur-md border border-white/20 shadow-xl group hover:bg-success/30 transition-all">
+                  <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+                    <Send className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase opacity-60 leading-none mb-1">Global Broadcast</p>
+                    <p className="font-bold text-sm text-white tracking-tight">{new Date(announcement.publishedAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+          
+          {!isEditing && (
+            <div className="bg-black/20 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl space-y-4 min-w-[240px]">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/50 px-1 border-b border-white/5 pb-2">Broadcast Control Dashboard</p>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-white/70">Route Active</span>
+                  <input
+                    type="checkbox"
+                    checked={announcement.isActive}
+                    onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
+                    className="toggle toggle-primary toggle-xs"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-white/70">Transmit</span>
+                  <input
+                    type="checkbox"
+                    checked={!!announcement.publishedAt}
+                    onChange={(e) => toggleStatusMutation.mutate({ isPublished: e.target.checked })}
+                    className="toggle toggle-success toggle-xs"
+                  />
+                </label>
+
+                <div className="col-span-2 flex items-center justify-center p-2 rounded-xl bg-white/5 border border-white/5 shadow-inner">
+                  <div className="text-center">
+                    <p className="text-[8px] font-black uppercase text-white/40 leading-none mb-1">Target Nodes</p>
+                    <p className="text-sm font-black text-white leading-none">
+                      {isGlobal ? "Global Propagation" : `${(announcement.propertyAnnouncements?.length || 0) + (announcement.unitAnnouncements?.length || 0)} Specified Hubs`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="mt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
         
-        {/* Toggle Grid Controls - Quick Switches */}
-        {!isEditing && (
-          <div className="p-4 bg-base-100 rounded-3xl border border-base-200 shadow-sm flex items-center gap-6">
-             <label className="flex items-center gap-3 cursor-pointer group bg-base-200/50 px-4 py-2.5 rounded-2xl border-2 border-transparent hover:border-primary/30 transition-all">
-              <input
-                type="checkbox"
-                checked={announcement.isActive}
-                onChange={(e) => toggleStatusMutation.mutate({ isActive: e.target.checked })}
-                className="toggle toggle-primary toggle-sm"
-              />
-              <span className="text-sm font-bold uppercase tracking-wider text-base-content/80 group-hover:text-base-content transition-colors">Route Active</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer group bg-base-200/50 px-4 py-2.5 rounded-2xl border-2 border-transparent hover:border-success/30 transition-all">
-              <input
-                type="checkbox"
-                checked={!!announcement.publishedAt}
-                onChange={(e) => toggleStatusMutation.mutate({ isPublished: e.target.checked })}
-                className="toggle toggle-success toggle-sm"
-              />
-              <span className="text-sm font-bold uppercase tracking-wider text-base-content/80 group-hover:text-base-content transition-colors">Transmit</span>
-            </label>
-          </div>
-        )}
+
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           

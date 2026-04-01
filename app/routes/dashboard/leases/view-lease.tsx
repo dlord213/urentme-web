@@ -68,7 +68,7 @@ export default function LeaseDetail() {
     if (lease) {
       setFormData({
         unitId: lease.unit.id,
-        status: lease.status,
+        status: lease.status === "expiring" ? "active" : lease.status,
         leaseStartDate: lease.leaseStartDate
           ? new Date(lease.leaseStartDate).toISOString().split("T")[0]
           : "",
@@ -103,7 +103,7 @@ export default function LeaseDetail() {
       await apiFetch(`/units/${data.unitId}`, {
         method: "PUT",
         body: JSON.stringify({
-          status: data.status === "active" ? "occupied" : "vacant",
+          status: data.status === "active" || data.status === "expiring" ? "occupied" : "vacant",
         }),
       });
     },
@@ -142,7 +142,7 @@ export default function LeaseDetail() {
       ...formData,
       leaseStartDate: formData.leaseStartDate ? new Date(formData.leaseStartDate).toISOString() : null,
       leaseEndDate: formData.leaseEndDate ? new Date(formData.leaseEndDate).toISOString() : null,
-      signedAt: formData.status === "active" ? new Date().toISOString() : formData.status === 'terminated' ? new Date(formData.signedAt).toISOString() : null,
+      signedAt: formData.status === "active" || formData.status === "expiring" ? new Date().toISOString() : formData.status === 'terminated' ? new Date(formData.signedAt).toISOString() : null,
       terminatedAt: formData.status === "terminated" ? new Date().toISOString() : null,
     };
     updateMutation.mutate(payload);
@@ -159,13 +159,13 @@ export default function LeaseDetail() {
   const now = new Date();
   const end = new Date(lease.leaseEndDate);
   const diffInDays = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-  const isExpiringSoon = lease.status === "active" && diffInDays <= 30 && diffInDays > 0;
+  const isExpiringSoon = (lease.status === "active" || lease.status === "expiring") && diffInDays <= 30 && diffInDays > 0;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-12">
       
       {/* Premium Gradient Hero Cover */}
-      <div className={`h-48 md:h-64 w-full rounded-b-3xl bg-gradient-to-r ${lease.status === 'active' ? 'from-primary/90 to-accent/90' : lease.status === 'terminated' ? 'from-error/90 to-warning/90' : 'from-base-300 to-base-200'} shadow-lg relative overflow-hidden -mt-6 sm:-mt-8`}>
+      <div className={`h-48 md:h-64 w-full rounded-b-3xl bg-gradient-to-r ${lease.status === 'active' || lease.status === 'expiring' ? 'from-primary/90 to-accent/90' : lease.status === 'terminated' ? 'from-error/90 to-warning/90' : 'from-base-300 to-base-200'} shadow-lg relative overflow-hidden -mt-6 sm:-mt-8`}>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         
@@ -229,11 +229,13 @@ export default function LeaseDetail() {
       <div className="mt-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
         
         {isExpiringSoon && (
-          <div className="alert alert-warning shadow-sm border-warning/20 animate-pulse rounded-2xl">
-            <ShieldAlert className="w-5 h-5" />
+          <div className="alert bg-warning/5 border-warning/20 shadow-sm rounded-3xl p-6 flex items-start gap-4 backdrop-blur-md animate-pulse">
+            <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-6 h-6" />
+            </div>
             <div>
-              <h3 className="font-bold text-sm">Lease Document Requires Attention</h3>
-              <div className="text-xs font-medium">This active lease agreement will expire on {new Date(lease.leaseEndDate).toLocaleDateString()}. Please initiate discussions for renewal or move-out.</div>
+              <h3 className="font-black text-warning uppercase tracking-tighter text-lg">Lease Expiring Soon</h3>
+              <p className="text-sm font-medium text-base-content/60 mt-1"> This active lease agreement will expire on <span className="text-warning font-bold">{new Date(lease.leaseEndDate).toLocaleDateString()}</span>. Please initiate discussions for renewal or move-out procedures.</p>
             </div>
           </div>
         )}
@@ -241,40 +243,40 @@ export default function LeaseDetail() {
         {/* Stats Summary - Premium Inline Cards */}
         {!isEditing && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <DollarSign className="w-6 h-6" />
+            <div className="bg-base-100 rounded-3xl p-6 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-all hover:-translate-y-1">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-inner">
+                <DollarSign className="w-7 h-7" />
               </div>
               <div>
-                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Base Montly</p>
-                <p className="text-xl font-black text-base-content">₱{unit?.monthlyRentAmount?.toLocaleString() || 0}</p>
+                <p className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-1">Monthly Rent</p>
+                <p className="text-2xl font-black text-base-content tracking-tight">₱{unit?.monthlyRentAmount?.toLocaleString() || 0}</p>
               </div>
             </div>
-            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
-                <Calendar className="w-6 h-6" />
+            <div className="bg-base-100 rounded-3xl p-6 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-all hover:-translate-y-1">
+              <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0 shadow-inner">
+                <Calendar className="w-7 h-7" />
               </div>
               <div>
-                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Commenced</p>
-                <p className="text-lg font-black text-base-content">{new Date(lease.leaseStartDate).toLocaleDateString()}</p>
+                <p className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-1">Commenced</p>
+                <p className="text-xl font-black text-base-content tracking-tight">{new Date(lease.leaseStartDate).toLocaleDateString()}</p>
               </div>
             </div>
-            <div className={`bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow ${isExpiringSoon ? 'ring-2 ring-warning/50' : ''}`}>
-              <div className={`w-12 h-12 rounded-2xl ${isExpiringSoon ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'} flex items-center justify-center shrink-0`}>
-                <Clock className="w-6 h-6" />
+            <div className={`bg-base-100 rounded-3xl p-6 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-all hover:-translate-y-1 ${isExpiringSoon ? 'ring-2 ring-warning/50' : ''}`}>
+              <div className={`w-14 h-14 rounded-2xl ${isExpiringSoon ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'} flex items-center justify-center shrink-0 shadow-inner`}>
+                <Clock className="w-7 h-7" />
               </div>
               <div>
-                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Matures</p>
-                <p className="text-lg font-black text-base-content">{lease.leaseEndDate ? new Date(lease.leaseEndDate).toLocaleDateString() : 'N/A'}</p>
+                <p className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-1">Maturity</p>
+                <p className="text-xl font-black text-base-content tracking-tight">{lease.leaseEndDate ? new Date(lease.leaseEndDate).toLocaleDateString() : 'N/A'}</p>
               </div>
             </div>
-            <div className="bg-base-100 rounded-3xl p-5 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-2xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
-                <FileText className="w-6 h-6" />
+            <div className="bg-base-100 rounded-3xl p-6 border border-base-200/60 shadow-sm flex items-center gap-4 hover:shadow-md transition-all hover:-translate-y-1">
+              <div className="w-14 h-14 rounded-2xl bg-accent/10 text-accent flex items-center justify-center shrink-0 shadow-inner">
+                <FileText className="w-7 h-7" />
               </div>
               <div>
-                <p className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Transactions</p>
-                <p className="text-2xl font-black text-base-content">{transactions.length}</p>
+                <p className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-1">Trace Entries</p>
+                <p className="text-3xl font-black text-base-content tracking-tighter">{transactions.length}</p>
               </div>
             </div>
           </div>
@@ -437,13 +439,29 @@ export default function LeaseDetail() {
                       </div>
 
                       {lease.status === "terminated" && (
-                        <div className="alert alert-error shadow-sm border-error/30 bg-error/10 rounded-2xl p-6">
-                          <ShieldAlert className="w-8 h-8 shrink-0 text-error" />
-                          <div className="w-full">
-                            <h3 className="font-bold text-base uppercase tracking-wider text-error">Contract Dissolved</h3>
-                            <div className="text-sm font-medium mt-2 p-4 rounded-xl bg-white/50 border border-error/20 shadow-inner">
-                              <span className="opacity-60 text-xs font-bold uppercase tracking-wider mb-2 block border-b border-error/20 pb-2">Finalization Log on {new Date(lease.terminatedAt).toLocaleDateString()}</span>
-                              {lease.terminationReason || "Dissolution confirmed without contextual reference trace."}
+                        <div className="card bg-error/5 border border-error/20 overflow-hidden relative group transition-all hover:shadow-md rounded-3xl">
+                          {/* Top Red Gradient Line */}
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-error/60 to-warning/60"></div>
+                          <div className="card-body p-6 sm:p-8">
+                            <div className="flex items-start gap-5">
+                              <div className="w-16 h-16 rounded-2xl bg-error/10 text-error flex items-center justify-center shrink-0 shadow-inner">
+                                <ShieldAlert className="w-8 h-8" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h3 className="text-xs font-black uppercase tracking-widest text-error">Contract Dissolved</h3>
+                                  <span className="badge badge-error badge-sm font-bold py-2 px-3">TERMINATED</span>
+                                </div>
+                                <div className="bg-white/40 dark:bg-black/20 p-5 rounded-2xl border border-error/10 backdrop-blur-sm">
+                                  <div className="flex items-center gap-2 text-[10px] font-black uppercase opacity-50 mb-3 border-b border-error/5 pb-2">
+                                    <Clock className="w-3 h-3" />
+                                    <span>Finalization Trace recorded on {new Date(lease.terminatedAt).toLocaleDateString()}</span>
+                                  </div>
+                                  <p className="text-base font-bold text-base-content leading-relaxed italic">
+                                    "{lease.terminationReason || "Dissolution confirmed without contextual reference trace."}"
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -501,7 +519,7 @@ export default function LeaseDetail() {
                           <span>Signed Date</span>
                           <span className="text-base-content font-black">{lease.signedAt ? new Date(lease.signedAt).toLocaleDateString() : "Unsigned Trace"}</span>
                         </div>
-                        {lease.status === "active" && (
+                        {(lease.status === "active" || lease.status === "expiring") && (
                           <div className="p-6 bg-success/10 flex items-center justify-between border-t border-success/10">
                             <span className="flex items-center gap-2 text-success font-bold"><ShieldCheck className="w-4 h-4" /> Protocol Alive</span>
                           </div>
