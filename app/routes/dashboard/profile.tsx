@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
@@ -22,6 +22,7 @@ import { apiFetch } from "~/lib/api";
 import { psgcApi } from "~/lib/psgc";
 import { useAuthStore } from "~/store/auth.store";
 import { PageHeader } from "~/components/PageHeader";
+import type { MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => {
   return [
@@ -527,7 +528,7 @@ export default function ProfilePage() {
                   onChange={handleChange}
                   placeholder="e.g. 123 Main St, Apt 4B"
                 />
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                   <InfoField
                     label="Barangay"
@@ -545,30 +546,27 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-                      <InfoField
-                        label="Province"
-                        name="province"
-                        value={(currentData as any).province ?? ""}
-                        editing={false}
-                        onChange={handleChange}
-                      />
-                      <InfoField
-                        label="Region"
-                        name="region"
-                        value={(currentData as any).region ?? ""}
-                        editing={false}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                  <InfoField
+                    label="Province"
+                    name="province"
+                    value={(currentData as any).province ?? ""}
+                    editing={false}
+                    onChange={handleChange}
+                  />
+                  <InfoField
+                    label="Region"
+                    name="region"
+                    value={(currentData as any).region ?? ""}
+                    editing={false}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
-  );
+  )
 }
