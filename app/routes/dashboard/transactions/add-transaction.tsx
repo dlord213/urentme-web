@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import {
   ArrowLeft,
   Save,
@@ -16,6 +16,16 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Record Transaction | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Record a new financial transaction or payment entry bound to a lease agreement.",
+    },
+  ];
+};
 
 const generateReference = () => {
   const date = new Date().toISOString().split('T')[0].replace(/-/g, '');

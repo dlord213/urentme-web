@@ -1,8 +1,18 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { ArrowLeft, Save, User, Phone, Mail, Calendar, Notebook, UserPlus } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Add Tenant | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Register a new tenant in the system to manage their leases and payments.",
+    },
+  ];
+};
 
 export default function AddTenant() {
   const navigate = useNavigate();

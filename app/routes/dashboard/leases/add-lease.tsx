@@ -1,8 +1,18 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { ArrowLeft, Save, FileText, User, Home, Calendar, PhilippinePeso, Info, Pencil, CheckCircle2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "New Lease | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Create a new lease agreement for your properties and tenants.",
+    },
+  ];
+};
 
 export default function CreateLease() {
   const navigate = useNavigate();

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { apiFetch } from "../lib/api";
 import { useAuthStore } from "../store/auth.store";
 import { useMutation } from "@tanstack/react-query";
@@ -12,6 +12,17 @@ import {
   Key,
 } from "lucide-react";
 
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Sign In | URentMe" },
+    {
+      name: "description",
+      content:
+        "Log in to your URentMe dashboard to manage your properties, leases, and tenants efficiently.",
+    },
+  ];
+};
+
 const HIGHLIGHTS = [
   { icon: Building2, text: "Manage unlimited properties & units" },
   { icon: Key, text: "Digital leases & rent automation" },
@@ -21,7 +32,7 @@ const HIGHLIGHTS = [
 export default function Login() {
   const navigate = useNavigate();
   const setAuthUser = useAuthStore((state) => state.setUser);
-  
+
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 

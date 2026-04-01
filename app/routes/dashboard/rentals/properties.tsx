@@ -14,8 +14,18 @@ import { PageHeader } from "~/components/PageHeader";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import { useState } from "react";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Properties Portfolio | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Manage your portfolio of rental properties, track occupancy, and monitor building status.",
+    },
+  ];
+};
 import { StatusBadge } from "~/components/StatusBadge";
 
 export interface Unit {

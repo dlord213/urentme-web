@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { ArrowLeft, Save, Building, MapPin, AlignLeft } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
-import { PageHeader } from "~/components/PageHeader";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Add Property | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Add a new rental property to your portfolio and set its location and details.",
+    },
+  ];
+};
 import { useAuthStore } from "~/store/auth.store";
 import { psgcApi } from "~/lib/psgc";
 
@@ -133,11 +142,11 @@ export default function AddProperty() {
       alert("You must be logged in to add a property.");
       return;
     }
-    
+
     // Copy formData and process yearBuilt
     const payload: any = { ...formData, ownerId: user.id };
     payload.yearBuilt = payload.yearBuilt ? parseInt(payload.yearBuilt.toString(), 10) : null;
-    
+
     mutation.mutate(payload);
   };
 
@@ -157,7 +166,7 @@ export default function AddProperty() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8 mt-8">
-        
+
         {/* Basic Info Card */}
         <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
@@ -270,7 +279,7 @@ export default function AddProperty() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="form-control">
                   <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Province <span className="text-error">*</span></span></label>
                   <select
@@ -304,7 +313,7 @@ export default function AddProperty() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="form-control">
                   <label className="label pb-1.5"><span className="label-text font-bold uppercase tracking-wider text-xs">Barangay <span className="text-error">*</span></span></label>
                   <select

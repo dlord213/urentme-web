@@ -15,8 +15,18 @@ import { StatsCard } from "~/components/StatsCard";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import { useState } from "react";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Financial Transactions | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Monitor and manage all financial transactions, payments, and cashflow across your portfolio.",
+    },
+  ];
+};
 import { StatusBadge } from "~/components/StatusBadge";
 
 export interface Transaction {

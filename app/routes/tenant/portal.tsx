@@ -1,4 +1,14 @@
-import { useSearchParams, Link } from "react-router";
+import { useSearchParams, Link, type MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Tenant Portal | URentMe" },
+    {
+      name: "description",
+      content: "Your personal dashboard for rent payments, maintenance requests, and announcements.",
+    },
+  ];
+};
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useState, useRef } from "react";

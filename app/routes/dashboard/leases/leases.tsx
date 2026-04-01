@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import {
   Plus,
   Search,
@@ -19,6 +19,16 @@ import { useDebounce } from "~/lib/useDebounce";
 import { PageHeader } from "~/components/PageHeader";
 import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { StatusBadge } from "~/components/StatusBadge";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Leases | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Manage your property lease agreements, track active contracts, and handle renewals.",
+    },
+  ];
+};
 
 export interface Lease {
   id: string;

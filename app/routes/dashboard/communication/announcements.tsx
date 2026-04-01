@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import {
   Megaphone,
   Search,
@@ -17,6 +17,16 @@ import { useDebounce } from "~/lib/useDebounce";
 import { PageHeader } from "~/components/PageHeader";
 import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { StatusBadge } from "~/components/StatusBadge";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Announcements | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Manage and send announcements to your tenants across all properties.",
+    },
+  ];
+};
 
 export interface Announcement {
   id: string;

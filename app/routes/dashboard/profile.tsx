@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { type MetaFunction } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
@@ -21,6 +22,16 @@ import {
 import { apiFetch } from "~/lib/api";
 import { useAuthStore } from "~/store/auth.store";
 import { PageHeader } from "~/components/PageHeader";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Owner Profile | URentMe" },
+    {
+      name: "description",
+      content: "Manage your personal information, contact details, and account settings.",
+    },
+  ];
+};
 
 interface OwnerProfile {
   id: string;
@@ -213,7 +224,7 @@ export default function ProfilePage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        
+
         {/* Left Column: Hero & Meta */}
         <div className="lg:col-span-4 space-y-6">
           {/* Profile Card */}
@@ -222,7 +233,7 @@ export default function ProfilePage() {
             <div className="h-32 bg-linear-to-r from-primary/80 to-secondary/80 relative">
               <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
             </div>
-            
+
             <div className="card-body p-6 pt-0 relative pb-8">
               {/* Avatar */}
               <div className="flex justify-center -mt-16 mb-4 relative z-10">
@@ -256,7 +267,7 @@ export default function ProfilePage() {
                 <p className="text-base-content/60 text-sm mt-1 font-medium flex items-center justify-center gap-1.5">
                   <Mail className="w-3.5 h-3.5" /> {profile.email}
                 </p>
-                
+
                 <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
                   <span className="badge badge-primary gap-1 font-semibold px-3 py-3 shadow-sm shadow-primary/20">
                     <Building2 className="w-3.5 h-3.5" /> Property Owner
@@ -272,7 +283,7 @@ export default function ProfilePage() {
               <h3 className="font-bold text-sm tracking-wider uppercase text-base-content/50 mb-5 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4" /> Account Status
               </h3>
-              
+
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center shrink-0">
@@ -291,7 +302,7 @@ export default function ProfilePage() {
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-base-content">Last Updated</p>
                     <p className="text-xs text-base-content/60 mt-0.5">
-                      {new Date(profile.updatedAt).toLocaleDateString("en-PH", { 
+                      {new Date(profile.updatedAt).toLocaleDateString("en-PH", {
                         year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                       })}
                     </p>
@@ -316,12 +327,12 @@ export default function ProfilePage() {
 
         {/* Right Column: Edit Form / Details */}
         <div className="lg:col-span-8 space-y-6 lg:space-y-8">
-          
+
           {/* Identity Section */}
           <div className="card bg-base-100 border border-base-200 shadow-sm relative overflow-hidden">
             {/* Decorative background element */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
-            
+
             <div className="card-body p-6 sm:p-8 relative z-10">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-base-200/60">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -418,7 +429,7 @@ export default function ProfilePage() {
                   onChange={handleChange}
                   placeholder="e.g. 123 Main St, Apt 4B"
                 />
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                   <InfoField
                     label="Barangay"

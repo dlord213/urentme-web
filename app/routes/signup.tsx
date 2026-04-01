@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { apiFetch } from "../lib/api";
 import { useAuthStore } from "../store/auth.store";
 import { useMutation } from "@tanstack/react-query";
@@ -11,6 +11,17 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Create Your Account | URentMe" },
+    {
+      name: "description",
+      content:
+        "Get started with URentMe and see how easy property management can be.",
+    },
+  ];
+};
 
 const PERKS = [
   "14-day free trial, no credit card",

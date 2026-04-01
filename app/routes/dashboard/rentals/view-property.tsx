@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams, type MetaFunction } from "react-router";
 import {
   ArrowLeft,
   Save,
@@ -21,6 +21,16 @@ import { apiFetch } from "~/lib/api";
 import { psgcApi } from "~/lib/psgc";
 import { StatusBadge } from "~/components/StatusBadge";
 import { DataTable } from "~/components/DataTable";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Property Details | URentMe" },
+    {
+      name: "description",
+      content: "Detailed overview of the property, including units, address, and house rules.",
+    },
+  ];
+};
 
 export default function PropertyDetail() {
   const { id } = useParams();

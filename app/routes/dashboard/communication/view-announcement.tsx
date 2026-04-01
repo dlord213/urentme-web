@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams, type MetaFunction } from "react-router";
 import { 
   ArrowLeft, 
   Save, 
@@ -21,6 +21,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { StatusBadge } from "~/components/StatusBadge";
 import { PageHeader } from "~/components/PageHeader";
+
+export const meta: MetaFunction = ({ data }: { data: any }) => {
+  return [
+    { title: `Announcement Details | URentMe` },
+    {
+      name: "description",
+      content: "View and manage the details of your property announcement.",
+    },
+  ];
+};
 
 export default function ViewAnnouncement() {
   const { id } = useParams();

@@ -13,8 +13,18 @@ import { DataTable, type PaginationMeta } from "~/components/DataTable";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { useDebounce } from "~/lib/useDebounce";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import { useState } from "react";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Rental Units | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Overview of all individual rental units, status tracking, and reservation management.",
+    },
+  ];
+};
 import { StatusBadge } from "~/components/StatusBadge";
 
 export interface Unit {

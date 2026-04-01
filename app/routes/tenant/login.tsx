@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Tenant Login | URentMe" },
+    {
+      name: "description",
+      content: "Sign in to your tenant portal to manage payments, maintenance requests, and lease documents.",
+    },
+  ];
+};
 import { useMutation } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { Lock, Mail, ArrowRight, Home } from "lucide-react";
@@ -77,7 +87,7 @@ export default function TenantLogin() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-3xl font-black text-base-content">Tenant Portal</h2>
+            <h1 className="text-3xl font-black text-base-content">Tenant Portal</h1>
             <p className="text-base-content/55 mt-1.5">Sign in to access your rental dashboard.</p>
           </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams, type MetaFunction } from "react-router";
 import {
   ArrowLeft,
   Save,
@@ -21,6 +21,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { DataTable } from "~/components/DataTable";
 import { StatusBadge } from "~/components/StatusBadge";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Lease Details | URentMe" },
+    {
+      name: "description",
+      content: "View and manage complete details of the lease agreement, including terms and transactions.",
+    },
+  ];
+};
 
 export default function LeaseDetail() {
   const { id } = useParams();

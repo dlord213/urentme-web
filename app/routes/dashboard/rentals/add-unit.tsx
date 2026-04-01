@@ -1,8 +1,18 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { ArrowLeft, Save, DoorOpen, LayoutDashboard, Wallet, AlignLeft, Info } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Add Unit | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Create a new rentable unit within an existing property.",
+    },
+  ];
+};
 import { PageHeader } from "~/components/PageHeader";
 import { formatFloor } from "~/lib/format";
 

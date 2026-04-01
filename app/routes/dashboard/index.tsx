@@ -11,8 +11,19 @@ import {
   Activity,
   Home,
   BellRing,
+  History,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Dashboard Overview | URentMe" },
+    {
+      name: "description",
+      content: "Real-time overview of your rental portfolio, including occupancy stats, revenue, and active alerts.",
+    },
+  ];
+};
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { StatusBadge } from "~/components/StatusBadge";

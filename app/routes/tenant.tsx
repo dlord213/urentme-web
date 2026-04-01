@@ -1,7 +1,18 @@
-import { Outlet, Link, useNavigate, useLocation } from "react-router";
+import { Outlet, Link, useNavigate, useLocation, type MetaFunction } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { Home, CreditCard, Wrench, FileText, LogOut } from "lucide-react";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Tenant Portal | URentMe" },
+    {
+      name: "description",
+      content:
+        "Access your tenant portal to pay rent, submit maintenance requests, and view important documents.",
+    },
+  ];
+};
 
 export default function TenantLayout() {
   const navigate = useNavigate();

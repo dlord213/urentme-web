@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, type MetaFunction } from "react-router";
 import {
   ArrowLeft,
   Trash2,
@@ -20,6 +20,16 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { PageHeader } from "~/components/PageHeader";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Transaction Details | URentMe" },
+    {
+      name: "description",
+      content: "View detailed financial record info, including lease binding and settlement details.",
+    },
+  ];
+};
 
 export default function TransactionDetail() {
   const { id } = useParams();

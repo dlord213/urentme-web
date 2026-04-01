@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams, type MetaFunction } from "react-router";
 import {
   ArrowLeft,
   Save,
@@ -25,6 +25,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { StatusBadge } from "~/components/StatusBadge";
 import { DataTable } from "~/components/DataTable";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Tenant Details | URentMe" },
+    {
+      name: "description",
+      content: "View and manage complete details of the tenant profile and lease history.",
+    },
+  ];
+};
 
 const calculateTotalLeaseAmount = (
   startDate: string,

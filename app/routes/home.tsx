@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import {
   Building2,
   ShieldCheck,
@@ -11,6 +11,17 @@ import {
   CheckCircle2,
   Star,
 } from "lucide-react";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "URentMe | Modern Property Management Software" },
+    {
+      name: "description",
+      content:
+        "Streamline your rental business with URentMe. The all-in-one platform for portfolio management, smart leasing, and tenant communication.",
+    },
+  ];
+};
 
 const FEATURES = [
   {

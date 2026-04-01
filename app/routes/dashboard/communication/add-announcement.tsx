@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import {
   ArrowLeft,
   Megaphone,
@@ -16,6 +16,16 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "New Announcement | URentMe Dashboard" },
+    {
+      name: "description",
+      content: "Create and dispatch a new announcement to your tenants.",
+    },
+  ];
+};
 
 export default function NewAnnouncement() {
   const navigate = useNavigate();

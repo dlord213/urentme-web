@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams, type MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Activate Your Account | URentMe" },
+    {
+      name: "description",
+      content: "Set your password to activate your tenant portal and access your rental dashboard.",
+    },
+  ];
+};
 import { useMutation } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
 import { Lock, CheckCircle, ArrowRight } from "lucide-react";
@@ -100,7 +110,7 @@ export default function AcceptInvite() {
         <div className="card bg-base-200 shadow-xl">
           <div className="card-body">
             <div className="mb-4">
-              <h2 className="text-2xl font-black text-base-content">Set Your Password</h2>
+              <h1 className="text-2xl font-black text-base-content">Set Your Password</h1>
               <p className="text-base-content/55 mt-1 text-sm">
                 Welcome! Create a password to activate your tenant portal account.
               </p>
