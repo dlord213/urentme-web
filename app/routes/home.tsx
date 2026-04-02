@@ -14,7 +14,7 @@ import {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "URentMe | Modern Property Management Software" },
+    { title: "URentMe" },
     {
       name: "description",
       content:
@@ -39,36 +39,6 @@ const FEATURES = [
     title: "Tenant Communication",
     desc: "Send announcements and notices to all your tenants in seconds.",
   },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Sarah K.",
-    role: "Property Manager · 120 Units",
-    quote:
-      "URentMe cut our admin time by 60%. The lease automation alone is worth it.",
-    rating: 5,
-  },
-  {
-    name: "David N.",
-    role: "Portfolio Owner · 8 Properties",
-    quote:
-      "Finally, a platform that handles owner distributions without a spreadsheet.",
-    rating: 5,
-  },
-  {
-    name: "Linda T.",
-    role: "Operations Director",
-    quote: "Our customers love the automated rent reminders. Game changer.",
-    rating: 5,
-  },
-];
-
-const STATS = [
-  { value: "50K+", label: "Units Managed" },
-  { value: "$2B+", label: "Rent Collected" },
-  { value: "98%", label: "Customer Satisfaction" },
-  { value: "150+", label: "Cities Served" },
 ];
 
 export default function Home() {
@@ -233,54 +203,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Testimonials */}
-        <section id="testimonials" className="py-24 px-4 bg-base-100">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <div className="badge badge-primary badge-outline px-3 py-2 text-sm font-semibold mb-4">
-                Testimonials
-              </div>
-              <h2 className="text-4xl lg:text-5xl font-black text-base-content mb-4">
-                Loved by property professionals
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {TESTIMONIALS.map((t, i) => (
-                <div
-                  key={i}
-                  className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="card-body p-6">
-                    <div className="flex gap-0.5 mb-4">
-                      {Array.from({ length: t.rating }).map((_, j) => (
-                        <Star
-                          key={j}
-                          className="w-4 h-4 fill-primary text-primary"
-                        />
-                      ))}
-                    </div>
-                    <p className="text-base-content/80 text-sm leading-relaxed mb-4 italic">
-                      "{t.quote}"
-                    </p>
-                    <div className="flex items-center gap-3 mt-auto pt-4 border-t border-base-200">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                        {t.name[0]}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm text-base-content">
-                          {t.name}
-                        </p>
-                        <p className="text-xs text-base-content/50">{t.role}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Feature checklist section */}
         <section className="py-24 px-4 bg-base-200/40">
           <div className="max-w-5xl mx-auto flex flex-col lg:flex-row items-center gap-16">
@@ -316,70 +238,6 @@ export default function Home() {
                 >
                   Start Free Trial <ArrowRight className="w-4 h-4" />
                 </Link>
-              </div>
-            </div>
-            <div className="flex-1 w-full">
-              <div className="card bg-base-100 shadow-xl border border-base-200">
-                <div className="card-body p-8 space-y-4">
-                  <div className="flex items-center justify-between pb-4 border-b border-base-200">
-                    <span className="font-bold text-lg">
-                      Portfolio Overview
-                    </span>
-                    <span className="badge badge-success badge-sm font-semibold">
-                      Live
-                    </span>
-                  </div>
-                  {[
-                    {
-                      label: "Occupied Units",
-                      value: "89%",
-                      color: "progress-success",
-                    },
-                    {
-                      label: "Rent Collected (MTD)",
-                      value: "92%",
-                      color: "progress-primary",
-                    },
-                    {
-                      label: "Work Orders Closed",
-                      value: "74%",
-                      color: "progress-warning",
-                    },
-                  ].map((item) => (
-                    <div key={item.label}>
-                      <div className="flex justify-between text-sm mb-1.5">
-                        <span className="font-medium text-base-content/70">
-                          {item.label}
-                        </span>
-                        <span className="font-bold">{item.value}</span>
-                      </div>
-                      <progress
-                        className={`progress ${item.color} w-full`}
-                        value={parseInt(item.value)}
-                        max={100}
-                      />
-                    </div>
-                  ))}
-                  <div className="grid grid-cols-3 gap-3 pt-4 border-t border-base-200">
-                    {[
-                      { v: "24", l: "Properties" },
-                      { v: "103", l: "Tenants" },
-                      { v: "$142K", l: "Revenue" },
-                    ].map((s) => (
-                      <div
-                        key={s.l}
-                        className="text-center p-3 bg-base-200/60 rounded-xl"
-                      >
-                        <div className="font-black text-primary text-lg">
-                          {s.v}
-                        </div>
-                        <div className="text-xs text-base-content/50 font-medium">
-                          {s.l}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>

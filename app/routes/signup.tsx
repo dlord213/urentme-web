@@ -23,14 +23,6 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-const PERKS = [
-  "14-day free trial, no credit card",
-  "Unlimited properties & units",
-  "Full accounting suite included",
-  "Dedicated onboarding support",
-  "Cancel anytime, no lock-in",
-];
-
 const STEPS = ["Account Info", "Portfolio Setup", "Go Live"];
 
 export default function Signup() {
@@ -69,7 +61,7 @@ export default function Signup() {
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center font-extrabold text-2xl shadow-lg">
+          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center font-extrabold text-2xl">
             U
           </div>
           <span className="text-2xl font-extrabold tracking-tight">
@@ -86,17 +78,6 @@ export default function Signup() {
             Join thousands of property managers who have simplified their entire
             operation with URentMe.
           </p>
-          <ul className="space-y-3">
-            {PERKS.map((p) => (
-              <li
-                key={p}
-                className="flex items-center gap-3 text-sm text-primary-content/90 font-medium"
-              >
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-white" />
-                {p}
-              </li>
-            ))}
-          </ul>
         </div>
 
         {/* Step indicator */}
@@ -131,7 +112,7 @@ export default function Signup() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 justify-center mb-10">
-            <div className="w-9 h-9 rounded-xl bg-primary text-primary-content flex items-center justify-center font-extrabold text-xl shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-primary text-primary-content flex items-center justify-center font-extrabold text-xl">
               U
             </div>
             <span className="text-xl font-extrabold text-base-content">
@@ -293,7 +274,7 @@ export default function Signup() {
 
             <button
               type="submit"
-              className="btn btn-primary w-full shadow-lg shadow-primary/30 gap-2 text-base mt-2"
+              className="btn btn-primary w-full gap-2 text-base mt-2"
               disabled={signupMutation.isPending}
             >
               {signupMutation.isPending ? (

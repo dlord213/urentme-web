@@ -91,32 +91,7 @@ export default function Login() {
             ))}
           </ul>
         </div>
-
-        {/* Testimonial */}
-        <div className="relative z-10 bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/20 max-w-sm">
-          <div className="flex gap-0.5 mb-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className="text-yellow-300 text-sm">
-                ★
-              </span>
-            ))}
-          </div>
-          <p className="text-sm text-primary-content/90 italic leading-relaxed">
-            "URentMe completely transformed how we run our 200-unit portfolio. I
-            can't imagine going back."
-          </p>
-          <div className="flex items-center gap-2 mt-3">
-            <div className="w-7 h-7 rounded-full bg-white/30 flex items-center justify-center font-bold text-xs">
-              D
-            </div>
-            <div>
-              <p className="text-xs font-semibold">David N.</p>
-              <p className="text-xs text-primary-content/60">
-                Portfolio Owner · 8 Properties
-              </p>
-            </div>
-          </div>
-        </div>
+        <div></div>
       </div>
 
       {/* Right panel – the form */}
@@ -124,7 +99,7 @@ export default function Login() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 justify-center mb-10">
-            <div className="w-9 h-9 rounded-xl bg-primary text-primary-content flex items-center justify-center font-extrabold text-xl shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-primary text-primary-content flex items-center justify-center font-extrabold text-xl">
               U
             </div>
             <span className="text-xl font-extrabold text-base-content">
@@ -203,7 +178,7 @@ export default function Login() {
 
             <button
               type="submit"
-              className="btn btn-primary w-full shadow-lg shadow-primary/30 mt-2 gap-2 text-base"
+              className="btn btn-primary w-full mt-2 gap-2 text-base"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? (

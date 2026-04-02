@@ -188,7 +188,7 @@ export default function Announcements() {
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-24 gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="text-base-content/50 font-medium">Loading network dispatches...</p>
+                <p className="text-base-content/50 font-medium">Loading...</p>
               </div>
             ) : isError ? (
               <div className="flex flex-col items-center justify-center py-24 gap-3 text-center px-4">
