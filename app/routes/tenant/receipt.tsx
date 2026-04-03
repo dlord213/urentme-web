@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate, useParams, type MetaFunction } from "react-router";
 import {
   ArrowLeft,
-  Trash2,
   Calendar,
   Clock,
   Home,
@@ -17,51 +16,32 @@ import {
   Info,
   ShieldAlert,
 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "~/lib/api";
-import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Transaction Details | URentMe" },
+    { title: "Payment Receipt | URentMe" },
     {
       name: "description",
-      content: "View detailed financial record info, including lease binding and settlement details.",
+      content: "View your payment receipt.",
     },
   ];
 };
 
-export default function TransactionDetail() {
+export default function TenantReceipt() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const {
     data: transaction,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["transaction", id],
-    queryFn: () => apiFetch(`/transactions/${id}`),
+    queryKey: ["tenant-transaction", id],
+    queryFn: () => apiFetch(`/portal/transactions/${id}`),
     enabled: !!id,
   });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => apiFetch(`/transactions/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({
-        queryKey: ["lease", transaction?.leaseId],
-      });
-      navigate("/dashboard/transactions");
-    },
-  });
-
-  const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this transaction record? This action cannot be undone.")) {
-      deleteMutation.mutate();
-    }
-  };
 
   if (isLoading) return <div className="flex justify-center p-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
   if (isError || !transaction) return <div className="alert alert-error">Failed to load transaction details.</div>;
@@ -70,7 +50,6 @@ export default function TransactionDetail() {
   const tenant = lease?.tenant;
   const unit = lease?.unit;
   const property = unit?.property;
-  const owner = property?.owner;
 
   const formattedAmount = new Intl.NumberFormat("en-PH", {
     style: "currency",
@@ -121,7 +100,7 @@ export default function TransactionDetail() {
         
         <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
           <Link
-            to="/dashboard/transactions"
+            to="/tenant/portal"
             className="btn btn-circle btn-sm md:btn-md bg-base-100/20 hover:bg-base-100/40 border-none text-white backdrop-blur-md transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -130,13 +109,6 @@ export default function TransactionDetail() {
           <div className="flex items-center gap-2">
             <button onClick={() => window.print()} className="btn btn-sm md:btn-md bg-base-100/90 hover:bg-base-100 border-none text-base-content gap-2 shadow-xl hover:scale-105 transition-all">
               <Printer className="w-4 h-4" /> Print Receipt
-            </button>
-            <button 
-              onClick={handleDelete} 
-              className="btn btn-square btn-sm md:btn-md bg-error/90 hover:bg-error border-none text-white shadow-xl hover:scale-105 transition-all"
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -268,9 +240,8 @@ export default function TransactionDetail() {
                   <Info className="w-4 h-4" /> Related Information
                 </h3>
                 <div className="space-y-3">
-                  <Link
-                    to={`/dashboard/leases/${transaction.lease.id}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50 hover:bg-base-200 transition-colors group"
+                  <div
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50"
                   >
                     <div className="flex items-center gap-3">
                       <FileText className="w-5 h-5 text-accent opacity-80" />
@@ -279,12 +250,10 @@ export default function TransactionDetail() {
                         <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">File #{transaction.lease.id.slice(0,8).toUpperCase()}</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                  </Link>
+                  </div>
 
-                  <Link
-                    to={`/dashboard/tenants/${tenant.id}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50 hover:bg-base-200 transition-colors group"
+                  <div
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50"
                   >
                     <div className="flex items-center gap-3">
                       <User className="w-5 h-5 text-primary opacity-80" />
@@ -293,12 +262,10 @@ export default function TransactionDetail() {
                         <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">{tenant.email}</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                  </Link>
+                  </div>
 
-                  <Link
-                    to={`/dashboard/units/${unit.id}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50 hover:bg-base-200 transition-colors group"
+                  <div
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 border border-base-300/50"
                   >
                     <div className="flex items-center gap-3">
                       <Home className="w-5 h-5 text-success opacity-80" />
@@ -307,8 +274,7 @@ export default function TransactionDetail() {
                         <span className="text-[10px] font-bold block opacity-50 uppercase tracking-wider">Unit {unit.unitNumber}</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                  </Link>
+                  </div>
                 </div>
               </div>
             </div>
@@ -316,7 +282,7 @@ export default function TransactionDetail() {
             <div className="alert alert-info shadow-sm bg-info/10 border border-info/20 text-xs text-info-content/90 font-medium leading-relaxed rounded-2xl flex items-start gap-4">
               <ShieldAlert className="w-5 h-5 mt-0.5 text-info" />
               <span>
-                Transaction integrity is strictly maintained. To ensure financial record safety, transactions cannot be edited once verified. If a correction is needed, please delete and re-create the record.
+                Transaction integrity is strictly maintained. To ensure financial record safety, transactions cannot be edited once verified. If you need any corrections, please contact your property manager.
               </span>
             </div>
 

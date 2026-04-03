@@ -39,6 +39,11 @@ const STATUS_COLORS: Record<string, string> = {
   "under repair": "badge-warning badge-outline",
   "under renovation": "badge-info badge-outline",
 
+  // Maintenance request statuses
+  open: "badge-warning",
+  "in-progress": "badge-info",
+  resolved: "badge-success",
+
   // Generic
   success: "badge-success",
   warning: "badge-warning",

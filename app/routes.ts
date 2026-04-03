@@ -56,6 +56,10 @@ export default [
       "dashboard/announcements/new",
       "routes/dashboard/communication/add-announcement.tsx",
     ),
+    route(
+      "dashboard/maintenance",
+      "routes/dashboard/maintenance/requests.tsx",
+    ),
     route("dashboard/profile", "routes/dashboard/profile.tsx"),
   ]),
 
@@ -64,5 +68,6 @@ export default [
   route("tenant/accept-invite", "routes/tenant/accept-invite.tsx"),
   layout("routes/tenant.tsx", [
     route("tenant/portal", "routes/tenant/portal.tsx"),
+    route("tenant/receipt/:id", "routes/tenant/receipt.tsx"),
   ]),
 ] satisfies RouteConfig;

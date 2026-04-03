@@ -7,6 +7,7 @@ import {
   PhilippinePeso,
   MessageSquare,
   FileText,
+  Wrench,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -49,6 +50,13 @@ const NAV_GROUPS = [
     icon: MessageSquare,
     items: [
       { label: "Announcements", to: "/dashboard/announcements" },
+    ],
+  },
+  {
+    title: "Maintenance",
+    icon: Wrench,
+    items: [
+      { label: "Requests", to: "/dashboard/maintenance" },
     ],
   },
 ];
