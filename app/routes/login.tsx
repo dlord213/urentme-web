@@ -10,6 +10,8 @@ import {
   Building2,
   BarChart3,
   Key,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 export const meta: MetaFunction = () => {
@@ -33,11 +35,18 @@ export default function Login() {
   const navigate = useNavigate();
   const setAuthUser = useAuthStore((state) => state.setUser);
 
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const loginMutation = useMutation({
-    mutationFn: async ({ email, password }: { email: string, password: string }) => {
+    mutationFn: async ({
+      email,
+      password,
+    }: {
+      email: string;
+      password: string;
+    }) => {
       return apiFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
@@ -56,35 +65,54 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex bg-base-100">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-[52%] relative flex-col justify-between overflow-hidden bg-primary p-12 text-primary-content">
-        {/* background glows */}
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-white/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute -bottom-40 -left-24 w-[400px] h-[400px] bg-black/15 rounded-full blur-[100px] pointer-events-none" />
+      {/* ─── Left panel ────────────────────────────────────────────── */}
+      <div className="hidden lg:flex lg:w-[52%] relative flex-col justify-between overflow-hidden bg-primary p-14 text-primary-content">
+        {/* Mesh / geometric background */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Large glow blobs */}
+          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-white/10 rounded-full blur-[130px]" />
+          <div className="absolute -bottom-40 -left-24 w-[400px] h-[400px] bg-black/15 rounded-full blur-[110px]" />
+          {/* Circle rings */}
+          <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full border border-white/10 translate-x-1/3 translate-y-1/3" />
+          <div className="absolute bottom-0 right-0 w-[32rem] h-[32rem] rounded-full border border-white/[0.06] translate-x-1/3 translate-y-1/3" />
+          {/* Dot grid */}
+          <div
+            className="absolute inset-0 opacity-[0.08]"
+            style={{
+              backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+        </div>
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center font-extrabold text-2xl text-white shadow-lg">
-            U
-          </div>
-          <span className="text-2xl font-extrabold tracking-tight">
-            URentMe
-          </span>
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center font-black text-2xl text-white shadow-lg border border-white/20">
+              U
+            </div>
+            <span className="text-2xl font-black tracking-tight">URentMe</span>
+          </Link>
         </div>
 
         {/* Hero copy */}
         <div className="relative z-10 max-w-sm">
-          <h1 className="text-4xl font-black leading-tight mb-6">
+          <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] mb-6">
             Welcome back to your property command center.
           </h1>
-          <ul className="space-y-4">
+          <p className="text-primary-content/70 mb-8 leading-relaxed">
+            Everything you need to run a great rental business is just one sign-in away.
+          </p>
+
+          {/* Feature chips */}
+          <ul className="space-y-3">
             {HIGHLIGHTS.map((h) => (
               <li
                 key={h.text}
                 className="flex items-center gap-3 text-primary-content/90 text-sm font-medium"
               >
-                <span className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                  <h.icon className="w-4 h-4" />
+                <span className="w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm">
+                  <h.icon className="w-4.5 h-4.5" />
                 </span>
                 {h.text}
               </li>
@@ -94,42 +122,53 @@ export default function Login() {
         <div></div>
       </div>
 
-      {/* Right panel – the form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-base-100">
-        <div className="w-full max-w-md">
+      {/* ─── Right panel – form ─────────────────────────────────────── */}
+      <div className="flex-1 flex items-center justify-center px-5 py-12 bg-base-100 relative overflow-hidden">
+        {/* Faint background glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-[400px] relative z-10">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2 justify-center mb-10">
-            <div className="w-9 h-9 rounded-xl bg-primary text-primary-content flex items-center justify-center font-extrabold text-xl">
-              U
-            </div>
-            <span className="text-xl font-extrabold text-base-content">
-              URentMe
-            </span>
+          <div className="lg:hidden flex items-center justify-center mb-10">
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-primary text-primary-content flex items-center justify-center font-black text-xl shadow-md shadow-primary/30">
+                U
+              </div>
+              <span className="text-xl font-black text-base-content">
+                URentMe
+              </span>
+            </Link>
           </div>
 
+          {/* Heading */}
           <div className="mb-8">
-            <h2 className="text-3xl font-black text-base-content">Sign in</h2>
-            <p className="text-base-content/55 mt-1.5">
+            <h2 className="text-3xl font-black text-base-content leading-tight">
+              Sign in
+            </h2>
+            <p className="text-base-content/50 mt-1.5 text-sm">
               Access your property management dashboard.
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
+            {/* Error */}
             {loginMutation.isError && (
-              <div className="alert alert-error text-sm rounded-lg py-2">
-                <span>{(loginMutation.error as any)?.message || "Failed to login"}</span>
+              <div className="bg-error/10 border border-error/30 text-error rounded-2xl px-4 py-3 text-sm font-medium">
+                {(loginMutation.error as any)?.message || "Failed to login"}
               </div>
             )}
-            <div className="form-control">
-              <label className="label pb-1.5">
-                <span className="label-text font-semibold">Email Address</span>
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-base-content">
+                Email Address
               </label>
-              <label className="input input-bordered flex items-center gap-2.5 focus-within:input-primary transition-colors w-full">
-                <Mail className="w-4 h-4 text-base-content/40 shrink-0" />
+              <label className="flex items-center gap-3 bg-base-200/60 border border-base-300 hover:border-primary/40 focus-within:border-primary focus-within:bg-base-100 rounded-2xl px-4 h-12 transition-all group cursor-text">
+                <Mail className="w-4 h-4 text-base-content/35 group-focus-within:text-primary transition-colors shrink-0" />
                 <input
                   type="email"
-                  className="grow text-sm"
-                  placeholder="urentme@example.com"
+                  className="grow bg-transparent text-sm text-base-content placeholder:text-base-content/35 outline-none"
+                  placeholder="you@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -137,63 +176,80 @@ export default function Login() {
               </label>
             </div>
 
-            <div className="form-control">
-              <label className="label pb-1.5">
-                <span className="label-text font-semibold">Password</span>
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-base-content">
+                Password
               </label>
-              <label className="input input-bordered flex items-center gap-2.5 focus-within:input-primary transition-colors w-full">
-                <Lock className="w-4 h-4 text-base-content/40 shrink-0" />
+              <label className="flex items-center gap-3 bg-base-200/60 border border-base-300 hover:border-primary/40 focus-within:border-primary focus-within:bg-base-100 rounded-2xl px-4 h-12 transition-all group cursor-text">
+                <Lock className="w-4 h-4 text-base-content/35 group-focus-within:text-primary transition-colors shrink-0" />
                 <input
-                  type="password"
-                  className="grow text-sm"
+                  type={showPassword ? "text" : "password"}
+                  className="grow bg-transparent text-sm text-base-content placeholder:text-base-content/35 outline-none"
                   placeholder="••••••••"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-base-content/30 hover:text-base-content/60 transition-colors shrink-0"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </label>
             </div>
 
-            <div className="flex justify-between items-center gap-2 pt-1">
-              <div className="flex flex-row gap-2">
+            {/* Remember + Forgot */}
+            <div className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   id="remember"
-                  className="checkbox checkbox-primary checkbox-sm"
+                  className="checkbox checkbox-primary checkbox-sm rounded-lg"
                 />
-                <label
-                  htmlFor="remember"
-                  className="text-sm text-base-content/65 cursor-pointer select-none"
-                >
+                <span className="text-xs text-base-content/55">
                   Keep me signed in for 30 days
-                </label>
-              </div>
+                </span>
+              </label>
               <a
                 href="#"
-                className="label-text-alt link link-primary text-xs font-medium hover:underline"
+                className="text-xs font-semibold text-primary hover:underline underline-offset-2 shrink-0"
               >
                 Forgot password?
               </a>
             </div>
 
+            {/* Submit */}
             <button
               type="submit"
-              className="btn btn-primary w-full mt-2 gap-2 text-base"
+              className="btn btn-primary w-full rounded-2xl h-12 text-sm font-bold gap-2 mt-1 group shadow-lg shadow-primary/25"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? (
-                <span className="loading loading-spinner loading-sm"></span>
+                <span className="loading loading-spinner loading-sm" />
               ) : (
                 <>
-                  Sign In <ArrowRight className="w-4 h-4" />
+                  Sign In
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          <p className="text-center text-sm text-base-content/55 mt-8">
+          {/* Sign up link */}
+          <p className="text-center text-sm text-base-content/45 mt-8">
             Don't have an account?{" "}
-            <Link to="/signup" className="link link-primary font-semibold">
+            <Link
+              to="/signup"
+              className="text-primary font-semibold hover:underline underline-offset-2"
+            >
               Create one free →
             </Link>
           </p>
